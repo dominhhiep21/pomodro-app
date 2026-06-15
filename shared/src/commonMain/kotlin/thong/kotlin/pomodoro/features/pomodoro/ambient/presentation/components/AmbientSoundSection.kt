@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -18,6 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
+import thong.kotlin.pomodoro.core.designsystem.components.AuraHorizontalScrollbar
+import thong.kotlin.pomodoro.core.utils.horizontalScrollWithMouseWheel
 import thong.kotlin.pomodoro.features.pomodoro.ambient.domain.AmbientSound
 
 @Composable
@@ -28,6 +31,8 @@ fun AmbientSoundSection(
     modifier: Modifier = Modifier,
     compact: Boolean = false,
 ) {
+    val lazyListState = rememberLazyListState()
+
     Column(modifier = modifier.fillMaxWidth()) {
         if (!compact) {
             Text(
@@ -44,22 +49,36 @@ fun AmbientSoundSection(
             shape = RoundedCornerShape(if (compact) 16.dp else 20.dp),
             backgroundColor = Color.White.copy(alpha = 0.05f)
         ) {
-            LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(if (compact) 8.dp else 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp),
-                contentPadding = PaddingValues(horizontal = 4.dp)
-            ) {
-                items(availableSounds) { sound ->
-                    val isActive = activeSoundIds.contains(sound.id)
-                    
-                    AmbientSoundItem(
-                        sound = sound,
-                        isActive = isActive,
-                        compact = compact
-                    ) { onToggleSound(sound.id) }
+            Column {
+                LazyRow(
+                    state = lazyListState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScrollWithMouseWheel(lazyListState)
+                        .padding(top = if (compact) 8.dp else 12.dp)
+                        .padding(horizontal = if (compact) 8.dp else 12.dp)
+                        .padding(bottom = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp)
+                ) {
+                    items(availableSounds) { sound ->
+                        val isActive = activeSoundIds.contains(sound.id)
+                        
+                        AmbientSoundItem(
+                            sound = sound,
+                            isActive = isActive,
+                            compact = compact
+                        ) { onToggleSound(sound.id) }
+                    }
                 }
+
+                AuraHorizontalScrollbar(
+                    state = lazyListState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 8.dp)
+                )
             }
         }
     }

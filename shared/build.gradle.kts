@@ -1,11 +1,9 @@
-import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
-    alias(libs.plugins.sqldelight)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 kotlin {
@@ -49,14 +47,9 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
-            implementation(libs.sqldelight.android)
         }
         jvmMain.dependencies {
             implementation(libs.jlayer)
-            implementation(libs.sqldelight.sqlite)
-        }
-        iosMain.dependencies {
-            implementation(libs.sqldelight.native)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -68,10 +61,10 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(compose.materialIconsExtended)
-            implementation(libs.sqldelight.coroutines)
             implementation(libs.multiplatformSettings)
             implementation(libs.multiplatformSettings.no.arg)
             implementation(libs.multiplatformSettings.coroutines)
+            implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -85,14 +78,14 @@ kotlin {
     }
 }
 
-sqldelight {
-    databases {
-        create("AuraDatabase") {
-            // Package chứa các class Kotlin được tự động sinh ra
-            packageName.set("thong.kotlin.pomodoro.database")
-        }
-    }
-}
+//sqldelight {
+//    databases {
+//        create("AuraDatabase") {
+//            // Package chứa các class Kotlin được tự động sinh ra
+//            packageName.set("thong.kotlin.pomodoro.database")
+//        }
+//    }
+//}
 
 dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)

@@ -1,13 +1,16 @@
 package thong.kotlin.pomodoro.features.pomodoro.data.local
 
 import com.russhwolf.settings.Settings
-import com.russhwolf.settings.ObservableSettings
 import com.russhwolf.settings.set
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import thong.kotlin.pomodoro.features.pomodoro.domain.model.UserSettings
+import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.Task
+import thong.kotlin.pomodoro.features.pomodoro.domain.model.DailyStats
+import kotlinx.serialization.json.Json
 
 class LocalSettingsDataSource(private val settings: Settings) {
+
+    private val json = Json { ignoreUnknownKeys = true }
 
     companion object {
         private const val KEY_WORK_MINUTES = "work_minutes"
@@ -23,6 +26,8 @@ class LocalSettingsDataSource(private val settings: Settings) {
         private const val KEY_MINIMAL_MODE = "minimal_mode"
         private const val KEY_BATTERY_SAVER = "battery_saver"
         private const val KEY_HAS_COMPLETED_ONBOARDING = "has_completed_onboarding"
+        private const val KEY_TASKS = "tasks_json"
+        private const val KEY_DAILY_STATS = "daily_stats_json"
     }
 
     fun getUserSettings(): UserSettings {
@@ -57,6 +62,33 @@ class LocalSettingsDataSource(private val settings: Settings) {
         settings[KEY_MINIMAL_MODE] = userSettings.isMinimalMode
         settings[KEY_BATTERY_SAVER] = userSettings.isBatterySaverEnabled
         settings[KEY_HAS_COMPLETED_ONBOARDING] = userSettings.hasCompletedOnboarding
+    }
+
+    fun saveTasks(tasks: List<Task>) {
+        settings[KEY_TASKS] = json.encodeToString(tasks)
+    }
+
+    fun getTasks(): List<Task> {
+        val jsonString = settings.getStringOrNull(KEY_TASKS) ?: return emptyList()
+        return try {
+            json.decodeFromString(jsonString)
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    fun saveDailyStats(stats: DailyStats) {
+        settings[KEY_DAILY_STATS] = json.encodeToString(stats)
+    }
+
+    fun getDailyStats(date: String): DailyStats? {
+        val jsonString = settings.getStringOrNull(KEY_DAILY_STATS) ?: return null
+        return try {
+            val stats: DailyStats = json.decodeFromString(jsonString)
+            if (stats.date == date) stats else null
+        } catch (e: Exception) {
+            null
+        }
     }
 
     fun clear() {

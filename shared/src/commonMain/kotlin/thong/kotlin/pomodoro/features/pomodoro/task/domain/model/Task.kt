@@ -1,8 +1,10 @@
 package thong.kotlin.pomodoro.features.pomodoro.task.domain.model
 
 import androidx.compose.runtime.Immutable
+import kotlinx.serialization.Serializable
 
 @Immutable
+@Serializable
 data class Task(
     val id: String,
     val text: String,

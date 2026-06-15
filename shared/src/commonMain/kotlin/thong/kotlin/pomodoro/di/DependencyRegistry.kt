@@ -1,16 +1,14 @@
 package thong.kotlin.pomodoro.di
 
 import com.russhwolf.settings.Settings
-import thong.kotlin.pomodoro.features.pomodoro.data.local.LocalDatabaseDataSource
 import thong.kotlin.pomodoro.features.pomodoro.data.local.LocalSettingsDataSource
 import thong.kotlin.pomodoro.features.pomodoro.data.repository.UserAppStateRepositoryImpl
 import thong.kotlin.pomodoro.features.pomodoro.domain.repository.UserAppStateRepository
 
 object DependencyRegistry {
-    private val localDb by lazy { LocalDatabaseDataSource() }
     private val localSettings by lazy { LocalSettingsDataSource(Settings()) }
 
     val userAppStateRepository: UserAppStateRepository by lazy {
-        UserAppStateRepositoryImpl(localDb, localSettings)
+        UserAppStateRepositoryImpl(localSettings)
     }
 }

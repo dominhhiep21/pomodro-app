@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,23 +28,32 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import pomodrokotlin.shared.generated.resources.Res
 import pomodrokotlin.shared.generated.resources.landspace_startup_bg
 import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
 import thong.kotlin.pomodoro.core.designsystem.components.AuraButton
+import thong.kotlin.pomodoro.core.designsystem.components.AuraInputField
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.features.pomodoro.domain.model.LearningStyle
 
 @Composable
 fun LearningStyleScreen(
-    onSelectionComplete: (LearningStyle) -> Unit,
+    onSelectionComplete: (LearningStyle, Int, Int, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var selectedStyle by remember { mutableStateOf(LearningStyle.SOLO) }
+    var showGroupSettingsPopup by remember { mutableStateOf(false) }
+    
+    // Group Settings State
+    var maxPeople by remember { mutableStateOf("4") }
+    var workMinutes by remember { mutableStateOf("25") }
+    var breakMinutes by remember { mutableStateOf("5") }
 
     AuraBackground(
         blurRadius = 8f,
@@ -127,9 +138,22 @@ fun LearningStyleScreen(
                     }
                 }
 
+                Spacer(modifier = Modifier.height(24.dp))
+
                 // Action Button
                 AuraButton(
-                    onClick = { onSelectionComplete(selectedStyle) },
+                    onClick = { 
+                        if (selectedStyle == LearningStyle.GROUP) {
+                            showGroupSettingsPopup = true
+                        } else {
+                            onSelectionComplete(
+                                selectedStyle, 
+                                1, 
+                                workMinutes.toIntOrNull() ?: 25,
+                                breakMinutes.toIntOrNull() ?: 5
+                            )
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
@@ -140,7 +164,155 @@ fun LearningStyleScreen(
                     )
                 }
             }
+
+            // Group Settings Dialog
+            if (showGroupSettingsPopup) {
+                GroupSettingsDialog(
+                    maxPeople = maxPeople,
+                    workMinutes = workMinutes,
+                    breakMinutes = breakMinutes,
+                    onMaxPeopleChange = { if (it.length <= 2) maxPeople = it.filter { char -> char.isDigit() } },
+                    onWorkMinutesChange = { if (it.length <= 3) workMinutes = it.filter { char -> char.isDigit() } },
+                    onBreakMinutesChange = { if (it.length <= 2) breakMinutes = it.filter { char -> char.isDigit() } },
+                    onDismiss = { showGroupSettingsPopup = false },
+                    onConfirm = {
+                        showGroupSettingsPopup = false
+                        onSelectionComplete(
+                            LearningStyle.GROUP,
+                            maxPeople.toIntOrNull() ?: 4,
+                            workMinutes.toIntOrNull() ?: 25,
+                            breakMinutes.toIntOrNull() ?: 5
+                        )
+                    }
+                )
+            }
         }
+    }
+}
+
+@Composable
+private fun GroupSettingsDialog(
+    maxPeople: String,
+    workMinutes: String,
+    breakMinutes: String,
+    onMaxPeopleChange: (String) -> Unit,
+    onWorkMinutesChange: (String) -> Unit,
+    onBreakMinutesChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        GlassBox(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .padding(horizontal = 16.dp),
+            shape = RoundedCornerShape(28.dp),
+            backgroundColor = Color.Black.copy(alpha = 0.8f)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Thiết lập nhóm của bạn",
+                    color = AuraColors.TextPrimary,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Cài đặt thời gian và số lượng thành viên cho phòng học nhóm",
+                    color = AuraColors.TextSecondary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    GroupSettingInput(
+                        label = "Số người",
+                        value = maxPeople,
+                        onValueChange = onMaxPeopleChange,
+                        modifier = Modifier.weight(1f)
+                    )
+                    GroupSettingInput(
+                        label = "Phút học",
+                        value = workMinutes,
+                        onValueChange = onWorkMinutesChange,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                GroupSettingInput(
+                    label = "Phút nghỉ",
+                    value = breakMinutes,
+                    onValueChange = onBreakMinutesChange,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    AuraButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(text = "Hủy", color = AuraColors.TextSecondary, fontSize = 14.sp)
+                    }
+
+                    AuraButton(
+                        onClick = onConfirm,
+                        modifier = Modifier.weight(1.5f)
+                    ) {
+                        Text(
+                            text = "Xác nhận",
+                            color = AuraColors.WorkMode,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GroupSettingInput(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier, horizontalAlignment = Alignment.Start) {
+        Text(
+            text = label,
+            color = AuraColors.TextSecondary,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
+        )
+        AuraInputField(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = "",
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 

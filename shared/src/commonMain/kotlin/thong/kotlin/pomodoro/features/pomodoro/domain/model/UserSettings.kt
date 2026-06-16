@@ -17,6 +17,7 @@ data class UserSettings(
     val isCompactMode: Boolean = false,
     val isMinimalMode: Boolean = false,
     val isBatterySaverEnabled: Boolean = false,
+    val maxGroupSize: Int = 4,
     val learningStyle: LearningStyle = LearningStyle.SOLO,
     val hasCompletedOnboarding: Boolean = false
 )

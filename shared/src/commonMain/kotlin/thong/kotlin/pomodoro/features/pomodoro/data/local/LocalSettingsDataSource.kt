@@ -26,6 +26,7 @@ class LocalSettingsDataSource(private val settings: Settings) {
         private const val KEY_COMPACT_MODE = "compact_mode"
         private const val KEY_MINIMAL_MODE = "minimal_mode"
         private const val KEY_BATTERY_SAVER = "battery_saver"
+        private const val KEY_MAX_GROUP_SIZE = "max_group_size"
         private const val KEY_LEARNING_STYLE = "learning_style"
         private const val KEY_HAS_COMPLETED_ONBOARDING = "has_completed_onboarding"
         private const val KEY_TASKS = "tasks_json"
@@ -46,6 +47,7 @@ class LocalSettingsDataSource(private val settings: Settings) {
             isCompactMode = settings.getBoolean(KEY_COMPACT_MODE, false),
             isMinimalMode = settings.getBoolean(KEY_MINIMAL_MODE, false),
             isBatterySaverEnabled = settings.getBoolean(KEY_BATTERY_SAVER, false),
+            maxGroupSize = settings.getInt(KEY_MAX_GROUP_SIZE, 4),
             learningStyle = LearningStyle.valueOf(settings.getString(KEY_LEARNING_STYLE, LearningStyle.SOLO.name)),
             hasCompletedOnboarding = settings.getBoolean(KEY_HAS_COMPLETED_ONBOARDING, false)
         )
@@ -64,6 +66,7 @@ class LocalSettingsDataSource(private val settings: Settings) {
         settings[KEY_COMPACT_MODE] = userSettings.isCompactMode
         settings[KEY_MINIMAL_MODE] = userSettings.isMinimalMode
         settings[KEY_BATTERY_SAVER] = userSettings.isBatterySaverEnabled
+        settings[KEY_MAX_GROUP_SIZE] = userSettings.maxGroupSize
         settings[KEY_LEARNING_STYLE] = userSettings.learningStyle.name
         settings[KEY_HAS_COMPLETED_ONBOARDING] = userSettings.hasCompletedOnboarding
     }
@@ -76,7 +79,7 @@ class LocalSettingsDataSource(private val settings: Settings) {
         val jsonString = settings.getStringOrNull(KEY_TASKS) ?: return emptyList()
         return try {
             json.decodeFromString(jsonString)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             emptyList()
         }
     }
@@ -90,7 +93,7 @@ class LocalSettingsDataSource(private val settings: Settings) {
         return try {
             val stats: DailyStats = json.decodeFromString(jsonString)
             if (stats.date == date) stats else null
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }

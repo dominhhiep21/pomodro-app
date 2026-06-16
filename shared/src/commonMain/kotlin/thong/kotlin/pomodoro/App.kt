@@ -96,11 +96,14 @@ fun App(
                     })
                 }
                 is AuraScreen.LearningStyleSelection -> {
-                    LearningStyleScreen(onSelectionComplete = { style ->
+                    LearningStyleScreen(onSelectionComplete = { style, maxGroupSize, workMins, breakMins ->
                         val currentSettings = repository.getUserSettings()
                         repository.saveUserSettings(
                             currentSettings.copy(
                                 learningStyle = style,
+                                maxGroupSize = maxGroupSize,
+                                workMinutes = workMins,
+                                breakMinutes = breakMins,
                                 hasCompletedOnboarding = true
                             )
                         )

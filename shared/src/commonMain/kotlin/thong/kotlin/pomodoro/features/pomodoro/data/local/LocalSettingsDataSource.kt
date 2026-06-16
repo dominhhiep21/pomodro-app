@@ -3,6 +3,7 @@ package thong.kotlin.pomodoro.features.pomodoro.data.local
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.set
 import kotlinx.coroutines.flow.Flow
+import thong.kotlin.pomodoro.features.pomodoro.domain.model.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro.domain.model.UserSettings
 import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.Task
 import thong.kotlin.pomodoro.features.pomodoro.domain.model.DailyStats
@@ -25,6 +26,7 @@ class LocalSettingsDataSource(private val settings: Settings) {
         private const val KEY_COMPACT_MODE = "compact_mode"
         private const val KEY_MINIMAL_MODE = "minimal_mode"
         private const val KEY_BATTERY_SAVER = "battery_saver"
+        private const val KEY_LEARNING_STYLE = "learning_style"
         private const val KEY_HAS_COMPLETED_ONBOARDING = "has_completed_onboarding"
         private const val KEY_TASKS = "tasks_json"
         private const val KEY_DAILY_STATS = "daily_stats_json"
@@ -44,6 +46,7 @@ class LocalSettingsDataSource(private val settings: Settings) {
             isCompactMode = settings.getBoolean(KEY_COMPACT_MODE, false),
             isMinimalMode = settings.getBoolean(KEY_MINIMAL_MODE, false),
             isBatterySaverEnabled = settings.getBoolean(KEY_BATTERY_SAVER, false),
+            learningStyle = LearningStyle.valueOf(settings.getString(KEY_LEARNING_STYLE, LearningStyle.SOLO.name)),
             hasCompletedOnboarding = settings.getBoolean(KEY_HAS_COMPLETED_ONBOARDING, false)
         )
     }
@@ -61,6 +64,7 @@ class LocalSettingsDataSource(private val settings: Settings) {
         settings[KEY_COMPACT_MODE] = userSettings.isCompactMode
         settings[KEY_MINIMAL_MODE] = userSettings.isMinimalMode
         settings[KEY_BATTERY_SAVER] = userSettings.isBatterySaverEnabled
+        settings[KEY_LEARNING_STYLE] = userSettings.learningStyle.name
         settings[KEY_HAS_COMPLETED_ONBOARDING] = userSettings.hasCompletedOnboarding
     }
 

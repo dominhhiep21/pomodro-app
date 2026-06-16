@@ -1,5 +1,9 @@
 package thong.kotlin.pomodoro.features.pomodoro.domain.model
 
+enum class LearningStyle {
+    SOLO, GROUP
+}
+
 data class UserSettings(
     val workMinutes: Int = 25,
     val breakMinutes: Int = 5,
@@ -13,5 +17,6 @@ data class UserSettings(
     val isCompactMode: Boolean = false,
     val isMinimalMode: Boolean = false,
     val isBatterySaverEnabled: Boolean = false,
+    val learningStyle: LearningStyle = LearningStyle.SOLO,
     val hasCompletedOnboarding: Boolean = false
 )

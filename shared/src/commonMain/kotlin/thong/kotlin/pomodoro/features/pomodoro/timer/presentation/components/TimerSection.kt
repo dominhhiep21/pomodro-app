@@ -2,6 +2,7 @@ package thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
@@ -29,6 +30,7 @@ fun TimerSection(
     onResetTimer: () -> Unit,
     onSkipTimer: () -> Unit,
     onToggleSettings: () -> Unit,
+    onExit: () -> Unit = {},
     onToggleCompactMode: () -> Unit = {},
     compact: Boolean = false,
     modifier: Modifier = Modifier
@@ -64,6 +66,13 @@ fun TimerSection(
                         Icon(
                             imageVector = Icons.Default.Settings,
                             contentDescription = "Settings",
+                            tint = Color.White.copy(alpha = 0.6f)
+                        )
+                    }
+                    IconButton(onClick = onExit) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                            contentDescription = "Exit to Style Selection",
                             tint = Color.White.copy(alpha = 0.6f)
                         )
                     }

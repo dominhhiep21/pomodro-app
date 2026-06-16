@@ -14,6 +14,7 @@ import thong.kotlin.pomodoro.core.navigation.AuraNavigator
 import thong.kotlin.pomodoro.core.navigation.AuraScreen
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraTheme
 import thong.kotlin.pomodoro.features.onboarding.presentation.OnboardingScreen
+import thong.kotlin.pomodoro.features.onboarding.presentation.LearningStyleScreen
 import thong.kotlin.pomodoro.features.startup.presentation.StartupScreen
 import thong.kotlin.pomodoro.features.pomodoro.presentation.PomodoroScreenResponsive
 import thong.kotlin.pomodoro.features.pomodoro.timer.state.PomodoroUiState
@@ -38,6 +39,7 @@ fun App(
         mutableStateOf(
             when (currentScreenName) {
                 "Onboarding" -> AuraScreen.Onboarding
+                "LearningStyle" -> AuraScreen.LearningStyleSelection
                 "MainApp" -> AuraScreen.MainApp
                 else -> AuraScreen.Splash
             }
@@ -90,15 +92,28 @@ fun App(
                 }
                 is AuraScreen.Onboarding -> {
                     OnboardingScreen(onFinish = {
+                        currentScreenName = "LearningStyle"
+                    })
+                }
+                is AuraScreen.LearningStyleSelection -> {
+                    LearningStyleScreen(onSelectionComplete = { style ->
                         val currentSettings = repository.getUserSettings()
-                        repository.saveUserSettings(currentSettings.copy(hasCompletedOnboarding = true))
+                        repository.saveUserSettings(
+                            currentSettings.copy(
+                                learningStyle = style,
+                                hasCompletedOnboarding = true
+                            )
+                        )
                         currentScreenName = "MainApp"
                     })
                 }
                 is AuraScreen.MainApp -> {
                     PomodoroScreenResponsive(
                         viewModel = pomodoroViewModel,
-                        notificationManager = notificationManager
+                        notificationManager = notificationManager,
+                        onExit = {
+                            currentScreenName = "LearningStyle"
+                        }
                     )
                 }
             }

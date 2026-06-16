@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 sealed interface AuraScreen {
     data object Splash : AuraScreen
     data object Onboarding : AuraScreen
+    data object LearningStyleSelection : AuraScreen
     data object MainApp : AuraScreen
 }
 

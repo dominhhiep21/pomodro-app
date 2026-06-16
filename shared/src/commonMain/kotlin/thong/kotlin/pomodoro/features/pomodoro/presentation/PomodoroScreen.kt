@@ -36,6 +36,7 @@ import thong.kotlin.pomodoro.core.notification.NotificationManager
 @Composable
 fun PomodoroScreenResponsive(
     viewModel: PomodoroViewModel,
+    onExit: () -> Unit = {},
     notificationManager: NotificationManager? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -161,6 +162,7 @@ fun PomodoroScreenResponsive(
                             onResetTimer = viewModel::resetTimer,
                             onSkipTimer = viewModel::skipTimer,
                             onToggleSettings = viewModel::toggleSettings,
+                            onExit = onExit,
                             onToggleCompactMode = viewModel::toggleCompactMode,
                             onAddTask = viewModel::addTask,
                             onDeleteTask = viewModel::deleteTask,
@@ -180,6 +182,7 @@ fun PomodoroScreenResponsive(
                             onResetTimer = viewModel::resetTimer,
                             onSkipTimer = viewModel::skipTimer,
                             onToggleSettings = viewModel::toggleSettings,
+                            onExit = onExit,
                             onToggleCompactMode = viewModel::toggleCompactMode,
                             onAddTask = viewModel::addTask,
                             onDeleteTask = viewModel::deleteTask,
@@ -434,6 +437,7 @@ private fun PortraitPomodoroContent(
     onResetTimer: () -> Unit,
     onSkipTimer: () -> Unit,
     onToggleSettings: () -> Unit,
+    onExit: () -> Unit,
     onToggleCompactMode: () -> Unit,
     onAddTask: () -> Unit,
     onDeleteTask: (String) -> Unit,
@@ -460,6 +464,7 @@ private fun PortraitPomodoroContent(
                 onResetTimer = onResetTimer,
                 onSkipTimer = onSkipTimer,
                 onToggleSettings = onToggleSettings,
+                onExit = onExit,
                 onToggleCompactMode = onToggleCompactMode,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -521,6 +526,7 @@ private fun LandscapePomodoroContent(
     onResetTimer: () -> Unit,
     onSkipTimer: () -> Unit,
     onToggleSettings: () -> Unit,
+    onExit: () -> Unit,
     onToggleCompactMode: () -> Unit,
     onAddTask: () -> Unit,
     onDeleteTask: (String) -> Unit,
@@ -552,6 +558,7 @@ private fun LandscapePomodoroContent(
                     onResetTimer = onResetTimer,
                     onSkipTimer = onSkipTimer,
                     onToggleSettings = onToggleSettings,
+                    onExit = onExit,
                     onToggleCompactMode = onToggleCompactMode,
                     compact = true,
                     modifier = Modifier.fillMaxWidth()

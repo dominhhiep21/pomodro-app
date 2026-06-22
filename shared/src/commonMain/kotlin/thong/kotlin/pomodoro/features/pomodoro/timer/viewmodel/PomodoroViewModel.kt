@@ -80,6 +80,21 @@ class PomodoroViewModel(
                 }
             }
         }
+
+        // Reactively update settings (like learning style)
+        viewModelScope.launch {
+            repository?.getSettingsFlow()?.collect { settings ->
+                _uiState.update { state ->
+                    state.copy(
+                        learningStyle = settings.learningStyle,
+                        config = state.config.copy(
+                            workMinutes = settings.workMinutes,
+                            shortBreakMinutes = settings.breakMinutes
+                        )
+                    )
+                }
+            }
+        }
     }
 
     // Quản lý Job đếm ngược của Coroutines để có thể hủy (Cancel) bất cứ lúc nào

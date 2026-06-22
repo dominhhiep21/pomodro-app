@@ -36,12 +36,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import pomodrokotlin.shared.generated.resources.Res
 import pomodrokotlin.shared.generated.resources.landspace_startup_bg
 import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
 import thong.kotlin.pomodoro.core.designsystem.components.AuraButton
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
+import thong.kotlin.pomodoro.core.notification.NotificationManager
+
+class OnboardingScreen(
+    private val notificationManager: NotificationManager?
+) : Screen {
+
+    @Composable
+    override fun Content() {
+        val navigator = LocalNavigator.currentOrThrow
+
+        // Gọi hàm UI bên dưới, khi finish thì ra lệnh cho voyager replace màn hình mới
+        OnboardingScreenUI(
+            onFinish = {
+                navigator.replace(LearningStyleScreen(notificationManager))
+            }
+        )
+    }
+
+}
 
 // 1. Định nghĩa cấu trúc dữ liệu cho từng bước hướng dẫn
 private data class OnboardingStep(
@@ -52,7 +74,7 @@ private data class OnboardingStep(
 )
 
 @Composable
-fun OnboardingScreen(
+private fun OnboardingScreenUI(
     onFinish: () -> Unit,
     modifier: Modifier = Modifier
 ) {

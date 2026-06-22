@@ -65,6 +65,10 @@ kotlin {
             implementation(libs.multiplatformSettings.no.arg)
             implementation(libs.multiplatformSettings.coroutines)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.androidx.navigation.compose)
+            implementation(libs.voyager.navigator)
+            implementation(libs.voyager.transition)
+            implementation(libs.voyager.screenmodel)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

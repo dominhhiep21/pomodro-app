@@ -33,6 +33,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import pomodrokotlin.shared.generated.resources.Res
 import pomodrokotlin.shared.generated.resources.landspace_startup_bg
 import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
@@ -40,16 +43,44 @@ import thong.kotlin.pomodoro.core.designsystem.components.AuraButton
 import thong.kotlin.pomodoro.core.designsystem.components.AuraInputField
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
+import thong.kotlin.pomodoro.core.notification.NotificationManager
+import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.pomodoro.domain.model.LearningStyle
+import thong.kotlin.pomodoro.features.pomodoro.presentation.PomodoroScreen
+
+class LearningStyleScreen(
+    private val notificationManager: NotificationManager?
+) : Screen {
+
+    @Composable
+    override fun Content() {
+        val navigator = LocalNavigator.currentOrThrow
+        val repository = remember { DependencyRegistry.userAppStateRepository }
+        val onSelectionComplete =
+            { style: LearningStyle, maxGroupSize: Int, workMins: Int, breakMins: Int ->
+                val currentSettings = repository.getUserSettings()
+                repository.saveUserSettings(
+                    currentSettings.copy(
+                        learningStyle = style,
+                        maxGroupSize = maxGroupSize,
+                        workMinutes = workMins,
+                        breakMinutes = breakMins
+                    )
+                )
+                navigator.push(PomodoroScreen(notificationManager))
+            }
+        LearningStyleScreenUI(onSelectionComplete = onSelectionComplete)
+    }
+}
 
 @Composable
-fun LearningStyleScreen(
+private fun LearningStyleScreenUI(
     onSelectionComplete: (LearningStyle, Int, Int, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var selectedStyle by remember { mutableStateOf(LearningStyle.SOLO) }
     var showGroupSettingsPopup by remember { mutableStateOf(false) }
-    
+
     // Group Settings State
     var maxPeople by remember { mutableStateOf("4") }
     var workMinutes by remember { mutableStateOf("25") }
@@ -93,7 +124,10 @@ fun LearningStyleScreen(
                 if (isLandscape) {
                     Row(
                         modifier = Modifier.fillMaxWidth().weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
+                        horizontalArrangement = Arrangement.spacedBy(
+                            24.dp,
+                            Alignment.CenterHorizontally
+                        ),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         SelectionCard(
@@ -116,7 +150,10 @@ fun LearningStyleScreen(
                 } else {
                     Column(
                         modifier = Modifier.fillMaxWidth().weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+                        verticalArrangement = Arrangement.spacedBy(
+                            16.dp,
+                            Alignment.CenterVertically
+                        ),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         SelectionCard(
@@ -142,13 +179,13 @@ fun LearningStyleScreen(
 
                 // Action Button
                 AuraButton(
-                    onClick = { 
+                    onClick = {
                         if (selectedStyle == LearningStyle.GROUP) {
                             showGroupSettingsPopup = true
                         } else {
                             onSelectionComplete(
-                                selectedStyle, 
-                                1, 
+                                selectedStyle,
+                                1,
                                 workMinutes.toIntOrNull() ?: 25,
                                 breakMinutes.toIntOrNull() ?: 5
                             )
@@ -171,9 +208,15 @@ fun LearningStyleScreen(
                     maxPeople = maxPeople,
                     workMinutes = workMinutes,
                     breakMinutes = breakMinutes,
-                    onMaxPeopleChange = { if (it.length <= 2) maxPeople = it.filter { char -> char.isDigit() } },
-                    onWorkMinutesChange = { if (it.length <= 3) workMinutes = it.filter { char -> char.isDigit() } },
-                    onBreakMinutesChange = { if (it.length <= 2) breakMinutes = it.filter { char -> char.isDigit() } },
+                    onMaxPeopleChange = {
+                        if (it.length <= 2) maxPeople = it.filter { char -> char.isDigit() }
+                    },
+                    onWorkMinutesChange = {
+                        if (it.length <= 3) workMinutes = it.filter { char -> char.isDigit() }
+                    },
+                    onBreakMinutesChange = {
+                        if (it.length <= 2) breakMinutes = it.filter { char -> char.isDigit() }
+                    },
                     onDismiss = { showGroupSettingsPopup = false },
                     onConfirm = {
                         showGroupSettingsPopup = false
@@ -252,9 +295,9 @@ private fun GroupSettingsDialog(
                         modifier = Modifier.weight(1f)
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 GroupSettingInput(
                     label = "Phút nghỉ",
                     value = breakMinutes,
@@ -325,7 +368,8 @@ private fun SelectionCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val backgroundColor = if (isSelected) Color.White.copy(alpha = 0.15f) else Color.White.copy(alpha = 0.05f)
+    val backgroundColor =
+        if (isSelected) Color.White.copy(alpha = 0.15f) else Color.White.copy(alpha = 0.05f)
 
     GlassBox(
         modifier = modifier

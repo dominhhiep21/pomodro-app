@@ -7,6 +7,7 @@ import thong.kotlin.pomodoro.features.pomodoro.timer.domain.PomodoroMode
 import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.Task
 import thong.kotlin.pomodoro.features.pomodoro.music.domain.MusicTrack
 import thong.kotlin.pomodoro.features.pomodoro.ambient.domain.AmbientSound
+import thong.kotlin.pomodoro.features.pomodoro.domain.model.LearningStyle
 import thong.kotlin.pomodoro.features.background.model.BackgroundConfig
 import thong.kotlin.pomodoro.features.background.model.BackgroundType
 import thong.kotlin.pomodoro.features.background.model.PerformanceMode
@@ -43,6 +44,7 @@ data class PomodoroUiState(
     val isCompactMode: Boolean = false,
     val isCompactMenuExpanded: Boolean = false,
     val activeCompactSection: CompactSection? = null,
+    val learningStyle: LearningStyle = LearningStyle.SOLO,
     val isNotificationEnabled: Boolean = true,
     val pendingNotification: String? = null
 ) {

@@ -27,13 +27,17 @@ import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitCompactU
 import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoroUI
 import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.PomodoroSettingsModal
 import thong.kotlin.pomodoro.core.designsystem.theme.rememberBreathingEffect
+import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.pomodoro.domain.repository.UserAppStateRepository
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
+import thong.kotlin.pomodoro.features.pomodoro.domain.model.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
 
 class PomodoroScreenV2(
     private val soundManager: SoundManager? = null,
-    private val repository: UserAppStateRepository? = null
+    private val repository: UserAppStateRepository? = null,
+    private val learningStyle: LearningStyle = LearningStyle.SOLO,
+    private val learningGroupConfig: LearningGroupConfig? = null
 ) : Screen {
 
     @Composable

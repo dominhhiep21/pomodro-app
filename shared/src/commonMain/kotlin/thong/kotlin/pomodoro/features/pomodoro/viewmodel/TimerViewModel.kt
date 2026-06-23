@@ -17,7 +17,6 @@ import thong.kotlin.pomodoro.features.pomodoro.domain.repository.UserAppStateRep
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.EventType
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroConfig
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
-import thong.kotlin.pomodoro.features.pomodoro.timer.state.totalSeconds
 import kotlin.random.Random
 
 data class TimerUiState(
@@ -248,5 +247,13 @@ class TimerViewModel(
             EventType.WORK_END,
             EventType.CLICK_PAUSE_BREAK -> state.event
         }
+    }
+}
+
+fun PomodoroMode.totalSeconds(config: PomodoroConfig): Long {
+    return when (this) {
+        PomodoroMode.WORK -> config.workSeconds.toLong()
+        PomodoroMode.SHORT_BREAK -> config.shortBreakSeconds.toLong()
+        PomodoroMode.LONG_BREAK -> config.longBreakSeconds.toLong()
     }
 }

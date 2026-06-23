@@ -185,23 +185,21 @@ class WorkspaceViewModel(
 
     // --- SETTINGS FORM ---
     fun toggleSettings() {
-        _uiState.update { state ->
-            if (!state.isSettingsVisible) {
-                viewModelScope.launch {
-                    val currentSettings = repository?.getUserSettings() ?: UserSettings()
-                    _uiState.update {
-                        it.copy(
-                            isSettingsVisible = true,
-                            editingWorkMinutes = currentSettings.workMinutes.toString(),
-                            editingBreakMinutes = currentSettings.breakMinutes.toString(),
-                            settingsError = ""
-                        )
-                    }
+        val currentlyVisible = _uiState.value.isSettingsVisible
+        if (!currentlyVisible) {
+            viewModelScope.launch {
+                val currentSettings = repository?.getUserSettings() ?: UserSettings()
+                _uiState.update {
+                    it.copy(
+                        isSettingsVisible = true,
+                        editingWorkMinutes = currentSettings.workMinutes.toString(),
+                        editingBreakMinutes = currentSettings.breakMinutes.toString(),
+                        settingsError = ""
+                    )
                 }
-                state.copy(isSettingsVisible = true)
-            } else {
-                state.copy(isSettingsVisible = false)
             }
+        } else {
+            _uiState.update { it.copy(isSettingsVisible = false) }
         }
     }
 

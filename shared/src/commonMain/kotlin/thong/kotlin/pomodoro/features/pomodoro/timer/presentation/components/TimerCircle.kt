@@ -40,7 +40,7 @@ import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
 import thong.kotlin.pomodoro.features.background.model.PerformanceMode
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
 import thong.kotlin.pomodoro.features.pomodoro.timer.domain.TimerSizes
-import thong.kotlin.pomodoro.features.pomodoro.timer.state.totalSeconds
+import thong.kotlin.pomodoro.features.pomodoro.viewmodel.totalSeconds
 
 @Composable
 fun TimerCircleComponent(

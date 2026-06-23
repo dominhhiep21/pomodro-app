@@ -7,12 +7,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ZoomInMap
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -20,10 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import thong.kotlin.pomodoro.core.designsystem.components.AuraHeader
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.features.pomodoro._base.components.BreakEndBanner
-import thong.kotlin.pomodoro.features.pomodoro._base.components.DailyPomoBadge
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TimerUiState
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
@@ -37,9 +29,6 @@ fun TimerSectionComponent(
     onToggleTimer: () -> Unit,
     onResetTimer: () -> Unit,
     onSkipTimer: () -> Unit,
-    onToggleSettings: () -> Unit,
-    onExit: () -> Unit = {},
-    onToggleCompactMode: () -> Unit = {},
     compact: Boolean = false,
     modifier: Modifier = Modifier
 ) {
@@ -57,38 +46,6 @@ fun TimerSectionComponent(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = if (compact) Arrangement.Center else Arrangement.Top
     ) {
-        AuraHeader(
-            title = "Aura Pomo",
-            subtitle = "Tìm kiếm dòng chảy học tập",
-            actionButton = {
-                Row {
-                    IconButton(onClick = onToggleCompactMode) {
-                        Icon(
-                            imageVector = Icons.Default.ZoomInMap,
-                            contentDescription = "Compact Mode",
-                            tint = Color.White.copy(alpha = 0.6f)
-                        )
-                    }
-                    IconButton(onClick = onToggleSettings) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings",
-                            tint = Color.White.copy(alpha = 0.6f)
-                        )
-                    }
-                    IconButton(onClick = onExit) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                            contentDescription = "Exit to Style Selection",
-                            tint = Color.White.copy(alpha = 0.6f)
-                        )
-                    }
-                }
-            }
-        )
-
-        DailyPomoBadge(count = timerUiState.pomodorosToday)
-
         if (compact) {
             CompactTimerControls(
                 workspaceUiState = workspaceUiState,

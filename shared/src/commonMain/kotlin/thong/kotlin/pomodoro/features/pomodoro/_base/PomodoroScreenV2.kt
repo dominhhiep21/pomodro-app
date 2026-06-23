@@ -37,9 +37,9 @@ class PomodoroScreenV2(
 
     @Composable
     override fun Content() {
-        val timerViewModel: TimerViewModel = viewModel { TimerViewModel() }
-        val tasksViewModel: TasksViewModel = viewModel { TasksViewModel() }
-        val workspaceViewModel: WorkspaceViewModel = viewModel { WorkspaceViewModel() }
+        val timerViewModel: TimerViewModel = viewModel { TimerViewModel(soundManager, repository) }
+        val tasksViewModel: TasksViewModel = viewModel { TasksViewModel(repository) }
+        val workspaceViewModel: WorkspaceViewModel = viewModel { WorkspaceViewModel(soundManager, repository) }
 
         val workspaceState by workspaceViewModel.uiState.collectAsState()
 

@@ -10,12 +10,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import thong.kotlin.pomodoro.core.media.SoundManager
 import kotlin.random.Random
-import thong.kotlin.pomodoro.features.pomodoro.timer.domain.EventType
-import thong.kotlin.pomodoro.features.pomodoro.timer.domain.PomodoroConfig
-import thong.kotlin.pomodoro.features.pomodoro.timer.domain.PomodoroMode
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.EventType
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroConfig
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
 import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.Task
 import thong.kotlin.pomodoro.features.pomodoro.timer.state.PomodoroUiState
-import thong.kotlin.pomodoro.features.pomodoro.timer.state.CompactSection
 import thong.kotlin.pomodoro.features.pomodoro.timer.state.totalSeconds
 
 import thong.kotlin.pomodoro.features.pomodoro.music.data.MusicRepository
@@ -24,8 +23,8 @@ import thong.kotlin.pomodoro.features.settings.data.BackgroundRepository
 import thong.kotlin.pomodoro.features.pomodoro.domain.repository.UserAppStateRepository
 import thong.kotlin.pomodoro.features.pomodoro.domain.model.UserSettings
 import thong.kotlin.pomodoro.features.pomodoro.domain.model.SessionRecord
-import thong.kotlin.pomodoro.core.utils.getCurrentDateString
 import thong.kotlin.pomodoro.core.utils.getCurrentDateTimeString
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.CompactSection
 
 class PomodoroViewModel(
     private val viewModelScope: CoroutineScope,

@@ -5,10 +5,11 @@ import androidx.compose.ui.graphics.Color
 import thong.kotlin.pomodoro.features.background.model.BackgroundConfig
 import thong.kotlin.pomodoro.features.background.model.BackgroundType
 import thong.kotlin.pomodoro.features.background.model.PerformanceMode
-import thong.kotlin.pomodoro.features.pomodoro.timer.domain.EventType
-import thong.kotlin.pomodoro.features.pomodoro.timer.domain.PomodoroMode
-import thong.kotlin.pomodoro.features.pomodoro.timer.domain.PomodoroConfig
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.EventType
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroConfig
 import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.Task
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.CompactSection
 
 /**
  * Custom saver for PomodoroUiState to persist all data during configuration changes.

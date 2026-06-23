@@ -1,26 +1,19 @@
-package thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components
+package thong.kotlin.pomodoro.features.settings.presentation.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -38,49 +31,7 @@ import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
 
 @Composable
-fun PomodoroSettingsModal(
-    workspaceUiState: WorkspaceUiState,
-    onWorkChange: (String) -> Unit,
-    onBreakChange: (String) -> Unit,
-    onSave: () -> Unit,
-    onCancel: () -> Unit,
-    onReset: () -> Unit,
-    onHardReset: () -> Unit = {}
-) {
-    // Semi-transparent background overlay
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.6f))
-            .clickable(enabled = true, onClick = onCancel),
-        contentAlignment = Alignment.Center
-    ) {
-        // Modal content
-        Card(
-            modifier = Modifier
-                .padding(24.dp)
-                .widthIn(max = 500.dp)
-                .clickable(enabled = false) { /* Stop click propagation */ },
-            shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = AuraColors.BottomBarBackground
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-        ) {
-            SettingsContent(
-                workspaceUiState = workspaceUiState,
-                onWorkChange = onWorkChange,
-                onBreakChange = onBreakChange,
-                onSave = onSave,
-                onReset = onReset,
-                onHardReset = onHardReset
-            )
-        }
-    }
-}
-
-@Composable
-fun SettingsContent(
+fun SettingsUiComponent(
     workspaceUiState: WorkspaceUiState,
     onWorkChange: (String) -> Unit,
     onBreakChange: (String) -> Unit,
@@ -191,7 +142,7 @@ fun SettingsContent(
 }
 
 @Composable
-fun DurationInput(
+private fun DurationInput(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,

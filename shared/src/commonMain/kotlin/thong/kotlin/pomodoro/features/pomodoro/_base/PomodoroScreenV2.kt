@@ -25,6 +25,7 @@ import thong.kotlin.pomodoro.features.pomodoro._base.components.LandscapeCompact
 import thong.kotlin.pomodoro.features.pomodoro._base.components.LandscapePomodoroUI
 import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitCompactUI
 import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoroUI
+import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.PomodoroSettingsModal
 import thong.kotlin.pomodoro.core.designsystem.theme.rememberBreathingEffect
 import thong.kotlin.pomodoro.features.pomodoro.domain.repository.UserAppStateRepository
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
@@ -198,6 +199,18 @@ fun PomodoroScreenUIv2(
                         )
                     }
                 }
+            }
+
+            // Settings Modal
+            if (workspaceState.isSettingsVisible) {
+                PomodoroSettingsModal(
+                    workspaceUiState = workspaceState,
+                    onWorkChange = workspaceViewModel::onWorkMinutesChange,
+                    onBreakChange = workspaceViewModel::onBreakMinutesChange,
+                    onSave = workspaceViewModel::saveSettings,
+                    onCancel = workspaceViewModel::toggleSettings,
+                    onReset = workspaceViewModel::resetSettingsToDefault
+                )
             }
         }
     }

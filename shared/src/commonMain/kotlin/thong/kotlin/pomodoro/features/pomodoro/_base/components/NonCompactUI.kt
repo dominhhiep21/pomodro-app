@@ -16,14 +16,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TasksUiState
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TimerUiState
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
-import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.TimerSectionComponent
 import thong.kotlin.pomodoro.features.pomodoro.ambient.presentation.components.AmbientSoundSection
 import thong.kotlin.pomodoro.features.pomodoro.music.presentation.MusicSection
 import thong.kotlin.pomodoro.features.pomodoro.task.components.TaskBottomBar
 import thong.kotlin.pomodoro.features.pomodoro.task.components.TaskSideBar
+import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.TimerSectionComponent
+import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TasksUiState
+import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TimerUiState
+import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
 
 @Composable
 fun LandscapePomodoroUI(
@@ -44,7 +44,8 @@ fun LandscapePomodoroUI(
     onSelectTrack: (String) -> Unit,
     onToggleAmbientSound: (String) -> Unit,
     onToggleTasksExpanded: () -> Unit,
-    onSelectBackground: (String) -> Unit
+    onSelectBackground: (String) -> Unit,
+    onExit: () -> Unit = {},
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Row(
@@ -57,6 +58,10 @@ fun LandscapePomodoroUI(
             Column(
                 modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())
             ) {
+                ApplicationHeaderComponent(onToggleCompactMode, onToggleSettings, onExit)
+
+                DailyPomoBadge(count = timerUiState.pomodorosToday)
+
                 Box(modifier = Modifier.fillMaxWidth()) {
                     TimerSectionComponent(
                         timerUiState = timerUiState,
@@ -65,8 +70,6 @@ fun LandscapePomodoroUI(
                         onToggleTimer = onToggleTimer,
                         onResetTimer = onResetTimer,
                         onSkipTimer = onSkipTimer,
-                        onToggleSettings = onToggleSettings,
-                        onToggleCompactMode = onToggleCompactMode,
                         compact = false,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -139,7 +142,8 @@ fun PortraitPomodoroUI(
     onSelectTrack: (String) -> Unit,
     onToggleAmbientSound: (String) -> Unit,
     onToggleTasksExpanded: () -> Unit,
-    onSelectBackground: (String) -> Unit
+    onSelectBackground: (String) -> Unit,
+    onExit: () -> Unit = {},
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -149,6 +153,10 @@ fun PortraitPomodoroUI(
                 .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            ApplicationHeaderComponent(onToggleCompactMode, onToggleSettings, onExit)
+
+            DailyPomoBadge(count = timerUiState.pomodorosToday)
+
             Box(modifier = Modifier.fillMaxWidth()) {
                 TimerSectionComponent(
                     timerUiState = timerUiState,
@@ -157,8 +165,6 @@ fun PortraitPomodoroUI(
                     onToggleTimer = onToggleTimer,
                     onResetTimer = onResetTimer,
                     onSkipTimer = onSkipTimer,
-                    onToggleSettings = onToggleSettings,
-                    onToggleCompactMode = onToggleCompactMode,
                     modifier = Modifier.fillMaxWidth()
                 )
             }

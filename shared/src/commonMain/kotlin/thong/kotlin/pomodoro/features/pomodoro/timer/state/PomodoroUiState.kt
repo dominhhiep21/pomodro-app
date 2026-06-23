@@ -1,9 +1,9 @@
 package thong.kotlin.pomodoro.features.pomodoro.timer.state
 
 import androidx.compose.runtime.Immutable
-import thong.kotlin.pomodoro.features.pomodoro.timer.domain.EventType
-import thong.kotlin.pomodoro.features.pomodoro.timer.domain.PomodoroConfig
-import thong.kotlin.pomodoro.features.pomodoro.timer.domain.PomodoroMode
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.EventType
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroConfig
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
 import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.Task
 import thong.kotlin.pomodoro.features.pomodoro.music.domain.MusicTrack
 import thong.kotlin.pomodoro.features.pomodoro.ambient.domain.AmbientSound
@@ -11,6 +11,7 @@ import thong.kotlin.pomodoro.features.pomodoro.domain.model.LearningStyle
 import thong.kotlin.pomodoro.features.background.model.BackgroundConfig
 import thong.kotlin.pomodoro.features.background.model.BackgroundType
 import thong.kotlin.pomodoro.features.background.model.PerformanceMode
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.CompactSection
 
 import thong.kotlin.pomodoro.features.settings.domain.AppBackground
 
@@ -55,10 +56,6 @@ data class PomodoroUiState(
         get() = currentMode == PomodoroMode.WORK &&
                 timeLeft == currentMode.totalSeconds(config) &&
                 !isActive && event == EventType.BREAK_END
-}
-
-enum class CompactSection {
-    TASKS, MUSIC, BACKGROUND, AMBIENT, SETTINGS
 }
 
 fun PomodoroMode.totalSeconds(config: PomodoroConfig): Long {

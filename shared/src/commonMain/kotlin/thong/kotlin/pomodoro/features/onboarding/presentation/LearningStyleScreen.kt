@@ -46,7 +46,6 @@ import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.core.notification.NotificationManager
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.pomodoro.domain.model.LearningStyle
-import thong.kotlin.pomodoro.features.pomodoro.presentation.PomodoroScreen
 
 class LearningStyleScreen(
     private val notificationManager: NotificationManager?
@@ -67,7 +66,7 @@ class LearningStyleScreen(
                         breakMinutes = breakMins
                     )
                 )
-                navigator.push(PomodoroScreen(notificationManager))
+//                navigator.push(PomodoroScreen(notificationManager))
             }
         LearningStyleScreenUI(onSelectionComplete = onSelectionComplete)
     }

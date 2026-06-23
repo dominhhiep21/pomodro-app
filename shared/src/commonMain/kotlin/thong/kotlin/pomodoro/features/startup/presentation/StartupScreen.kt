@@ -20,12 +20,14 @@ import kotlinx.coroutines.delay
 import pomodrokotlin.shared.generated.resources.Res
 import pomodrokotlin.shared.generated.resources.landspace_startup_bg
 import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
+import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.core.notification.NotificationManager
 import thong.kotlin.pomodoro.di.DependencyRegistry
+import thong.kotlin.pomodoro.features.pomodoro._base.PomodoroScreenV2
 import thong.kotlin.pomodoro.features.onboarding.presentation.OnboardingScreen
-import thong.kotlin.pomodoro.features.pomodoro.presentation.PomodoroScreen
 
 class StartupLoadingScreen(
+    private val soundManager: SoundManager? = null,
     private val notificationManager: NotificationManager?
 ) : Screen {
 
@@ -40,7 +42,7 @@ class StartupLoadingScreen(
             val hasCompletedOnboarding = repository.getUserSettings().hasCompletedOnboarding
 
             if (hasCompletedOnboarding) {
-                navigator.replace(PomodoroScreen(notificationManager))
+                navigator.replace(PomodoroScreenV2(soundManager, repository))
             } else {
                 navigator.replace(OnboardingScreen(notificationManager))
             }

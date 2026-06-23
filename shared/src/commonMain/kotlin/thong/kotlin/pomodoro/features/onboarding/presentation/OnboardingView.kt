@@ -45,10 +45,11 @@ import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
 import thong.kotlin.pomodoro.core.designsystem.components.AuraButton
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
-import thong.kotlin.pomodoro.core.notification.NotificationManager
+import thong.kotlin.pomodoro.core.media.SoundManager
+import thong.kotlin.pomodoro.features.learning.mode.components.LearningStyleScreen
 
 class OnboardingScreen(
-    private val notificationManager: NotificationManager?
+    private val soundManager: SoundManager?
 ) : Screen {
 
     @Composable
@@ -58,7 +59,7 @@ class OnboardingScreen(
         // Gọi hàm UI bên dưới, khi finish thì ra lệnh cho voyager replace màn hình mới
         OnboardingScreenUI(
             onFinish = {
-                navigator.replace(LearningStyleScreen(notificationManager))
+                navigator.replace(LearningStyleScreen(soundManager))
             }
         )
     }

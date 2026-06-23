@@ -1,4 +1,4 @@
-package thong.kotlin.pomodoro.features.onboarding.presentation
+package thong.kotlin.pomodoro.features.learning.mode.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -43,38 +43,33 @@ import thong.kotlin.pomodoro.core.designsystem.components.AuraButton
 import thong.kotlin.pomodoro.core.designsystem.components.AuraInputField
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
-import thong.kotlin.pomodoro.core.notification.NotificationManager
+import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.di.DependencyRegistry
+import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
+import thong.kotlin.pomodoro.features.pomodoro._base.PomodoroScreenV2
 import thong.kotlin.pomodoro.features.pomodoro.domain.model.LearningStyle
 
-class LearningStyleScreen(
-    private val notificationManager: NotificationManager?
-) : Screen {
+class LearningStyleScreen(private val soundManager: SoundManager?) : Screen {
 
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val repository = remember { DependencyRegistry.userAppStateRepository }
-        val onSelectionComplete =
-            { style: LearningStyle, maxGroupSize: Int, workMins: Int, breakMins: Int ->
-                val currentSettings = repository.getUserSettings()
-                repository.saveUserSettings(
-                    currentSettings.copy(
-                        learningStyle = style,
-                        maxGroupSize = maxGroupSize,
-                        workMinutes = workMins,
-                        breakMinutes = breakMins
-                    )
+
+        LearningStyleScreenUI(onFinish = {
+            learningStyle, learningGroupConfig ->
+            navigator.push(
+                PomodoroScreenV2(
+                    soundManager, repository, learningStyle, learningGroupConfig
                 )
-//                navigator.push(PomodoroScreen(notificationManager))
-            }
-        LearningStyleScreenUI(onSelectionComplete = onSelectionComplete)
+            )
+        })
     }
 }
 
 @Composable
 private fun LearningStyleScreenUI(
-    onSelectionComplete: (LearningStyle, Int, Int, Int) -> Unit,
+    onFinish: (LearningStyle, LearningGroupConfig?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var selectedStyle by remember { mutableStateOf(LearningStyle.SOLO) }
@@ -182,12 +177,7 @@ private fun LearningStyleScreenUI(
                         if (selectedStyle == LearningStyle.GROUP) {
                             showGroupSettingsPopup = true
                         } else {
-                            onSelectionComplete(
-                                selectedStyle,
-                                1,
-                                workMinutes.toIntOrNull() ?: 25,
-                                breakMinutes.toIntOrNull() ?: 5
-                            )
+                            onFinish(selectedStyle, null)
                         }
                     },
                     modifier = Modifier.fillMaxWidth()
@@ -219,11 +209,13 @@ private fun LearningStyleScreenUI(
                     onDismiss = { showGroupSettingsPopup = false },
                     onConfirm = {
                         showGroupSettingsPopup = false
-                        onSelectionComplete(
+                        onFinish(
                             LearningStyle.GROUP,
-                            maxPeople.toIntOrNull() ?: 4,
-                            workMinutes.toIntOrNull() ?: 25,
-                            breakMinutes.toIntOrNull() ?: 5
+                            LearningGroupConfig(
+                                maxPeople.toInt(),
+                                workMinutes.toInt(),
+                                breakMinutes.toInt()
+                            )
                         )
                     }
                 )

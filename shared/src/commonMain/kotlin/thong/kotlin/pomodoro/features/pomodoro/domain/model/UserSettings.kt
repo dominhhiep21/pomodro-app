@@ -1,8 +1,6 @@
 package thong.kotlin.pomodoro.features.pomodoro.domain.model
 
-enum class LearningStyle {
-    SOLO, GROUP
-}
+import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 
 data class UserSettings(
     val workMinutes: Int = 25,

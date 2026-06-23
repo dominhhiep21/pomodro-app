@@ -46,8 +46,8 @@ import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
+import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro._base.PomodoroScreenV2
-import thong.kotlin.pomodoro.features.pomodoro.domain.model.LearningStyle
 
 class LearningStyleScreen(private val soundManager: SoundManager?) : Screen {
 

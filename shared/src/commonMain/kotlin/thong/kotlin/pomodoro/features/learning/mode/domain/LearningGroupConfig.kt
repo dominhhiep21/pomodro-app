@@ -6,3 +6,7 @@ data class LearningGroupConfig(
     val breakMinutes: Int = 5,
     val longBreakMinutes: Int = 15,
 )
+
+enum class LearningStyle {
+    SOLO, GROUP
+}

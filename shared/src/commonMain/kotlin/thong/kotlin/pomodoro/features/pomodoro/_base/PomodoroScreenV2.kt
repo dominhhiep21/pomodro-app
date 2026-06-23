@@ -28,9 +28,9 @@ import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoro
 import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.PomodoroSettingsModal
 import thong.kotlin.pomodoro.core.designsystem.theme.rememberBreathingEffect
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
+import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro.domain.repository.UserAppStateRepository
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
-import thong.kotlin.pomodoro.features.pomodoro.domain.model.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
 
 class PomodoroScreenV2(

@@ -28,6 +28,8 @@ data class WorkspaceUiState(
     val learningStyle: LearningStyle = LearningStyle.SOLO,
     val learningGroupConfig: LearningGroupConfig? = null,
 
+    val isChatExpanded: Boolean = false,
+
     // Background
     val selectedBackgroundId: String = BackgroundRepository.DEFAULT_BACKGROUND_ID,
     val availableBackgrounds: List<AppBackground> = BackgroundRepository.availableBackgrounds,

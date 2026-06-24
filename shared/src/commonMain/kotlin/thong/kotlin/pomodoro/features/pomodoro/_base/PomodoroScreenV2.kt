@@ -153,7 +153,16 @@ fun PomodoroScreenUIv2(
                             onNewTaskTextChange = tasksViewModel::onNewTaskTextChange,
                             onWorkChange = workspaceViewModel::onWorkMinutesChange,
                             onBreakChange = workspaceViewModel::onBreakMinutesChange,
-                            onSaveSettings = workspaceViewModel::saveSettings,
+                            onSaveSettings = {
+                                workspaceViewModel.saveSettings { work, breakTime ->
+                                    timerViewModel.updateConfig(
+                                        timerState.config.copy(
+                                            workMinutes = work,
+                                            shortBreakMinutes = breakTime
+                                        )
+                                    )
+                                }
+                            },
                             onResetSettings = workspaceViewModel::resetSettingsToDefault,
                             onToggleSettings = workspaceViewModel::toggleSettings,
                             onExit = {
@@ -191,7 +200,16 @@ fun PomodoroScreenUIv2(
                             onNewTaskTextChange = tasksViewModel::onNewTaskTextChange,
                             onWorkChange = workspaceViewModel::onWorkMinutesChange,
                             onBreakChange = workspaceViewModel::onBreakMinutesChange,
-                            onSaveSettings = workspaceViewModel::saveSettings,
+                            onSaveSettings = {
+                                workspaceViewModel.saveSettings { work, breakTime ->
+                                    timerViewModel.updateConfig(
+                                        timerState.config.copy(
+                                            workMinutes = work,
+                                            shortBreakMinutes = breakTime
+                                        )
+                                    )
+                                }
+                            },
                             onResetSettings = workspaceViewModel::resetSettingsToDefault,
                             onToggleSettings = workspaceViewModel::toggleSettings,
                             onExit = {
@@ -231,7 +249,16 @@ fun PomodoroScreenUIv2(
                             onNewTaskTextChange = tasksViewModel::onNewTaskTextChange,
                             onWorkChange = workspaceViewModel::onWorkMinutesChange,
                             onBreakChange = workspaceViewModel::onBreakMinutesChange,
-                            onSaveSettings = workspaceViewModel::saveSettings,
+                            onSaveSettings = {
+                                workspaceViewModel.saveSettings { work, breakTime ->
+                                    timerViewModel.updateConfig(
+                                        timerState.config.copy(
+                                            workMinutes = work,
+                                            shortBreakMinutes = breakTime
+                                        )
+                                    )
+                                }
+                            },
                             onResetSettings = workspaceViewModel::resetSettingsToDefault,
                             onExit = {
                                 navigator.pop()
@@ -267,7 +294,16 @@ fun PomodoroScreenUIv2(
                             onNewTaskTextChange = tasksViewModel::onNewTaskTextChange,
                             onWorkChange = workspaceViewModel::onWorkMinutesChange,
                             onBreakChange = workspaceViewModel::onBreakMinutesChange,
-                            onSaveSettings = workspaceViewModel::saveSettings,
+                            onSaveSettings = {
+                                workspaceViewModel.saveSettings { work, breakTime ->
+                                    timerViewModel.updateConfig(
+                                        timerState.config.copy(
+                                            workMinutes = work,
+                                            shortBreakMinutes = breakTime
+                                        )
+                                    )
+                                }
+                            },
                             onResetSettings = workspaceViewModel::resetSettingsToDefault,
                             onToggleSettings = workspaceViewModel::toggleSettings,
                             onExit = {
@@ -402,7 +438,16 @@ fun PomodoroScreenUIv2(
                     workspaceUiState = workspaceState,
                     onWorkChange = workspaceViewModel::onWorkMinutesChange,
                     onBreakChange = workspaceViewModel::onBreakMinutesChange,
-                    onSave = workspaceViewModel::saveSettings,
+                    onSave = {
+                        workspaceViewModel.saveSettings { work, breakTime ->
+                            timerViewModel.updateConfig(
+                                timerState.config.copy(
+                                    workMinutes = work,
+                                    shortBreakMinutes = breakTime
+                                )
+                            )
+                        }
+                    },
                     onCancel = workspaceViewModel::toggleSettings,
                     onReset = workspaceViewModel::resetSettingsToDefault
                 )

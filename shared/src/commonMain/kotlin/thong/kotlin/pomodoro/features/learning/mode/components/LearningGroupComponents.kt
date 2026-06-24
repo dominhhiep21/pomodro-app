@@ -3,6 +3,7 @@ package thong.kotlin.pomodoro.features.learning.mode.components
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,8 +22,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -37,8 +39,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import thong.kotlin.pomodoro.core.designsystem.components.AuraInputField
@@ -46,7 +51,7 @@ import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.features.learning.mode.domain.ChatMessage
 import thong.kotlin.pomodoro.features.learning.mode.domain.ExpandDirection
-import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
+import kotlin.math.roundToInt
 
 @Composable
 fun RoomIdBadge(roomId: String, modifier: Modifier = Modifier) {
@@ -175,9 +180,11 @@ private fun MemberAvatar(name: String) {
 @Composable
 fun ExpandableChatPanel(
     modifier: Modifier = Modifier,
-    expandDirection: ExpandDirection = ExpandDirection.TO_LEFT
+    expandDirection: ExpandDirection = ExpandDirection.TO_LEFT,
+    initialOffset: Offset = Offset.Zero
 ) {
     var isExpanded by remember { mutableStateOf(false) }
+    var panelOffset by remember { mutableStateOf(initialOffset) }
     var messageText by remember { mutableStateOf("") }
     val messages = remember {
         mutableStateListOf(
@@ -193,7 +200,21 @@ fun ExpandableChatPanel(
         ExpandDirection.TO_RIGHT -> Alignment.BottomStart // Neo góc trái -> nở sang phải
     }
 
-    Box(modifier = modifier.animateContentSize(), contentAlignment = panelAlignment) {
+    Box(
+        modifier = modifier
+            .offset { IntOffset(panelOffset.x.roundToInt(), panelOffset.y.roundToInt()) }
+            .pointerInput(Unit) {
+                detectDragGestures { change, dragAmount ->
+                    change.consume()
+                    panelOffset = Offset(
+                        x = panelOffset.x + dragAmount.x,
+                        y = panelOffset.y + dragAmount.y
+                    )
+                }
+            }
+            .animateContentSize(),
+        contentAlignment = panelAlignment
+    ) {
         if (!isExpanded) {
             // Bubble State
             GlassBox(

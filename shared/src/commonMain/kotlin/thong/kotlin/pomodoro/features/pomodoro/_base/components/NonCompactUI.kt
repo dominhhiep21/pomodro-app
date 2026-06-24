@@ -390,6 +390,9 @@ fun PortraitPomodoroGroupUI(
             RoomIdBadge("1234")
             DailyPomoBadge(count = timerUiState.pomodorosToday)
 
+            ExpandableMembersPanel()
+            Spacer(modifier = Modifier.height(24.dp))
+
             Box(modifier = Modifier.fillMaxWidth()) {
                 TimerSectionComponent(
                     timerUiState = timerUiState,

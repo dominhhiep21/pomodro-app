@@ -52,7 +52,8 @@ class PomodoroScreenV2(
 
         val timerViewModel: TimerViewModel = viewModel { TimerViewModel(soundManager, repository) }
         val tasksViewModel: TasksViewModel = viewModel { TasksViewModel(repository) }
-        val workspaceViewModel: WorkspaceViewModel = viewModel { WorkspaceViewModel(soundManager, repository) }
+        val workspaceViewModel: WorkspaceViewModel =
+            viewModel { WorkspaceViewModel(soundManager, repository) }
 
         val workspaceState by workspaceViewModel.uiState.collectAsState()
 
@@ -100,7 +101,7 @@ fun PomodoroScreenUIv2(
     workspaceViewModel: WorkspaceViewModel,
     learningStyle: LearningStyle = LearningStyle.SOLO,
     learningGroupConfig: LearningGroupConfig? = null,
-    navigator : Navigator
+    navigator: Navigator
 ) {
     val timerState by timerViewModel.uiState.collectAsState()
     val workspaceState by workspaceViewModel.uiState.collectAsState()
@@ -118,9 +119,54 @@ fun PomodoroScreenUIv2(
         Box(modifier = Modifier.fillMaxSize()) {
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                 val isLandscape = maxWidth > maxHeight
-                val currentState = PomodoroUiState(workspaceState.isCompactMode, isLandscape, learningStyle)
+                val currentState =
+                    PomodoroUiState(workspaceState.isCompactMode, isLandscape, learningStyle)
                 when (currentState) {
-                    PomodoroUiState(isCompact = true, isLandscape = true, style = LearningStyle.GROUP)   -> {
+                    // Gen UI Landscape Compact Group
+                    PomodoroUiState(
+                        isCompact = true,
+                        isLandscape = true,
+                        style = LearningStyle.GROUP
+                    ) -> {
+                        LandscapeCompactUI(
+                            workspaceUiState = workspaceState,
+                            timerUiState = timerState,
+                            tasksUiState = tasksState,
+                            learningStyle = learningStyle,
+                            onToggleTimer = timerViewModel::toggleTimer,
+                            onToggleCompactMode = workspaceViewModel::toggleCompactMode,
+                            onToggleCompactMenu = workspaceViewModel::toggleCompactMenu,
+                            onSelectCompactSection = workspaceViewModel::setActiveCompactSection,
+                            onCloseCompactSection = {
+                                workspaceViewModel.setActiveCompactSection(
+                                    null
+                                )
+                            },
+                            // Section-specific actions
+                            onToggleMusic = workspaceViewModel::toggleMusic,
+                            onSelectTrack = workspaceViewModel::selectTrack,
+                            onToggleAmbientSound = workspaceViewModel::toggleAmbientSound,
+                            onSelectBackground = workspaceViewModel::selectBackground,
+                            onAddTask = tasksViewModel::addTask,
+                            onDeleteTask = tasksViewModel::deleteTask,
+                            onToggleTask = tasksViewModel::toggleTask,
+                            onNewTaskTextChange = tasksViewModel::onNewTaskTextChange,
+                            onWorkChange = workspaceViewModel::onWorkMinutesChange,
+                            onBreakChange = workspaceViewModel::onBreakMinutesChange,
+                            onSaveSettings = workspaceViewModel::saveSettings,
+                            onResetSettings = workspaceViewModel::resetSettingsToDefault,
+                            onToggleSettings = workspaceViewModel::toggleSettings,
+                            onExit = {
+                                navigator.pop()
+                            }
+                        )
+                    }
+                    // Gen UI Landscape Compact Solo
+                    PomodoroUiState(
+                        isCompact = true,
+                        isLandscape = true,
+                        style = LearningStyle.SOLO
+                    ) -> {
                         LandscapeCompactUI(
                             workspaceUiState = workspaceState,
                             timerUiState = timerState,
@@ -146,14 +192,25 @@ fun PomodoroScreenUIv2(
                             onWorkChange = workspaceViewModel::onWorkMinutesChange,
                             onBreakChange = workspaceViewModel::onBreakMinutesChange,
                             onSaveSettings = workspaceViewModel::saveSettings,
-                            onResetSettings = workspaceViewModel::resetSettingsToDefault
+                            onResetSettings = workspaceViewModel::resetSettingsToDefault,
+                            onToggleSettings = workspaceViewModel::toggleSettings,
+                            onExit = {
+                                navigator.pop()
+                            }
                         )
-                    }// Gen UI Landscape Compact Group
-                    PomodoroUiState(isCompact = true, isLandscape = true, style = LearningStyle.SOLO)    -> {
-                        LandscapeCompactUI(
+                    }
+                    // Gen UI Portrait Compact Group
+                    PomodoroUiState(
+                        isCompact = true,
+                        isLandscape = false,
+                        style = LearningStyle.GROUP
+                    ) -> {
+                        PortraitCompactUI(
                             workspaceUiState = workspaceState,
                             timerUiState = timerState,
                             tasksUiState = tasksState,
+                            learningStyle = learningStyle,
+                            onToggleSettings = workspaceViewModel::toggleSettings,
                             onToggleTimer = timerViewModel::toggleTimer,
                             onToggleCompactMode = workspaceViewModel::toggleCompactMode,
                             onToggleCompactMenu = workspaceViewModel::toggleCompactMenu,
@@ -175,10 +232,17 @@ fun PomodoroScreenUIv2(
                             onWorkChange = workspaceViewModel::onWorkMinutesChange,
                             onBreakChange = workspaceViewModel::onBreakMinutesChange,
                             onSaveSettings = workspaceViewModel::saveSettings,
-                            onResetSettings = workspaceViewModel::resetSettingsToDefault
+                            onResetSettings = workspaceViewModel::resetSettingsToDefault,
+                            onExit = {
+                                navigator.pop()
+                            }
                         )
-                    }// Gen UI Landscape Compact Solo
-                    PomodoroUiState(isCompact = true, isLandscape = false, style = LearningStyle.GROUP)  -> {
+                    }
+                    PomodoroUiState(
+                        isCompact = true,
+                        isLandscape = false,
+                        style = LearningStyle.SOLO
+                    ) -> {
                         PortraitCompactUI(
                             workspaceUiState = workspaceState,
                             timerUiState = timerState,
@@ -204,39 +268,18 @@ fun PomodoroScreenUIv2(
                             onWorkChange = workspaceViewModel::onWorkMinutesChange,
                             onBreakChange = workspaceViewModel::onBreakMinutesChange,
                             onSaveSettings = workspaceViewModel::saveSettings,
-                            onResetSettings = workspaceViewModel::resetSettingsToDefault
-                        )
-                    }// Gen UI Portrait Compact Group
-                    PomodoroUiState(isCompact = true, isLandscape = false, style = LearningStyle.SOLO)   -> {
-                        PortraitCompactUI(
-                            workspaceUiState = workspaceState,
-                            timerUiState = timerState,
-                            tasksUiState = tasksState,
-                            onToggleTimer = timerViewModel::toggleTimer,
-                            onToggleCompactMode = workspaceViewModel::toggleCompactMode,
-                            onToggleCompactMenu = workspaceViewModel::toggleCompactMenu,
-                            onSelectCompactSection = workspaceViewModel::setActiveCompactSection,
-                            onCloseCompactSection = {
-                                workspaceViewModel.setActiveCompactSection(
-                                    null
-                                )
-                            },
-                            // Section-specific actions
-                            onToggleMusic = workspaceViewModel::toggleMusic,
-                            onSelectTrack = workspaceViewModel::selectTrack,
-                            onToggleAmbientSound = workspaceViewModel::toggleAmbientSound,
-                            onSelectBackground = workspaceViewModel::selectBackground,
-                            onAddTask = tasksViewModel::addTask,
-                            onDeleteTask = tasksViewModel::deleteTask,
-                            onToggleTask = tasksViewModel::toggleTask,
-                            onNewTaskTextChange = tasksViewModel::onNewTaskTextChange,
-                            onWorkChange = workspaceViewModel::onWorkMinutesChange,
-                            onBreakChange = workspaceViewModel::onBreakMinutesChange,
-                            onSaveSettings = workspaceViewModel::saveSettings,
-                            onResetSettings = workspaceViewModel::resetSettingsToDefault
+                            onResetSettings = workspaceViewModel::resetSettingsToDefault,
+                            onToggleSettings = workspaceViewModel::toggleSettings,
+                            onExit = {
+                                navigator.pop()
+                            }
                         )
                     }// Gen UI Portrait Compact Solo
-                    PomodoroUiState(isCompact = false, isLandscape = true, style = LearningStyle.GROUP)  -> {
+                    PomodoroUiState(
+                        isCompact = false,
+                        isLandscape = true,
+                        style = LearningStyle.GROUP
+                    ) -> {
                         LandscapePomodoroGroupUI(
                             workspaceUiState = workspaceState,
                             timerUiState = timerState,
@@ -262,7 +305,11 @@ fun PomodoroScreenUIv2(
                             }
                         )
                     }// Gen UI Landscape Group
-                    PomodoroUiState(isCompact = false, isLandscape = true, style = LearningStyle.SOLO)   -> {
+                    PomodoroUiState(
+                        isCompact = false,
+                        isLandscape = true,
+                        style = LearningStyle.SOLO
+                    ) -> {
                         LandscapePomodoroUI(
                             workspaceUiState = workspaceState,
                             timerUiState = timerState,
@@ -287,7 +334,11 @@ fun PomodoroScreenUIv2(
                             }
                         )
                     }// Gen UI Landscape Solo
-                    PomodoroUiState(isCompact = false, isLandscape = false, style = LearningStyle.GROUP) -> {
+                    PomodoroUiState(
+                        isCompact = false,
+                        isLandscape = false,
+                        style = LearningStyle.GROUP
+                    ) -> {
                         PortraitPomodoroGroupUI(
                             workspaceUiState = workspaceState,
                             timerUiState = timerState,
@@ -313,7 +364,11 @@ fun PomodoroScreenUIv2(
                             }
                         )
                     }// Gen UI Portrait Group
-                    PomodoroUiState(isCompact = false, isLandscape = false, style = LearningStyle.SOLO)  -> {
+                    PomodoroUiState(
+                        isCompact = false,
+                        isLandscape = false,
+                        style = LearningStyle.SOLO
+                    ) -> {
                         PortraitPomodoroUI(
                             workspaceUiState = workspaceState,
                             timerUiState = timerState,

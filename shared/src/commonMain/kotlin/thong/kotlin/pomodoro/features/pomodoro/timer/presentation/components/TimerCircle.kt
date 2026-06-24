@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ZoomOutMap
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -115,6 +116,7 @@ fun CompactFloatingTimerComponent(
     timeFontSize: TextUnit = 20.sp,
     buttonSize: Dp = 36.dp,
     showExitShortcut: Boolean = false,
+    onToggleSettings: () -> Unit = {},
     onExitClick: () -> Unit = {}
 ) {
     val minutes = (timeLeft / 60).toString().padStart(2, '0')
@@ -191,6 +193,19 @@ fun CompactFloatingTimerComponent(
                     )
                 }
             }
+        }
+
+        IconButton(
+            onClick = onToggleSettings,
+            modifier = Modifier
+                .size(40.dp)
+                .background(Color.White.copy(alpha = 0.1f), CircleShape)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Settings,
+                contentDescription = "Settings",
+                tint = Color.White.copy(alpha = 0.6f)
+            )
         }
     }
 }

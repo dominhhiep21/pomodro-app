@@ -19,3 +19,9 @@ data class UserSettings(
     val learningStyle: LearningStyle = LearningStyle.SOLO,
     val hasCompletedOnboarding: Boolean = false
 )
+
+data class PomodoroUiState(
+    val isCompact: Boolean,
+    val isLandscape: Boolean,
+    val style: LearningStyle
+)

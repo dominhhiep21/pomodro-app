@@ -434,8 +434,6 @@ fun PortraitPomodoroGroupUI(
             Spacer(modifier = Modifier.height(100.dp))
         }
 
-
-
         TaskBottomBar(
             tasks = tasksUiState.tasks,
             isExpanded = tasksUiState.isTasksExpanded,

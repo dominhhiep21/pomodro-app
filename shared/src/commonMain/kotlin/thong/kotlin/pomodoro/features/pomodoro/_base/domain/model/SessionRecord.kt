@@ -1,4 +1,4 @@
-package thong.kotlin.pomodoro.features.pomodoro.domain.model
+package thong.kotlin.pomodoro.features.pomodoro._base.domain.model
 
 data class SessionRecord(
     val id: String,

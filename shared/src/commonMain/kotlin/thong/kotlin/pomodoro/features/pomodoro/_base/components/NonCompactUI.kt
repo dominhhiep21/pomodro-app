@@ -124,6 +124,100 @@ fun LandscapePomodoroUI(
 }
 
 @Composable
+fun LandscapePomodoroGroupUI(
+    workspaceUiState: WorkspaceUiState,
+    timerUiState: TimerUiState,
+    tasksUiState: TasksUiState,
+    themeColor: Color,
+    onToggleTimer: () -> Unit,
+    onResetTimer: () -> Unit,
+    onSkipTimer: () -> Unit,
+    onToggleSettings: () -> Unit,
+    onToggleCompactMode: () -> Unit,
+    onAddTask: () -> Unit,
+    onDeleteTask: (String) -> Unit,
+    onToggleTask: (String) -> Unit,
+    onNewTaskTextChange: (String) -> Unit,
+    onToggleMusic: () -> Unit,
+    onSelectTrack: (String) -> Unit,
+    onToggleAmbientSound: (String) -> Unit,
+    onToggleTasksExpanded: () -> Unit,
+    onSelectBackground: (String) -> Unit,
+    onExit: () -> Unit = {},
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 20.dp, bottom = 20.dp, start = 40.dp, end = 92.dp),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            Column(
+                modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())
+            ) {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    TimerSectionComponent(
+                        timerUiState = timerUiState,
+                        workspaceUiState = workspaceUiState,
+                        themeColor = themeColor,
+                        onToggleTimer = onToggleTimer,
+                        onResetTimer = onResetTimer,
+                        onSkipTimer = onSkipTimer,
+                        compact = false,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier.weight(1f).verticalScroll(rememberScrollState())
+            ) {
+
+                MusicSection(
+                    availableTracks = workspaceUiState.availableTracks,
+                    selectedTrackId = workspaceUiState.selectedTrackId,
+                    isMusicPlaying = workspaceUiState.isMusicPlaying,
+                    onToggleMusic = onToggleMusic,
+                    onSelectTrack = onSelectTrack,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                BackgroundSection(
+                    availableBackgrounds = workspaceUiState.availableBackgrounds,
+                    selectedBackgroundId = workspaceUiState.selectedBackgroundId,
+                    onSelectBackground = onSelectBackground,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                AmbientSoundSection(
+                    availableSounds = workspaceUiState.availableAmbientSounds,
+                    activeSoundIds = workspaceUiState.activeAmbientSoundIds,
+                    onToggleSound = onToggleAmbientSound,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+
+        TaskSideBar(
+            tasks = tasksUiState.tasks,
+            isExpanded = tasksUiState.isTasksExpanded,
+            onToggleExpand = onToggleTasksExpanded,
+            newTaskText = tasksUiState.newTaskText,
+            onAddTask = onAddTask,
+            onDeleteTask = onDeleteTask,
+            onToggleTask = onToggleTask,
+            onNewTaskTextChange = onNewTaskTextChange,
+            modifier = Modifier.align(Alignment.BottomEnd)
+        )
+    }
+}
+
+@Composable
 fun PortraitPomodoroUI(
     workspaceUiState: WorkspaceUiState,
     timerUiState: TimerUiState,

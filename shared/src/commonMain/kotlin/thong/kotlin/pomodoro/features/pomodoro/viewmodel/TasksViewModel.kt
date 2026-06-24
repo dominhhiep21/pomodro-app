@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import thong.kotlin.pomodoro.core.utils.getCurrentDateTimeString
-import thong.kotlin.pomodoro.features.pomodoro.domain.repository.UserAppStateRepository
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepository
 import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.Task
 import kotlin.random.Random
 

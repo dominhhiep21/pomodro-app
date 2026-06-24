@@ -13,8 +13,8 @@ import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro.ambient.data.AmbientSoundRepository
 import thong.kotlin.pomodoro.features.pomodoro.ambient.domain.AmbientSound
-import thong.kotlin.pomodoro.features.pomodoro.domain.model.UserSettings
-import thong.kotlin.pomodoro.features.pomodoro.domain.repository.UserAppStateRepository
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettings
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepository
 import thong.kotlin.pomodoro.features.pomodoro.music.data.MusicRepository
 import thong.kotlin.pomodoro.features.pomodoro.music.domain.MusicTrack
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.CompactSection

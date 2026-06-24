@@ -11,9 +11,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.core.utils.getCurrentDateTimeString
-import thong.kotlin.pomodoro.features.pomodoro.domain.model.SessionRecord
-import thong.kotlin.pomodoro.features.pomodoro.domain.model.UserSettings
-import thong.kotlin.pomodoro.features.pomodoro.domain.repository.UserAppStateRepository
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.SessionRecord
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettings
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepository
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.EventType
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroConfig
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode

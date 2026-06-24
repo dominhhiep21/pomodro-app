@@ -227,7 +227,7 @@ class WorkspaceViewModel(
         _uiState.update { it.copy(editingBreakMinutes = value, settingsError = "") }
     }
 
-    fun saveSettings() {
+    fun saveSettings(onSettingsSaved: ((Int, Int) -> Unit)? = null) {
         val workMin = _uiState.value.editingWorkMinutes.toIntOrNull()
         val breakMin = _uiState.value.editingBreakMinutes.toIntOrNull()
 
@@ -257,6 +257,7 @@ class WorkspaceViewModel(
                         breakMinutes = breakMin
                     )
                 )
+                onSettingsSaved?.invoke(workMin, breakMin)
             }
         }
     }

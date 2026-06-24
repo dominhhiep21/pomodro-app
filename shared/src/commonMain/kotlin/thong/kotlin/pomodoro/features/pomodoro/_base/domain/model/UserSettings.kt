@@ -1,8 +1,6 @@
-package thong.kotlin.pomodoro.features.pomodoro.domain.model
+package thong.kotlin.pomodoro.features.pomodoro._base.domain.model
 
-enum class LearningStyle {
-    SOLO, GROUP
-}
+import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 
 data class UserSettings(
     val workMinutes: Int = 25,
@@ -20,4 +18,10 @@ data class UserSettings(
     val maxGroupSize: Int = 4,
     val learningStyle: LearningStyle = LearningStyle.SOLO,
     val hasCompletedOnboarding: Boolean = false
+)
+
+data class PomodoroUiState(
+    val isCompact: Boolean,
+    val isLandscape: Boolean,
+    val style: LearningStyle
 )

@@ -10,15 +10,15 @@ import kotlinx.coroutines.launch
 import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.features.background.model.BackgroundConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
+import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro.ambient.data.AmbientSoundRepository
 import thong.kotlin.pomodoro.features.pomodoro.ambient.domain.AmbientSound
-import thong.kotlin.pomodoro.features.pomodoro.domain.model.UserSettings
-import thong.kotlin.pomodoro.features.pomodoro.domain.repository.UserAppStateRepository
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettings
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepository
 import thong.kotlin.pomodoro.features.pomodoro.music.data.MusicRepository
 import thong.kotlin.pomodoro.features.pomodoro.music.domain.MusicTrack
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.CompactSection
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
-import thong.kotlin.pomodoro.features.pomodoro.domain.model.LearningStyle
 import thong.kotlin.pomodoro.features.settings.data.BackgroundRepository
 import thong.kotlin.pomodoro.features.settings.domain.AppBackground
 
@@ -27,6 +27,8 @@ data class WorkspaceUiState(
     val isJustEndedBreak : Boolean = false,
     val learningStyle: LearningStyle = LearningStyle.SOLO,
     val learningGroupConfig: LearningGroupConfig? = null,
+
+    val isChatExpanded: Boolean = false,
 
     // Background
     val selectedBackgroundId: String = BackgroundRepository.DEFAULT_BACKGROUND_ID,

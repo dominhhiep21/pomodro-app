@@ -49,13 +49,13 @@ fun TaskSideBar(
     )
 
     val animatedWidth by animateDpAsState(
-        targetValue = if (isExpanded) 350.dp else 64.dp,
+        targetValue = if (isExpanded) 350.dp else 48.dp,
         animationSpec = animationSpec,
         label = "TaskBarWidth"
     )
     
     val animatedHeight by animateDpAsState(
-        targetValue = if (isExpanded) 400.dp else 64.dp,
+        targetValue = if (isExpanded) 400.dp else 48.dp,
         animationSpec = animationSpec,
         label = "TaskBarHeight"
     )
@@ -75,7 +75,6 @@ fun TaskSideBar(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 16.dp, end = 16.dp)
                 .graphicsLayer {
                     // Offload clipping and transformations to GPU
                     clip = true
@@ -158,10 +157,9 @@ fun TaskSideBar(
             if (incompleteCount > 0) {
                 Box(
                     modifier = Modifier
-                        .align(Alignment.TopStart)
-                        // Position relative to the top-right corner of the collapsed button (48x48)
-                        .offset(x = (animatedWidth - 34.dp), y = (-6).dp)
-                        .size(26.dp)
+                        .align(Alignment.TopEnd)
+                        .offset(x = 6.dp, y = (-6).dp)
+                        .size(24.dp)
                         .background(Color.Red, CircleShape)
                         .clickable { onToggleExpand() }, // Also clickable
                     contentAlignment = Alignment.Center

@@ -4,11 +4,11 @@ import com.russhwolf.settings.Settings
 import com.russhwolf.settings.set
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import thong.kotlin.pomodoro.features.pomodoro.domain.model.LearningStyle
-import thong.kotlin.pomodoro.features.pomodoro.domain.model.UserSettings
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettings
 import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.Task
-import thong.kotlin.pomodoro.features.pomodoro.domain.model.DailyStats
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.DailyStats
 import kotlinx.serialization.json.Json
+import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 
 class LocalSettingsDataSource(private val settings: Settings) {
 

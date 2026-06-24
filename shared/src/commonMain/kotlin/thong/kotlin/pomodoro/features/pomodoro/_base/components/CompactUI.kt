@@ -35,7 +35,8 @@ fun LandscapeCompactUI(
     onWorkChange: (String) -> Unit,
     onBreakChange: (String) -> Unit,
     onSaveSettings: () -> Unit,
-    onResetSettings: () -> Unit
+    onResetSettings: () -> Unit,
+    onExit: () -> Unit = {}
 ) {
     Box(modifier = Modifier.fillMaxSize().padding(32.dp)) {
         CompactFloatingTimerComponent(

@@ -69,6 +69,7 @@ kotlin {
             implementation(libs.voyager.navigator)
             implementation(libs.voyager.transition)
             implementation(libs.voyager.screenmodel)
+            implementation(libs.voyager.lifecycle.kmp)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

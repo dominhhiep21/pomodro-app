@@ -19,12 +19,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
@@ -46,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import thong.kotlin.pomodoro.core.designsystem.components.AuraHorizontalScrollbar
 import thong.kotlin.pomodoro.core.designsystem.components.AuraInputField
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
@@ -66,7 +69,7 @@ fun RoomIdBadge(roomId: String, modifier: Modifier = Modifier) {
         ) {
             Text(
                 text = "PHÒNG: ",
-                color = AuraColors.TextSecondary,
+                color = Color.White,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -76,6 +79,134 @@ fun RoomIdBadge(roomId: String, modifier: Modifier = Modifier) {
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Black
             )
+        }
+    }
+}
+
+@Suppress("FrequentlyChangingValue")
+@Composable
+fun ExpandableMembersPanelBubble(
+    modifier: Modifier = Modifier,
+    expandDirection: ExpandDirection = ExpandDirection.TO_RIGHT
+) {
+    var isExpanded by remember { mutableStateOf(false) }
+    val participants = remember {
+        listOf("Bạn", "Minh", "Lan", "Phong", "Trang", "Hoàng", "Nam", "An")
+    }
+
+    val panelAlignment = when (expandDirection) {
+        ExpandDirection.TO_LEFT -> Alignment.TopEnd
+        ExpandDirection.TO_RIGHT -> Alignment.TopStart
+    }
+
+    Box(
+        modifier = modifier.animateContentSize(),
+        contentAlignment = panelAlignment
+    ) {
+        if (!isExpanded) {
+            // Bubble State
+            Box(contentAlignment = Alignment.TopEnd) {
+                GlassBox(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clickable { isExpanded = true },
+                    shape = CircleShape,
+                    backgroundColor = AuraColors.BottomBarBackground
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Groups,
+                        contentDescription = "Members",
+                        tint = AuraColors.WorkMode,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                // Count Badge
+                GlassBox(
+                    shape = CircleShape,
+                    backgroundColor = AuraColors.WorkMode,
+                    modifier = Modifier.size(20.dp)
+                ) {
+                    Text(
+                        text = participants.size.toString(),
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        } else {
+            // Expanded Panel State
+            GlassBox(
+                modifier = Modifier
+                    .width(300.dp),
+                shape = RoundedCornerShape(24.dp),
+                backgroundColor = AuraColors.BottomBarBackground
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { isExpanded = false }
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Cụm Chữ + Số lượng
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Thành viên",
+                                color = AuraColors.TextPrimary,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            GlassBox(
+                                shape = CircleShape,
+                                backgroundColor = AuraColors.WorkMode.copy(alpha = 0.2f),
+                                modifier = Modifier.size(22.dp)
+                            ) {
+                                Text(
+                                    text = participants.size.toString(),
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        // Cụm Icon Collapse
+                        Icon(
+                            imageVector = Icons.Default.KeyboardArrowUp,
+                            contentDescription = "Collapse",
+                            tint = AuraColors.TextSecondary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    val lazyListState = rememberLazyListState()
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    // --- DANH SÁCH THÀNH VIÊN ---
+                    LazyRow(
+                        state = lazyListState,
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(participants) { name ->
+                            MemberAvatar(name = name)
+                        }
+                    }
+
+                    AuraHorizontalScrollbar(
+                        state = lazyListState,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 8.dp)
+                    )
+                }
+            }
         }
     }
 }
@@ -332,7 +463,9 @@ private fun ChatBubble(msg: ChatMessage) {
         )
         GlassBox(
             shape = RoundedCornerShape(12.dp),
-            backgroundColor = if (msg.isMe) AuraColors.WorkMode.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.05f),
+            backgroundColor = if (msg.isMe) AuraColors.WorkMode.copy(alpha = 0.2f) else Color.White.copy(
+                alpha = 0.05f
+            ),
             modifier = Modifier.padding(top = 2.dp)
         ) {
             Text(

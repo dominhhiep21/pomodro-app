@@ -47,9 +47,11 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
+            implementation(libs.ktor.client.cio)
         }
         jvmMain.dependencies {
             implementation(libs.jlayer)
+            implementation(libs.ktor.client.cio)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -70,6 +72,9 @@ kotlin {
             implementation(libs.voyager.transition)
             implementation(libs.voyager.screenmodel)
             implementation(libs.voyager.lifecycle.kmp)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

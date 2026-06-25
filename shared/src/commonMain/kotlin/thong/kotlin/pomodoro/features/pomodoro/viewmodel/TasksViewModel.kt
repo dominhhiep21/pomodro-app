@@ -1,14 +1,12 @@
 package thong.kotlin.pomodoro.features.pomodoro.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import thong.kotlin.pomodoro.core.utils.getCurrentDateTimeString
-import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepository
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryV2
 import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.Task
 import kotlin.random.Random
 
@@ -19,7 +17,7 @@ data class TasksUiState(
 )
 
 class TasksViewModel(
-    private val repository: UserAppStateRepository? = null
+    private val repository: UserAppStateRepositoryV2
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(TasksUiState())
     val uiState: StateFlow<TasksUiState> = _uiState.asStateFlow()
@@ -29,11 +27,11 @@ class TasksViewModel(
     }
 
     private fun loadTasks() {
-        viewModelScope.launch {
-            repository?.getAllTasks()?.collect { tasks ->
-                _uiState.update { it.copy(tasks = tasks) }
-            }
-        }
+//        viewModelScope.launch {
+//            repository?.getAllTasks()?.collect { tasks ->
+//                _uiState.update { it.copy(tasks = tasks) }
+//            }
+//        }
     }
 
     fun onNewTaskTextChange(text: String) {
@@ -68,9 +66,9 @@ class TasksViewModel(
             }
 
             // Lưu xuống Database
-            viewModelScope.launch {
-                repository?.saveTask(newTask)
-            }
+//            viewModelScope.launch {
+//                repository?.saveTask(newTask)
+//            }
         }
     }
 
@@ -79,9 +77,9 @@ class TasksViewModel(
             state.copy(tasks = state.tasks.filter { it.id != taskId })
         }
 
-        viewModelScope.launch {
-            repository?.deleteTask(taskId)
-        }
+//        viewModelScope.launch {
+//            repository?.deleteTask(taskId)
+//        }
     }
 
     fun toggleTask(taskId: String) {
@@ -104,11 +102,11 @@ class TasksViewModel(
             )
         }
 
-        updatedTask?.let { task ->
-            viewModelScope.launch {
-                repository?.saveTask(task)
-            }
-        }
+//        updatedTask?.let { task ->
+//            viewModelScope.launch {
+//                repository?.saveTask(task)
+//            }
+//        }
     }
 
     fun toggleTasksExpanded() {

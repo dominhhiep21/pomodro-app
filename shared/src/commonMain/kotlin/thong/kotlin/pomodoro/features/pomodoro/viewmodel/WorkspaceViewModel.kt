@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import thong.kotlin.pomodoro.core.config.AppConfig
 import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.features.background.model.BackgroundConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
@@ -19,12 +20,13 @@ import thong.kotlin.pomodoro.features.pomodoro.music.data.MusicRepository
 import thong.kotlin.pomodoro.features.pomodoro.music.domain.MusicTrack
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.CompactSection
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryV2
 import thong.kotlin.pomodoro.features.settings.data.BackgroundRepository
 import thong.kotlin.pomodoro.features.settings.domain.AppBackground
 
 data class WorkspaceUiState(
     val currentMode: PomodoroMode = PomodoroMode.WORK,
-    val isJustEndedBreak : Boolean = false,
+    val isJustEndedBreak: Boolean = false,
     val learningStyle: LearningStyle = LearningStyle.SOLO,
     val learningGroupConfig: LearningGroupConfig? = null,
 
@@ -57,9 +59,10 @@ data class WorkspaceUiState(
     val editingBreakMinutes: String = "5",
     val settingsError: String = ""
 )
+
 class WorkspaceViewModel(
     private val soundManager: SoundManager? = null,
-    private val repository: UserAppStateRepository? = null
+    private val repository: UserAppStateRepositoryV2
 ) : ViewModel() {
 
     // Chỉ có ViewModel mới có quyền lấy ra và gán giá trị mới (sửa state).
@@ -85,14 +88,14 @@ class WorkspaceViewModel(
             }
 
             // Lắng nghe dữ liệu cấu hình đã lưu (Database/DataStore)
-            repository?.getSettingsFlow()?.collect { settings ->
+            repository.getSettingsFlow().collect { settings ->
                 _uiState.update { state ->
                     state.copy(
-                        selectedBackgroundId = settings.selectedBackgroundId ?: BackgroundRepository.DEFAULT_BACKGROUND_ID,
+                        selectedBackgroundId = settings.personalSelectedBackgroundId
+                            ?: BackgroundRepository.DEFAULT_BACKGROUND_ID,
                         isNotificationEnabled = settings.isNotificationEnabled,
-                        isCompactMode = settings.isCompactMode,
-                        // Nếu trong tương lai settings có lưu bài nhạc cuối cùng nghe, cập nhật tại đây:
-                        // selectedTrackId = settings.selectedTrackId ?: MusicRepository.DEFAULT_TRACK_ID
+                        selectedTrackId = settings.personalLastSelectedMusicId
+                            ?: MusicRepository.DEFAULT_TRACK_ID
                     )
                 }
             }
@@ -147,8 +150,10 @@ class WorkspaceViewModel(
     fun selectBackground(backgroundId: String) {
         _uiState.update { it.copy(selectedBackgroundId = backgroundId) }
         viewModelScope.launch {
-            repository?.let { repo ->
-                repo.saveUserSettings(repo.getUserSettings().copy(selectedBackgroundId = backgroundId))
+            repository.let { repo ->
+                repo.saveUserSettings(
+                    repo.getUserSettings().copy(personalSelectedBackgroundId = backgroundId)
+                )
             }
         }
     }
@@ -161,11 +166,6 @@ class WorkspaceViewModel(
     fun toggleCompactMode() {
         _uiState.update { state ->
             val newValue = !state.isCompactMode
-            viewModelScope.launch {
-                repository?.let { repo ->
-                    repo.saveUserSettings(repo.getUserSettings().copy(isCompactMode = newValue))
-                }
-            }
             state.copy(isCompactMode = newValue, isCompactMenuExpanded = false)
         }
     }
@@ -182,8 +182,10 @@ class WorkspaceViewModel(
         _uiState.update { state ->
             val newValue = !state.isNotificationEnabled
             viewModelScope.launch {
-                repository?.let { repo ->
-                    repo.saveUserSettings(repo.getUserSettings().copy(isNotificationEnabled = newValue))
+                repository.let { repo ->
+                    repo.saveUserSettings(
+                        repo.getUserSettings().copy(isNotificationEnabled = newValue)
+                    )
                 }
             }
             state.copy(isNotificationEnabled = newValue)
@@ -204,12 +206,12 @@ class WorkspaceViewModel(
         val currentlyVisible = _uiState.value.isSettingsVisible
         if (!currentlyVisible) {
             viewModelScope.launch {
-                val currentSettings = repository?.getUserSettings() ?: UserSettings()
+                val currentSettings = repository.getUserSettings()
                 _uiState.update {
                     it.copy(
                         isSettingsVisible = true,
-                        editingWorkMinutes = currentSettings.workMinutes.toString(),
-                        editingBreakMinutes = currentSettings.breakMinutes.toString(),
+                        editingWorkMinutes = currentSettings.personalWorkMinutes.toString(),
+                        editingBreakMinutes = currentSettings.personalBreakMinutes.toString(),
                         settingsError = ""
                     )
                 }
@@ -249,12 +251,12 @@ class WorkspaceViewModel(
         _uiState.update { it.copy(isSettingsVisible = false) }
 
         viewModelScope.launch {
-            repository?.let { repo ->
+            repository.let { repo ->
                 val currentSettings = repo.getUserSettings()
                 repo.saveUserSettings(
                     currentSettings.copy(
-                        workMinutes = workMin,
-                        breakMinutes = breakMin
+                        personalWorkMinutes = workMin,
+                        personalBreakMinutes = breakMin
                     )
                 )
                 onSettingsSaved?.invoke(workMin, breakMin)
@@ -265,8 +267,8 @@ class WorkspaceViewModel(
     fun resetSettingsToDefault() {
         _uiState.update {
             it.copy(
-                editingWorkMinutes = "25",
-                editingBreakMinutes = "5",
+                editingWorkMinutes = AppConfig.DEFAULT_WORK_MINUTES.toString(),
+                editingBreakMinutes = AppConfig.DEFAULT_BREAK_MINUTES.toString(),
                 settingsError = ""
             )
         }

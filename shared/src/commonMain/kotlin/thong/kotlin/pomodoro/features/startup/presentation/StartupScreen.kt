@@ -24,7 +24,6 @@ import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.core.notification.NotificationManager
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.learning.mode.components.LearningStyleScreen
-import thong.kotlin.pomodoro.features.pomodoro._base.PomodoroScreenV2
 import thong.kotlin.pomodoro.features.onboarding.presentation.OnboardingScreen
 
 class StartupLoadingScreen(
@@ -35,21 +34,22 @@ class StartupLoadingScreen(
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val repository = remember { DependencyRegistry.userAppStateRepository }
+        val repositoryV2 = remember { DependencyRegistry.userAppStateRepositoryV2 }
 
-        // Logic chờ và chuyển cảnh
         LaunchedEffect(Unit) {
-            delay(5000)
-            val hasCompletedOnboarding = false
-
-            if (hasCompletedOnboarding) {
-                navigator.replace(LearningStyleScreen(soundManager))
+            delay(3000)
+            val userSettings = repositoryV2.getUserSettings()
+            if (userSettings.hasCompletedOnboarding) {
+                navigator.replace(
+                    LearningStyleScreen(soundManager)
+                )
             } else {
-                navigator.replace(OnboardingScreen(soundManager))
+                navigator.replace(
+                    OnboardingScreen(soundManager)
+                )
             }
         }
 
-        // Render UI
         StartupScreenUI()
     }
 }

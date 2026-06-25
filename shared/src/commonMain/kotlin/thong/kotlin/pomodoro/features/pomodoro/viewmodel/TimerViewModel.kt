@@ -10,14 +10,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import thong.kotlin.pomodoro.core.media.SoundManager
-import thong.kotlin.pomodoro.core.utils.getCurrentDateTimeString
-import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.SessionRecord
-import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettings
-import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepository
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.EventType
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroConfig
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
-import kotlin.random.Random
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettingsV2
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryV2
 
 data class TimerUiState(
     val isActive: Boolean = false,
@@ -31,7 +28,7 @@ data class TimerUiState(
 
 class TimerViewModel(
     private val soundManager: SoundManager? = null,
-    private val repository: UserAppStateRepository? = null
+    private val repository: UserAppStateRepositoryV2? = null
 ) : ViewModel() {
     // Trạng thái độc lập chỉ dành cho UI Đồng hồ
     private val _uiState = MutableStateFlow(TimerUiState())
@@ -47,25 +44,28 @@ class TimerViewModel(
 
     private fun loadInitialData() {
         viewModelScope.launch {
-            val savedSettings = repository?.getUserSettings() ?: UserSettings()
+            val savedSettings = repository?.getUserSettings() ?: UserSettingsV2()
 
             _uiState.update { state ->
                 state.copy(
                     config = state.config.copy(
-                        workMinutes = savedSettings.workMinutes,
-                        shortBreakMinutes = savedSettings.breakMinutes
+                        workMinutes = savedSettings.personalWorkMinutes,
+                        shortBreakMinutes = savedSettings.personalBreakMinutes
                     ),
                     timeLeft = PomodoroMode.WORK.totalSeconds(
-                        PomodoroConfig(savedSettings.workMinutes, savedSettings.breakMinutes)
+                        PomodoroConfig(
+                            savedSettings.personalWorkMinutes,
+                            savedSettings.personalBreakMinutes
+                        )
                     )
                 )
             }
 
-            repository?.getTodayStats()?.collect { stats ->
-                if (stats != null) {
-                    _uiState.update { it.copy(pomodorosToday = stats.sessionsCompleted) }
-                }
-            }
+//            repository?.getTodayStats()?.collect { stats ->
+//                if (stats != null) {
+//                    _uiState.update { it.copy(pomodorosToday = stats.sessionsCompleted) }
+//                }
+//            }
         }
     }
 
@@ -169,55 +169,55 @@ class TimerViewModel(
         soundManager?.playChimeSound()
         pauseTimer()
         val currentState = _uiState.value
-
-        val (newMode, nextTime, eventType, notification) = if (currentState.currentMode == PomodoroMode.WORK) {
-            // Học xong: Cộng điểm và nghỉ
-            val nextMode = PomodoroMode.SHORT_BREAK
-            val nextTime = nextMode.totalSeconds(currentState.config)
-
-            viewModelScope.launch {
-                repository?.saveSession(
-                    SessionRecord(
-                        id = Random.nextInt().toString(),
-                        startTime = getCurrentDateTimeString(),
-                        endTime = getCurrentDateTimeString(),
-                        mode = PomodoroMode.WORK.name,
-                        durationMinutes = currentState.config.workMinutes,
-                        status = "COMPLETED",
-                        // Note: Bỏ đếm task ở đây vì logic task sẽ do TasksViewModel lo
-                        tasksCompletedCount = 0
-                    )
-                )
-                repository?.incrementDailyStats(
-                    sessionsCompleted = 1,
-                    focusMinutes = currentState.config.workMinutes
-                )
-            }
-
-            listOf(nextMode, nextTime, EventType.WORK_END, "Work session completed. Time for a break!")
-        } else {
-            // Nghỉ xong: Quay lại làm việc
-            val nextMode = PomodoroMode.WORK
-            val nextTime = nextMode.totalSeconds(currentState.config)
-
-            viewModelScope.launch {
-                repository?.incrementDailyStats(
-                    breakMinutes = currentState.config.shortBreakMinutes
-                )
-            }
-
-            listOf(nextMode, nextTime, EventType.BREAK_END, "Break finished. Time to focus again!")
-        }
-
-        _uiState.update { state ->
-            state.copy(
-                pomodorosToday = if (currentState.currentMode == PomodoroMode.WORK) state.pomodorosToday + 1 else state.pomodorosToday,
-                currentMode = newMode as PomodoroMode,
-                timeLeft = nextTime as Long,
-                event = eventType as EventType,
-                pendingNotification = notification as String
-            )
-        }
+//
+//        val (newMode, nextTime, eventType, notification) = if (currentState.currentMode == PomodoroMode.WORK) {
+//            // Học xong: Cộng điểm và nghỉ
+//            val nextMode = PomodoroMode.SHORT_BREAK
+//            val nextTime = nextMode.totalSeconds(currentState.config)
+//
+//            viewModelScope.launch {
+//                repository?.saveSession(
+//                    SessionRecord(
+//                        id = Random.nextInt().toString(),
+//                        startTime = getCurrentDateTimeString(),
+//                        endTime = getCurrentDateTimeString(),
+//                        mode = PomodoroMode.WORK.name,
+//                        durationMinutes = currentState.config.workMinutes,
+//                        status = "COMPLETED",
+//                        // Note: Bỏ đếm task ở đây vì logic task sẽ do TasksViewModel lo
+//                        tasksCompletedCount = 0
+//                    )
+//                )
+//                repository?.incrementDailyStats(
+//                    sessionsCompleted = 1,
+//                    focusMinutes = currentState.config.workMinutes
+//                )
+//            }
+//
+//            listOf(nextMode, nextTime, EventType.WORK_END, "Work session completed. Time for a break!")
+//        } else {
+//            // Nghỉ xong: Quay lại làm việc
+//            val nextMode = PomodoroMode.WORK
+//            val nextTime = nextMode.totalSeconds(currentState.config)
+//
+//            viewModelScope.launch {
+//                repository?.incrementDailyStats(
+//                    breakMinutes = currentState.config.shortBreakMinutes
+//                )
+//            }
+//
+//            listOf(nextMode, nextTime, EventType.BREAK_END, "Break finished. Time to focus again!")
+//        }
+//
+//        _uiState.update { state ->
+//            state.copy(
+//                pomodorosToday = if (currentState.currentMode == PomodoroMode.WORK) state.pomodorosToday + 1 else state.pomodorosToday,
+//                currentMode = newMode as PomodoroMode,
+//                timeLeft = nextTime as Long,
+//                event = eventType as EventType,
+//                pendingNotification = notification as String
+//            )
+//        }
     }
 
     fun clearPendingNotification() {

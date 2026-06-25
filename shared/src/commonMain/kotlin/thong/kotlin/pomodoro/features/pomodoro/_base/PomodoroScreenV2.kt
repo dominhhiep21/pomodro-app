@@ -20,28 +20,28 @@ import pomodrokotlin.shared.generated.resources.Res
 import pomodrokotlin.shared.generated.resources.startup_bg
 import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
-import thong.kotlin.pomodoro.core.media.SoundManager
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TasksViewModel
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TimerViewModel
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceViewModel
-import thong.kotlin.pomodoro.features.pomodoro._base.components.LandscapeCompactUI
-import thong.kotlin.pomodoro.features.pomodoro._base.components.LandscapePomodoroUI
-import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitCompactUI
-import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoroUI
-import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.PomodoroSettingsModal
 import thong.kotlin.pomodoro.core.designsystem.theme.rememberBreathingEffect
+import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
+import thong.kotlin.pomodoro.features.pomodoro._base.components.LandscapeCompactUI
 import thong.kotlin.pomodoro.features.pomodoro._base.components.LandscapePomodoroGroupUI
+import thong.kotlin.pomodoro.features.pomodoro._base.components.LandscapePomodoroUI
+import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitCompactUI
 import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoroGroupUI
-import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepository
+import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoroUI
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.PomodoroUiState
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryV2
+import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.PomodoroSettingsModal
+import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TasksViewModel
+import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TimerViewModel
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
+import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceViewModel
 
 class PomodoroScreenV2(
     private val soundManager: SoundManager? = null,
-    private val repository: UserAppStateRepository? = null,
+    private val repository: UserAppStateRepositoryV2,
     private val learningStyle: LearningStyle = LearningStyle.SOLO,
     private val learningGroupConfig: LearningGroupConfig? = null
 ) : Screen {
@@ -61,6 +61,7 @@ class PomodoroScreenV2(
             restoreAudioState(workspaceState, soundManager)
         }
         PomodoroScreenUIv2(
+            soundManager,
             timerViewModel,
             tasksViewModel,
             workspaceViewModel,
@@ -96,6 +97,7 @@ private fun restoreAudioState(
 
 @Composable
 fun PomodoroScreenUIv2(
+    soundManager: SoundManager?,
     timerViewModel: TimerViewModel,
     tasksViewModel: TasksViewModel,
     workspaceViewModel: WorkspaceViewModel,
@@ -165,9 +167,7 @@ fun PomodoroScreenUIv2(
                             },
                             onResetSettings = workspaceViewModel::resetSettingsToDefault,
                             onToggleSettings = workspaceViewModel::toggleSettings,
-                            onExit = {
-                                navigator.pop()
-                            }
+                            onExit = { onExit(soundManager, navigator) }
                         )
                     }
                     // Gen UI Landscape Compact Solo
@@ -212,9 +212,7 @@ fun PomodoroScreenUIv2(
                             },
                             onResetSettings = workspaceViewModel::resetSettingsToDefault,
                             onToggleSettings = workspaceViewModel::toggleSettings,
-                            onExit = {
-                                navigator.pop()
-                            }
+                            onExit = { onExit(soundManager, navigator) }
                         )
                     }
                     // Gen UI Portrait Compact Group
@@ -260,9 +258,7 @@ fun PomodoroScreenUIv2(
                                 }
                             },
                             onResetSettings = workspaceViewModel::resetSettingsToDefault,
-                            onExit = {
-                                navigator.pop()
-                            }
+                            onExit = { onExit(soundManager, navigator) }
                         )
                     }
                     PomodoroUiState(
@@ -306,9 +302,7 @@ fun PomodoroScreenUIv2(
                             },
                             onResetSettings = workspaceViewModel::resetSettingsToDefault,
                             onToggleSettings = workspaceViewModel::toggleSettings,
-                            onExit = {
-                                navigator.pop()
-                            }
+                            onExit = { onExit(soundManager, navigator) }
                         )
                     }// Gen UI Portrait Compact Solo
                     PomodoroUiState(
@@ -336,9 +330,7 @@ fun PomodoroScreenUIv2(
                             onToggleTask = tasksViewModel::toggleTask,
                             onNewTaskTextChange = tasksViewModel::onNewTaskTextChange,
                             onToggleTasksExpanded = tasksViewModel::toggleTasksExpanded,
-                            onExit = {
-                                navigator.pop()
-                            }
+                            onExit = { onExit(soundManager, navigator) }
                         )
                     }// Gen UI Landscape Group
                     PomodoroUiState(
@@ -365,9 +357,7 @@ fun PomodoroScreenUIv2(
                             onToggleTask = tasksViewModel::toggleTask,
                             onNewTaskTextChange = tasksViewModel::onNewTaskTextChange,
                             onToggleTasksExpanded = tasksViewModel::toggleTasksExpanded,
-                            onExit = {
-                                navigator.pop()
-                            }
+                            onExit = { onExit(soundManager, navigator) }
                         )
                     }// Gen UI Landscape Solo
                     PomodoroUiState(
@@ -395,9 +385,7 @@ fun PomodoroScreenUIv2(
                             onSelectTrack = workspaceViewModel::selectTrack,
                             onToggleAmbientSound = workspaceViewModel::toggleAmbientSound,
                             onSelectBackground = workspaceViewModel::selectBackground,
-                            onExit = {
-                                navigator.pop()
-                            }
+                            onExit = { onExit(soundManager, navigator) }
                         )
                     }// Gen UI Portrait Group
                     PomodoroUiState(
@@ -424,9 +412,7 @@ fun PomodoroScreenUIv2(
                             onSelectTrack = workspaceViewModel::selectTrack,
                             onToggleAmbientSound = workspaceViewModel::toggleAmbientSound,
                             onSelectBackground = workspaceViewModel::selectBackground,
-                            onExit = {
-                                navigator.pop()
-                            }
+                            onExit = { onExit(soundManager, navigator) }
                         )
                     }// Gen UI Portrait Solo
                 }
@@ -468,4 +454,9 @@ fun rememberPomodoroThemeColor(currentMode: PomodoroMode): Color {
         label = "ThemeColorTransition",
     )
     return animatedThemeColor
+}
+
+private fun onExit(soundManager: SoundManager?, navigator: Navigator) {
+    soundManager?.stopAllSounds()
+    navigator.pop()
 }

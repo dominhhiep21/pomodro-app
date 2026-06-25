@@ -54,7 +54,7 @@ class LearningStyleScreen(private val soundManager: SoundManager?) : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val repository = remember { DependencyRegistry.userAppStateRepository }
+        val repository = remember { DependencyRegistry.userAppStateRepositoryV2 }
 
         LearningStyleScreenUI(onFinish = {
             learningStyle, learningGroupConfig ->

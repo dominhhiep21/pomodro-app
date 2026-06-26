@@ -23,7 +23,7 @@ tối đa giữa Android và Desktop.
 
 Dưới đây là sơ đồ chi tiết cách tổ chức các package và lớp bên trong module `:shared`:
 
-```mermaid
+```
 commonMain
 ├── composeResources
 └── kotlin

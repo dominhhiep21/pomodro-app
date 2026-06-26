@@ -169,6 +169,13 @@ class TimerViewModel(
         soundManager?.playChimeSound()
         pauseTimer()
         val currentState = _uiState.value
+
+        // Increment streak when work session completes
+        if (currentState.currentMode == PomodoroMode.WORK) {
+            viewModelScope.launch {
+                thong.kotlin.pomodoro.di.DependencyRegistry.streakRepository.incrementToday()
+            }
+        }
 //
 //        val (newMode, nextTime, eventType, notification) = if (currentState.currentMode == PomodoroMode.WORK) {
 //            // Học xong: Cộng điểm và nghỉ

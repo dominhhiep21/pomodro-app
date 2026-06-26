@@ -47,7 +47,7 @@ import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
-import thong.kotlin.pomodoro.features.pomodoro._base.PomodoroScreenV2
+import thong.kotlin.pomodoro.features.main.MainTabScreen
 
 class LearningStyleScreen(private val soundManager: SoundManager?) : Screen {
 
@@ -59,7 +59,7 @@ class LearningStyleScreen(private val soundManager: SoundManager?) : Screen {
         LearningStyleScreenUI(onFinish = {
             learningStyle, learningGroupConfig ->
             navigator.push(
-                PomodoroScreenV2(
+                MainTabScreen(
                     soundManager, repository, learningStyle, learningGroupConfig
                 )
             )

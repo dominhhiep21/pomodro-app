@@ -9,6 +9,8 @@ import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.LocalSett
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepository
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryImplV2
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryV2
+import thong.kotlin.pomodoro.features.streak.data.StreakRepositoryImpl
+import thong.kotlin.pomodoro.features.streak.domain.StreakRepository
 
 object DependencyRegistry {
 
@@ -28,6 +30,10 @@ object DependencyRegistry {
 
     val userAppStateRepositoryV2: UserAppStateRepositoryV2 by lazy {
         UserAppStateRepositoryImplV2(localSettingsDataSource)
+    }
+
+    val streakRepository: StreakRepository by lazy {
+        StreakRepositoryImpl(Settings())
     }
 
     val ktorPomodoroMiniClient: KtorPomodoroMiniClient by lazy {

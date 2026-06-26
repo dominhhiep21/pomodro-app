@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.sqldelight)
 }
 
 kotlin {
@@ -48,10 +49,12 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.ktor.client.cio)
+            implementation(libs.sqldelight.android.driver)
         }
         jvmMain.dependencies {
             implementation(libs.jlayer)
             implementation(libs.ktor.client.cio)
+            implementation(libs.sqldelight.sqlite.driver)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -75,6 +78,7 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.sqldelight.coroutines)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -88,14 +92,13 @@ kotlin {
     }
 }
 
-//sqldelight {
-//    databases {
-//        create("AuraDatabase") {
-//            // Package chứa các class Kotlin được tự động sinh ra
-//            packageName.set("thong.kotlin.pomodoro.database")
-//        }
-//    }
-//}
+sqldelight {
+    databases {
+        create("AuraDatabase") {
+            packageName.set("thong.kotlin.pomodoro.database")
+        }
+    }
+}
 
 dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)

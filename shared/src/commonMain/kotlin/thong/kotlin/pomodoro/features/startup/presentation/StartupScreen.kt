@@ -23,8 +23,8 @@ import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
 import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.core.notification.NotificationManager
 import thong.kotlin.pomodoro.di.DependencyRegistry
-import thong.kotlin.pomodoro.features.learning.mode.components.LearningStyleScreen
 import thong.kotlin.pomodoro.features.onboarding.presentation.OnboardingScreen
+import thong.kotlin.pomodoro.features.session.presentation.SessionHistoryScreen
 
 class StartupLoadingScreen(
     private val soundManager: SoundManager? = null,
@@ -41,7 +41,7 @@ class StartupLoadingScreen(
             val userSettings = repositoryV2.getUserSettings()
             if (userSettings.hasCompletedOnboarding) {
                 navigator.replace(
-                    LearningStyleScreen(soundManager)
+                    SessionHistoryScreen(soundManager)
                 )
             } else {
                 navigator.replace(

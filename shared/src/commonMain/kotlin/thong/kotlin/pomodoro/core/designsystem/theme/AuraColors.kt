@@ -15,4 +15,8 @@ object AuraColors {
 
     // Màu nền cho các thanh công cụ (Bottom Bar)
     val BottomBarBackground = Color(0xFF18181B) // Nền đen Zinc (Opaque)
+
+    // Additional tokens used by streak feature
+    val surface = Color(0xFF18181B)             // Surface / elevated background
+    val primary = WorkMode                      // Primary accent (rose)
 }

@@ -18,7 +18,7 @@
 ```
 
 ### Known Issues to Verify
-1. **R.raw.cat_pomodoro** — Ensure `androidApp/src/main/res/raw/` contains all 3 .riv files
+1. **R.raw.muza_cat** — Ensure `shared/src/androidMain/res/raw/` contains `muza_cat.riv`, `fire.riv`, `star.riv`
 2. **Rive imports** — `app.rive.runtime.kotlin.compose.*` requires `rive-android:11.7.1` in androidApp
 3. **PomodoroScreenUIv2 visibility** — May need to change from private to internal if MainTabScreen can't access it
 4. **GlassBox** — Verify component exists at `thong.kotlin.pomodoro.core.designsystem.components.GlassBox`
@@ -62,9 +62,9 @@ Key test cases:
 - `di/DependencyRegistry.kt` — Registered streakRepository
 
 ## Files Created
-- `androidApp/src/main/res/raw/cat_pomodoro.riv`
-- `androidApp/src/main/res/raw/fire.riv`
-- `androidApp/src/main/res/raw/star.riv`
+- `shared/src/androidMain/res/raw/muza_cat.riv`
+- `shared/src/androidMain/res/raw/fire.riv`
+- `shared/src/androidMain/res/raw/star.riv`
 - `features/streak/domain/StreakRepository.kt`
 - `features/streak/domain/model/DailyRecord.kt`
 - `features/streak/domain/model/StreakData.kt`

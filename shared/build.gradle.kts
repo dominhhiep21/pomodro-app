@@ -48,6 +48,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.ktor.client.cio)
+            implementation(libs.rive.android)
         }
         jvmMain.dependencies {
             implementation(libs.jlayer)

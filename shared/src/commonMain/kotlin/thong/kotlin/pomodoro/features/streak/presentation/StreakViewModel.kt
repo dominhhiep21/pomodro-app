@@ -16,14 +16,8 @@ data class StreakUiState(
     val currentStreak: Int = 0,
     val longestStreak: Int = 0,
     val heatMapData: List<DailyRecord> = emptyList(),
-    val isLoading: Boolean = true,
-    val pomodoroProgress: Float = 0f,  // 0..1 progress of current pomodoro
-    val isInPomodoro: Boolean = false
+    val isLoading: Boolean = true
 )
-
-enum class PetState {
-    SLEEPING, IDLE, FOCUS_LVL1, FOCUS_LVL2, FOCUS_LVL3, FOCUS_END, BREAK, BREAK_END
-}
 
 class StreakViewModel(
     private val streakRepository: StreakRepository
@@ -33,10 +27,6 @@ class StreakViewModel(
     val uiState: StateFlow<StreakUiState> = _uiState.asStateFlow()
 
     init {
-        loadStreak()
-    }
-
-    fun loadStreak() {
         viewModelScope.launch {
             streakRepository.getHistoryFlow().collect { history ->
                 val streakData = StreakCalculator.calculate(history, getCurrentDate())
@@ -49,22 +39,6 @@ class StreakViewModel(
                     )
                 }
             }
-        }
-    }
-
-    fun updatePomodoroProgress(progress: Float, isActive: Boolean) {
-        _uiState.update { it.copy(pomodoroProgress = progress, isInPomodoro = isActive) }
-    }
-
-    fun getPetState(): PetState {
-        val state = _uiState.value
-        if (!state.isInPomodoro) {
-            return if (state.currentStreak == 0) PetState.SLEEPING else PetState.IDLE
-        }
-        return when {
-            state.pomodoroProgress < 0.33f -> PetState.FOCUS_LVL1
-            state.pomodoroProgress < 0.66f -> PetState.FOCUS_LVL2
-            else -> PetState.FOCUS_LVL3
         }
     }
 }

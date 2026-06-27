@@ -1,10 +1,12 @@
 package thong.kotlin.pomodoro.features.streak.presentation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -22,70 +24,71 @@ class StreakScreen(
     override fun Content() {
         val viewModel: StreakViewModel = viewModel { StreakViewModel(streakRepository) }
         val uiState by viewModel.uiState.collectAsState()
-        val petState = viewModel.getPetState()
-
-        StreakScreenContent(uiState = uiState, petState = petState)
+        StreakScreenContent(uiState = uiState)
     }
 }
 
 @Composable
-internal fun StreakScreenContent(
-    uiState: StreakUiState,
-    petState: PetState
-) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+internal fun StreakScreenContent(uiState: StreakUiState) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(AuraColors.Background)
     ) {
-        // Pet area (~40% of screen)
-        Box(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.4f),
-            contentAlignment = Alignment.Center
+                .fillMaxSize()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            RivePetView(
-                petState = petState,
-                onTap = { /* trigger klik interaction */ },
-                modifier = Modifier.fillMaxSize(0.8f)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.42f),
+                contentAlignment = Alignment.Center
+            ) {
+                RivePetView(
+                    onTap = {},
+                    modifier = Modifier.fillMaxSize(0.85f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                StreakCounterCard(
+                    label = "Current Streak",
+                    count = uiState.currentStreak,
+                    accentColor = AuraColors.WorkMode,
+                    icon = { RiveFireIcon(modifier = Modifier.fillMaxSize()) },
+                    modifier = Modifier.weight(1f)
+                )
+                StreakCounterCard(
+                    label = "Longest Streak",
+                    count = uiState.longestStreak,
+                    accentColor = Color(0xFFF59E0B),
+                    icon = { RiveStarIcon(modifier = Modifier.fillMaxSize()) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Text(
+                text = "Activity",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = AuraColors.TextSecondary,
+                modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp)
+            )
+            CalendarHeatMap(
+                history = uiState.heatMapData,
+                accentColor = AuraColors.WorkMode,
+                modifier = Modifier.fillMaxWidth()
             )
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Streak counter cards
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            StreakCounterCard(
-                label = "Current",
-                count = uiState.currentStreak,
-                icon = { RiveFireIcon(modifier = Modifier.fillMaxSize()) },
-                modifier = Modifier.weight(1f)
-            )
-            StreakCounterCard(
-                label = "Longest",
-                count = uiState.longestStreak,
-                icon = { RiveStarIcon(modifier = Modifier.fillMaxSize()) },
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Calendar Heat Map
-        Text(
-            text = "Activity",
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color = AuraColors.textSecondary,
-            modifier = Modifier.align(Alignment.Start)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        CalendarHeatMap(
-            history = uiState.heatMapData,
-            modifier = Modifier.fillMaxWidth().weight(0.3f)
-        )
     }
 }

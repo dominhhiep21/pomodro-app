@@ -7,10 +7,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import thong.kotlin.pomodoro.features.streak.presentation.PetState
 
 @Composable
-actual fun RivePetView(petState: PetState, onTap: () -> Unit, modifier: Modifier) {
+actual fun RivePetView(onTap: () -> Unit, modifier: Modifier) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Text("Pet (Desktop - Rive not supported)", color = Color.White)
     }

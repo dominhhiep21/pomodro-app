@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import thong.kotlin.pomodoro.core.config.AppConfig
 import thong.kotlin.pomodoro.core.media.SoundManager
+import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.background.model.BackgroundConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
@@ -61,8 +62,8 @@ data class WorkspaceUiState(
 )
 
 class WorkspaceViewModel(
-    private val soundManager: SoundManager? = null,
-    private val repository: UserAppStateRepositoryV2
+    private val soundManager: SoundManager? = DependencyRegistry.soundManager,
+    private val repository: UserAppStateRepositoryV2 = DependencyRegistry.userAppStateRepositoryV2
 ) : ViewModel() {
 
     // Chỉ có ViewModel mới có quyền lấy ra và gán giá trị mới (sửa state).

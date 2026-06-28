@@ -10,7 +10,7 @@ object AuraColors {
     // Màu sắc đại diện cho các chế độ Pomodoro
     val MainAppMode = Color(0xFFFFFFFF)
     val WorkMode = Color(0xFFF43F5E)            // Hồng Rose (Tập trung)
-    val ShortBreakMode = Color(0xFF14B8A6)      // Xanh Teal (Nghỉ ngắn)
+    val ShortBreakMode = Color(0xFF0FD9BF)      // Xanh Teal (Nghỉ ngắn)
     val LongBreakMode = Color(0xFF3B82F6)       // Xanh Dương (Nghỉ dài)
     val SessionCompletedMode = Color(0xFF03BA35)
     val SessionPausedMode = Color(0xFFE00303)

@@ -18,4 +18,6 @@ interface LearningSessionRepository {
     fun getTotalFocusSeconds(): Long
 
     fun insertSession(session: LearningSessionRecord)
+
+    fun updateSession(session: LearningSessionRecord)
 }

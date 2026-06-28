@@ -59,6 +59,32 @@ INSERT INTO session_history_local (
 )
 VALUES (?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
+updateSessionHistory:
+UPDATE session_history_local
+SET
+    user_id = ?,
+    anonymous_user_id = ?,
+    session_mode = ?,
+    current_learning_mode = ?,
+    status = ?,
+    ended_at = ?,
+    last_paused_at = ?,
+    planned_work_minutes = ?,
+    planned_break_minutes = ?,
+    completed_work_rounds = ?,
+    completed_break_rounds = ?,
+    total_focus_seconds = ?,
+    total_break_seconds = ?,
+    total_paused_seconds = ?,
+    updated_at = ?,
+    sync_status = ?
+WHERE id = ?;
+
+selectSessionHistoryById:
+SELECT *
+FROM session_history_local
+WHERE id = ?;
+
 selectAllSessionHistory:
 SELECT *
 FROM session_history_local

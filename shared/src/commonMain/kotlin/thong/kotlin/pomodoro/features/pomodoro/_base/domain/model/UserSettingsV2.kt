@@ -2,9 +2,11 @@ package thong.kotlin.pomodoro.features.pomodoro._base.domain.model
 
 import thong.kotlin.pomodoro.core.config.AppConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
 
 data class UserSettingsV2(
+    val currentSession : LearningSessionRecord? = null,
     val personalWorkMinutes: Int = AppConfig.DEFAULT_WORK_MINUTES,
     val personalBreakMinutes: Int = AppConfig.DEFAULT_BREAK_MINUTES,
     val personalLongBreakMinutes: Int = AppConfig.DEFAULT_LONG_BREAK_MINUTES,

@@ -88,7 +88,13 @@ class LearningStyleScreen : Screen {
                     syncStatus = SyncStatus.LOCAL_ONLY
                 )
                 learningSessionManager.insertSession(newSession)
-                navigator.push(PomodoroScreenV2(learningStyle, learningGroupConfig))
+                navigator.push(
+                    PomodoroScreenV2(
+                        learningStyle = learningStyle,
+                        learningGroupConfig = learningGroupConfig,
+                        session = newSession
+                    )
+                )
             })
     }
 }

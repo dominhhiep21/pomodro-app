@@ -32,8 +32,8 @@ object AuraGradients {
     // Gradient mang lại sự bình yên khi Nghỉ ngơi (Break Mode)
     val BreakFlow = Brush.horizontalGradient(
         colors = listOf(
-            Color(0xFF14B8A6), // Teal 500
-            Color(0xFF2DD4BF)  // Teal 400
+            Color(0xFF00BBA1), // Teal 500
+            Color(0xFF51FFEB)  // Teal 400
         )
     )
 }

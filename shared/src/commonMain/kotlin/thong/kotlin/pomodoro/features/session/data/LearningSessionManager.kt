@@ -9,23 +9,6 @@ class LearningSessionManager(
     private val repository: LearningSessionRepository
 ) {
 
-    fun startSession(workMinutes: Int) {
-        val now = currentTimeMillis()
-
-        val newSession = LearningSessionState(
-            sessionId = "session_$now",
-            status = LearningSessionStatus.RUNNING,
-            remainingSeconds = workMinutes * 60,
-            currentRound = 1,
-            startedAtMillis = now,
-            pausedAtMillis = null,
-            endedAtMillis = null,
-            completedByUser = false
-        )
-
-        repository.saveCurrentSession(newSession)
-    }
-
     fun pauseSessionBecauseAppInactive() {
         val current = repository.getCurrentSession()
 
@@ -97,6 +80,8 @@ class LearningSessionManager(
     fun getTotalFocusSeconds() = repository.getTotalFocusSeconds()
 
     fun insertSession(session: LearningSessionRecord) = repository.insertSession(session)
+
+    fun updateSession(session: LearningSessionRecord) = repository.updateSession(session)
 
     private fun currentTimeMillis(): Long {
         return Clock.System.now().toEpochMilliseconds()

@@ -23,14 +23,14 @@ import thong.kotlin.pomodoro.features.pomodoro.timer.domain.TimerSizes
 
 @Composable
 fun TimerSectionComponent(
+    modifier: Modifier = Modifier,
     timerUiState: TimerUiState,
     workspaceUiState: WorkspaceUiState,
     themeColor: Color,
     onToggleTimer: () -> Unit,
     onResetTimer: () -> Unit,
     onSkipTimer: () -> Unit,
-    compact: Boolean = false,
-    modifier: Modifier = Modifier
+    compact: Boolean = false
 ) {
     val timerBackgroundColor = remember(timerUiState.currentMode) {
         when (timerUiState.currentMode) {

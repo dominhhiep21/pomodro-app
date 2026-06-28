@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -39,24 +38,24 @@ import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TasksViewModel
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TimerViewModel
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceViewModel
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.presentation.SessionHistoryScreen
 
 class PomodoroScreenV2(
     private val learningStyle: LearningStyle = LearningStyle.SOLO,
-    private val learningGroupConfig: LearningGroupConfig? = null
+    private val learningGroupConfig: LearningGroupConfig? = null,
+    private val session : LearningSessionRecord,
+    private val soundManager: SoundManager? = DependencyRegistry.soundManager
 ) : Screen {
 
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val repository = remember { DependencyRegistry.userAppStateRepositoryV2 }
-        val database = remember { DependencyRegistry.database }
-        val soundManager = remember { DependencyRegistry.soundManager }
 
-        val timerViewModel: TimerViewModel = viewModel { TimerViewModel(soundManager, repository) }
-        val tasksViewModel: TasksViewModel = viewModel { TasksViewModel(repository) }
+        val timerViewModel: TimerViewModel = viewModel { TimerViewModel(currentSession = session) }
+        val tasksViewModel: TasksViewModel = viewModel { TasksViewModel() }
         val workspaceViewModel: WorkspaceViewModel =
-            viewModel { WorkspaceViewModel(soundManager, repository) }
+            viewModel { WorkspaceViewModel() }
 
         val workspaceState by workspaceViewModel.uiState.collectAsState()
 
@@ -124,15 +123,10 @@ fun PomodoroScreenUIv2(
         Box(modifier = Modifier.fillMaxSize()) {
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                 val isLandscape = maxWidth > maxHeight
-                val currentState =
-                    PomodoroUiState(workspaceState.isCompactMode, isLandscape, learningStyle)
+                val currentState = PomodoroUiState(workspaceState.isCompactMode, isLandscape, learningStyle)
                 when (currentState) {
                     // Gen UI Landscape Compact Group
-                    PomodoroUiState(
-                        isCompact = true,
-                        isLandscape = true,
-                        style = LearningStyle.GROUP
-                    ) -> {
+                    PomodoroUiState(isCompact = true, isLandscape = true, style = LearningStyle.GROUP) -> {
                         LandscapeCompactUI(
                             workspaceUiState = workspaceState,
                             timerUiState = timerState,
@@ -174,11 +168,7 @@ fun PomodoroScreenUIv2(
                         )
                     }
                     // Gen UI Landscape Compact Solo
-                    PomodoroUiState(
-                        isCompact = true,
-                        isLandscape = true,
-                        style = LearningStyle.SOLO
-                    ) -> {
+                    PomodoroUiState(isCompact = true, isLandscape = true, style = LearningStyle.SOLO) -> {
                         LandscapeCompactUI(
                             workspaceUiState = workspaceState,
                             timerUiState = timerState,
@@ -219,11 +209,7 @@ fun PomodoroScreenUIv2(
                         )
                     }
                     // Gen UI Portrait Compact Group
-                    PomodoroUiState(
-                        isCompact = true,
-                        isLandscape = false,
-                        style = LearningStyle.GROUP
-                    ) -> {
+                    PomodoroUiState(isCompact = true, isLandscape = false, style = LearningStyle.GROUP) -> {
                         PortraitCompactUI(
                             workspaceUiState = workspaceState,
                             timerUiState = timerState,
@@ -319,7 +305,7 @@ fun PomodoroScreenUIv2(
                             timerUiState = timerState,
                             tasksUiState = tasksState,
                             groupConfig = learningGroupConfig ?: LearningGroupConfig(),
-                            themeColor = rememberPomodoroThemeColor(workspaceState.currentMode),
+                            themeColor = rememberPomodoroThemeColor(timerState.currentMode),
                             onToggleTimer = timerViewModel::toggleTimer,
                             onResetTimer = timerViewModel::resetTimer,
                             onSkipTimer = timerViewModel::skipTimer,
@@ -346,7 +332,7 @@ fun PomodoroScreenUIv2(
                             workspaceUiState = workspaceState,
                             timerUiState = timerState,
                             tasksUiState = tasksState,
-                            themeColor = rememberPomodoroThemeColor(workspaceState.currentMode),
+                            themeColor = rememberPomodoroThemeColor(timerState.currentMode),
                             onToggleTimer = timerViewModel::toggleTimer,
                             onResetTimer = timerViewModel::resetTimer,
                             onSkipTimer = timerViewModel::skipTimer,
@@ -374,7 +360,7 @@ fun PomodoroScreenUIv2(
                             timerUiState = timerState,
                             tasksUiState = tasksState,
                             groupConfig = learningGroupConfig ?: LearningGroupConfig(),
-                            themeColor = rememberPomodoroThemeColor(workspaceState.currentMode),
+                            themeColor = rememberPomodoroThemeColor(timerState.currentMode),
                             onToggleTimer = timerViewModel::toggleTimer,
                             onResetTimer = timerViewModel::resetTimer,
                             onSkipTimer = timerViewModel::skipTimer,
@@ -401,7 +387,7 @@ fun PomodoroScreenUIv2(
                             workspaceUiState = workspaceState,
                             timerUiState = timerState,
                             tasksUiState = tasksState,
-                            themeColor = rememberPomodoroThemeColor(workspaceState.currentMode),
+                            themeColor = rememberPomodoroThemeColor(timerState.currentMode),
                             onToggleTimer = timerViewModel::toggleTimer,
                             onResetTimer = timerViewModel::resetTimer,
                             onSkipTimer = timerViewModel::skipTimer,

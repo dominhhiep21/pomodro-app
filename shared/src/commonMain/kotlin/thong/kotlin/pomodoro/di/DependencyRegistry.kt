@@ -19,9 +19,6 @@ object DependencyRegistry {
 
     private var _database: AuraDatabase? = null
 
-    val database: AuraDatabase?
-        get() = _database
-
     fun initDatabase(driver: SqlDriver) {
         if (_database == null) {
             _database = AuraDatabase(driver)

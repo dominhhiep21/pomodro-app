@@ -6,6 +6,7 @@ import thong.kotlin.pomodoro.database.AuraDatabase
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.LearningSessionState
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.toLearningSessionRecord
+import kotlin.time.Clock
 
 class LearningSessionRepositoryImpl(
     private val localDataSource: LocalLearningSessionDataSource,
@@ -69,5 +70,38 @@ class LearningSessionRepositoryImpl(
 
             sync_status = session.syncStatus.name
         )
+    }
+
+    override fun updateSession(session: LearningSessionRecord) {
+        val queries = database?.sessionHistoryLocalQueries ?: return
+        val existing = queries
+            .selectSessionHistoryById(session.sessionId)
+            .executeAsOneOrNull()
+
+        val now = Clock.System.now().toEpochMilliseconds()
+
+        if (existing == null) {
+            insertSession(session)
+        } else {
+            queries.updateSessionHistory(
+                user_id = session.userId,
+                anonymous_user_id = session.anonymousUserId,
+                session_mode = session.sessionMode.name,
+                current_learning_mode = session.currentLearningMode.name,
+                status = session.status.name,
+                ended_at = session.endedAtMillis.toDateTimeTextOrNull(),
+                last_paused_at = session.lastPausedAtMillis.toDateTimeTextOrNull(),
+                planned_work_minutes = session.plannedWorkMinutes.toLong(),
+                planned_break_minutes = session.plannedBreakMinutes.toLong(),
+                completed_work_rounds = session.completedWorkRounds.toLong(),
+                completed_break_rounds = session.completedBreakRounds.toLong(),
+                total_focus_seconds = session.totalFocusSeconds.toLong(),
+                total_break_seconds = session.totalBreakSeconds.toLong(),
+                total_paused_seconds = session.totalPausedSeconds.toLong(),
+                updated_at = now.toDateTimeText(),
+                sync_status = session.syncStatus.name,
+                id = session.sessionId
+            )
+        }
     }
 }

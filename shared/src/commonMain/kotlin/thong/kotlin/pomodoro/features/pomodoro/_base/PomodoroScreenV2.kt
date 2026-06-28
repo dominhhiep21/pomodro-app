@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -22,7 +23,7 @@ import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.core.designsystem.theme.rememberBreathingEffect
 import thong.kotlin.pomodoro.core.media.SoundManager
-import thong.kotlin.pomodoro.database.AuraDatabase
+import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro._base.components.LandscapeCompactUI
@@ -33,7 +34,6 @@ import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoro
 import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoroUI
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.PomodoroUiState
-import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryV2
 import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.PomodoroSettingsModal
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TasksViewModel
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TimerViewModel
@@ -41,9 +41,6 @@ import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceViewModel
 
 class PomodoroScreenV2(
-    private val database : AuraDatabase? = null,
-    private val soundManager: SoundManager? = null,
-    private val repository: UserAppStateRepositoryV2,
     private val learningStyle: LearningStyle = LearningStyle.SOLO,
     private val learningGroupConfig: LearningGroupConfig? = null
 ) : Screen {
@@ -51,6 +48,9 @@ class PomodoroScreenV2(
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
+        val repository = remember { DependencyRegistry.userAppStateRepositoryV2 }
+        val database = remember { DependencyRegistry.database }
+        val soundManager = remember { DependencyRegistry.soundManager }
 
         val timerViewModel: TimerViewModel = viewModel { TimerViewModel(soundManager, repository) }
         val tasksViewModel: TasksViewModel = viewModel { TasksViewModel(repository) }
@@ -263,6 +263,7 @@ fun PomodoroScreenUIv2(
                             onExit = { onExit(soundManager, navigator) }
                         )
                     }
+
                     PomodoroUiState(
                         isCompact = true,
                         isLandscape = false,

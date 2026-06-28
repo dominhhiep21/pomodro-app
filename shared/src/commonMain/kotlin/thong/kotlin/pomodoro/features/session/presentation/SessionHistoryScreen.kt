@@ -42,19 +42,19 @@ import thong.kotlin.pomodoro.core.utils.secondsToHourMinuteText
 import thong.kotlin.pomodoro.core.utils.secondsToMinutesText
 import thong.kotlin.pomodoro.core.utils.toDateTimeText
 import thong.kotlin.pomodoro.database.AuraDatabase
+import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.session.domain.CurrentLearningMode
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
 import thong.kotlin.pomodoro.features.session.domain.toLearningSessionRecord
 import kotlin.collections.emptyList
 
-class SessionHistoryScreen(
-    private val database: AuraDatabase? = null,
-    soundManager: SoundManager? = null
-) : Screen {
+class SessionHistoryScreen : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
+        val database = remember { DependencyRegistry.database }
+
         val sessions = remember(database) {
             database
                 ?.sessionHistoryLocalQueries

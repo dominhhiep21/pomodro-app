@@ -14,14 +14,10 @@ import thong.kotlin.pomodoro.features.startup.presentation.StartupLoadingScreen
 @OptIn(ExperimentalVoyagerApi::class)
 @Composable
 @Preview
-fun App(
-    database: AuraDatabase? = null,
-    soundManager: SoundManager? = null,
-    notificationManager: NotificationManager? = null
-) {
+fun App() {
     AuraTheme {
         ProvideNavigatorLifecycleKMPSupport {
-            Navigator(screen = StartupLoadingScreen(database, soundManager, notificationManager))
+            Navigator(screen = StartupLoadingScreen())
         }
     }
 }

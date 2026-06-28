@@ -1,5 +1,6 @@
 package thong.kotlin.pomodoro.features.session.domain
 
+import thong.kotlin.pomodoro.core.config.AppConfig
 import thong.kotlin.pomodoro.core.utils.toDateTimeText
 import thong.kotlin.pomodoro.core.utils.toDateTimeTextOrNull
 import thong.kotlin.pomodoro.core.utils.toEnumOrDefault
@@ -18,11 +19,11 @@ data class LearningSessionRecord(
     val status: LearningSessionStatus = LearningSessionStatus.IDLE,
     val currentLearningMode : CurrentLearningMode = CurrentLearningMode.NOT_YET_STARTED,
     val startedAtMillis: Long = Clock.System.now().toEpochMilliseconds(),
-    val endedAtMillis: Long?,
-    val lastPausedAtMillis: Long?,
-    val plannedWorkMinutes: Int = 0,
-    val plannedBreakMinutes: Int = 0,
-    val plannedLongBreakMinutes: Int = 0,
+    val endedAtMillis: Long? = null,
+    val lastPausedAtMillis: Long? = null,
+    val plannedWorkMinutes: Int = AppConfig.DEFAULT_WORK_MINUTES,
+    val plannedBreakMinutes: Int = AppConfig.DEFAULT_BREAK_MINUTES,
+    val plannedLongBreakMinutes: Int = AppConfig.DEFAULT_LONG_BREAK_MINUTES,
     val totalFocusSeconds: Int = 0,
     val totalBreakSeconds: Int = 0,
     val totalPausedSeconds: Int = 0,

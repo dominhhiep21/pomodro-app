@@ -39,6 +39,7 @@ import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TasksViewModel
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TimerViewModel
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceViewModel
+import thong.kotlin.pomodoro.features.session.presentation.SessionHistoryScreen
 
 class PomodoroScreenV2(
     private val learningStyle: LearningStyle = LearningStyle.SOLO,
@@ -461,5 +462,5 @@ fun rememberPomodoroThemeColor(currentMode: PomodoroMode): Color {
 
 private fun onExit(soundManager: SoundManager?, navigator: Navigator) {
     soundManager?.stopAllSounds()
-    navigator.pop()
+    navigator.replace(SessionHistoryScreen())
 }

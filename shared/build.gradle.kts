@@ -9,15 +9,15 @@ plugins {
 
 kotlin {
     jvmToolchain(17)
-    listOf(
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "Shared"
-            isStatic = true
-        }
-    }
+//    listOf(
+//        iosArm64(),
+//        iosSimulatorArm64()
+//    ).forEach { iosTarget ->
+//        iosTarget.binaries.framework {
+//            baseName = "Shared"
+//            isStatic = true
+//        }
+//    }
     
     jvm()
     
@@ -43,6 +43,10 @@ kotlin {
        withHostTest {
            isIncludeAndroidResources = true
        }
+    }
+
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
     }
     
     sourceSets {
@@ -79,6 +83,8 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.sqldelight.coroutines)
+            implementation(libs.sqldelight.runtime)
+            implementation(libs.kotlinx.datetime)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

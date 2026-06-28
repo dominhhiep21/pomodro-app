@@ -22,6 +22,7 @@ import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.core.designsystem.theme.rememberBreathingEffect
 import thong.kotlin.pomodoro.core.media.SoundManager
+import thong.kotlin.pomodoro.database.AuraDatabase
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro._base.components.LandscapeCompactUI
@@ -40,6 +41,7 @@ import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceViewModel
 
 class PomodoroScreenV2(
+    private val database : AuraDatabase? = null,
     private val soundManager: SoundManager? = null,
     private val repository: UserAppStateRepositoryV2,
     private val learningStyle: LearningStyle = LearningStyle.SOLO,

@@ -7,31 +7,19 @@ enum class LearningSessionStatus {
     COMPLETED  // Đã kết thúc chính thức
 }
 
+enum class CurrentLearningMode {
+    NOT_YET_STARTED,
+    WORK,
+    BREAK,
+    LONG_BREAK
+}
+
 enum class SyncStatus {
     LOCAL_ONLY,
     PENDING_SYNC,
     SYNCING,
     SYNCED,
     SYNC_FAILED
-}
-
-enum class OutboxStatus {
-    PENDING,
-    SYNCING,
-    SYNCED,
-    FAILED
-}
-
-enum class SyncEntityType {
-    LEARNING_SESSION,
-    LEARNING_SESSION_EVENT,
-    LEARNING_SESSION_BUNDLE
-}
-
-enum class SyncOperation {
-    CREATE,
-    UPDATE,
-    DELETE
 }
 
 enum class LearningSessionEventType {

@@ -12,6 +12,9 @@ object AuraColors {
     val WorkMode = Color(0xFFF43F5E)            // Hồng Rose (Tập trung)
     val ShortBreakMode = Color(0xFF14B8A6)      // Xanh Teal (Nghỉ ngắn)
     val LongBreakMode = Color(0xFF3B82F6)       // Xanh Dương (Nghỉ dài)
+    val SessionCompletedMode = Color(0xFF03BA35)
+    val SessionPausedMode = Color(0xFFE00303)
+    val SessionIdleMode = Color(0xFFFFA500)
 
     // Màu nền cho các thanh công cụ (Bottom Bar)
     val BottomBarBackground = Color(0xFF18181B) // Nền đen Zinc (Opaque)

@@ -44,23 +44,26 @@ import thong.kotlin.pomodoro.core.designsystem.components.AuraInputField
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.core.media.SoundManager
+import thong.kotlin.pomodoro.database.AuraDatabase
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro._base.PomodoroScreenV2
 
-class LearningStyleScreen(private val soundManager: SoundManager?) : Screen {
+class LearningStyleScreen(
+    private val database: AuraDatabase? = null,
+    private val soundManager: SoundManager?
+) : Screen {
 
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val repository = remember { DependencyRegistry.userAppStateRepositoryV2 }
 
-        LearningStyleScreenUI(onFinish = {
-            learningStyle, learningGroupConfig ->
+        LearningStyleScreenUI(onFinish = { learningStyle, learningGroupConfig ->
             navigator.push(
                 PomodoroScreenV2(
-                    soundManager, repository, learningStyle, learningGroupConfig
+                    database, soundManager, repository, learningStyle, learningGroupConfig
                 )
             )
         })

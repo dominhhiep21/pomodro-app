@@ -46,12 +46,14 @@ import thong.kotlin.pomodoro.core.designsystem.components.AuraButton
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.core.media.SoundManager
+import thong.kotlin.pomodoro.database.AuraDatabase
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.learning.mode.components.LearningStyleScreen
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettingsV2
 import thong.kotlin.pomodoro.features.settings.data.BackgroundRepository
 
 class OnboardingScreen(
+    private val database: AuraDatabase? = null,
     private val soundManager: SoundManager?
 ) : Screen {
 
@@ -74,7 +76,7 @@ class OnboardingScreen(
                         hasCompletedOnboarding = true
                     )
                 )
-                navigator.replace(LearningStyleScreen(soundManager))
+                navigator.replace(LearningStyleScreen(database, soundManager))
             }
         )
     }

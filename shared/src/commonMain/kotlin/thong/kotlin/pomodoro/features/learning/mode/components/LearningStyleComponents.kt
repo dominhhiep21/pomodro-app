@@ -57,6 +57,7 @@ import thong.kotlin.pomodoro.features.session.domain.CurrentLearningMode
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
 import thong.kotlin.pomodoro.features.session.domain.SyncStatus
+import thong.kotlin.pomodoro.features.session.presentation.SessionHistoryScreen
 import kotlin.time.Clock
 
 class LearningStyleScreen : Screen {
@@ -67,7 +68,7 @@ class LearningStyleScreen : Screen {
         val learningSessionManager = remember { DependencyRegistry.learningSessionManager }
 
         LearningStyleScreenUI(
-            onBack = { navigator.pop() },
+            onBack = { navigator.replace(SessionHistoryScreen()) },
             onFinish = { learningStyle, learningGroupConfig ->
                 val now = Clock.System.now().toEpochMilliseconds()
                 val workMin = learningGroupConfig?.workMinutes ?: AppConfig.DEFAULT_WORK_MINUTES

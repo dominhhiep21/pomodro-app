@@ -13,7 +13,6 @@ import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppSt
 import thong.kotlin.pomodoro.features.session.data.LearningSessionManager
 import thong.kotlin.pomodoro.features.session.data.LearningSessionRepository
 import thong.kotlin.pomodoro.features.session.data.LearningSessionRepositoryImpl
-import thong.kotlin.pomodoro.features.session.data.LocalLearningSessionDataSource
 
 object DependencyRegistry {
 
@@ -62,7 +61,7 @@ object DependencyRegistry {
     }
 
     private val localLearningSessionDataSource by lazy {
-        LocalLearningSessionDataSource(settings)
+        LocalSettingsDataSourceV2(settings)
     }
 
     val learningSessionRepository: LearningSessionRepository by lazy {

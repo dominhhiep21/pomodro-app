@@ -1,6 +1,5 @@
 package thong.kotlin.pomodoro.features.session.data
 
-import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.LearningSessionState
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
 import kotlin.time.Clock
@@ -82,6 +81,8 @@ class LearningSessionManager(
     fun insertSession(session: LearningSessionRecord) = repository.insertSession(session)
 
     fun updateSession(session: LearningSessionRecord) = repository.updateSession(session)
+
+    fun clearAllSessionsData() = repository.clearAllSessionsData()
 
     private fun currentTimeMillis(): Long {
         return Clock.System.now().toEpochMilliseconds()

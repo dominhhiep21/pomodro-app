@@ -20,4 +20,6 @@ interface LearningSessionRepository {
     fun insertSession(session: LearningSessionRecord)
 
     fun updateSession(session: LearningSessionRecord)
+
+    fun clearAllSessionsData()
 }

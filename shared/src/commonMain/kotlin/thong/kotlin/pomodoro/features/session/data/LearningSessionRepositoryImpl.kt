@@ -4,25 +4,25 @@ import thong.kotlin.pomodoro.core.utils.toDateTimeText
 import thong.kotlin.pomodoro.core.utils.toDateTimeTextOrNull
 import thong.kotlin.pomodoro.database.AuraDatabase
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.LearningSessionState
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.LocalSettingsDataSourceV2
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.toLearningSessionRecord
 import kotlin.time.Clock
 
 class LearningSessionRepositoryImpl(
-    private val localDataSource: LocalLearningSessionDataSource,
+    private val localDataSource: LocalSettingsDataSourceV2,
     private val database: AuraDatabase? = null
 ) : LearningSessionRepository {
-
     override fun getCurrentSession(): LearningSessionState {
-        return localDataSource.getCurrentSession()
+        TODO("Not yet implemented")
     }
 
     override fun saveCurrentSession(session: LearningSessionState) {
-        localDataSource.saveCurrentSession(session)
+        TODO("Not yet implemented")
     }
 
     override fun clearCurrentSession() {
-        localDataSource.clearCurrentSession()
+        TODO("Not yet implemented")
     }
 
     override fun saveCompletedSession(session: LearningSessionState) {
@@ -103,5 +103,12 @@ class LearningSessionRepositoryImpl(
                 id = session.sessionId
             )
         }
+    }
+
+    override fun clearAllSessionsData() {
+        val queries = database?.sessionHistoryLocalQueries ?: return
+        localDataSource.clearUserSettings()
+        queries.deleteAllLearningSessionEvents()
+        queries.deleteAllSessionHistory()
     }
 }

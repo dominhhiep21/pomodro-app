@@ -95,23 +95,11 @@ SELECT COALESCE(SUM(total_focus_seconds), 0)
 FROM session_history_local
 WHERE status = 'COMPLETED';
 
-selectSessionHistoryByUserId:
-SELECT *
-FROM session_history_local
-WHERE user_id = ?
-ORDER BY started_at DESC;
+deleteAllLearningSessionEvents:
+DELETE FROM learning_session_event_local;
 
-selectSessionHistoryByAnonymousUserId:
-SELECT *
-FROM session_history_local
-WHERE anonymous_user_id = ?
-ORDER BY started_at DESC;
-
-selectUnsyncedSessionHistory:
-SELECT *
-FROM session_history_local
-WHERE sync_status != 'SYNCED'
-ORDER BY updated_at ASC;
+deleteAllSessionHistory:
+DELETE FROM session_history_local;
 
 CREATE TABLE IF NOT EXISTS learning_session_event_local (
     event_id TEXT NOT NULL PRIMARY KEY,

@@ -56,7 +56,6 @@ import thong.kotlin.pomodoro.features.session.domain.CurrentLearningMode
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
 import thong.kotlin.pomodoro.features.session.domain.SyncStatus
-import thong.kotlin.pomodoro.features.session.domain.insertInto
 import kotlin.time.Clock
 
 class LearningStyleScreen : Screen {
@@ -64,12 +63,11 @@ class LearningStyleScreen : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val database = remember { DependencyRegistry.database }
+        val learningSessionManager = remember { DependencyRegistry.learningSessionManager }
 
         LearningStyleScreenUI(
             onBack = { navigator.pop() },
             onFinish = { learningStyle, learningGroupConfig ->
-            database?.sessionHistoryLocalQueries?.let { queries ->
                 val now = Clock.System.now().toEpochMilliseconds()
                 val workMin = AppConfig.DEFAULT_WORK_MINUTES
                 val breakMin = AppConfig.DEFAULT_BREAK_MINUTES
@@ -88,12 +86,11 @@ class LearningStyleScreen : Screen {
                     totalFocusSeconds = workMin * 60,
                     syncStatus = SyncStatus.LOCAL_ONLY
                 )
-                newSession.insertInto(queries)
-            }
-            navigator.push(
-                PomodoroScreenV2(learningStyle, learningGroupConfig)
-            )
-        })
+                learningSessionManager.insertSession(newSession)
+                navigator.push(
+                    PomodoroScreenV2(learningStyle, learningGroupConfig)
+                )
+            })
     }
 }
 
@@ -122,7 +119,10 @@ private fun LearningStyleScreenUI(
             // Back Button
             Box(
                 modifier = Modifier
-                    .padding(top = if (isLandscape) 12.dp else 24.dp, start = if (isLandscape) 12.dp else 24.dp)
+                    .padding(
+                        top = if (isLandscape) 12.dp else 24.dp,
+                        start = if (isLandscape) 12.dp else 24.dp
+                    )
                     .align(Alignment.TopStart)
             ) {
                 GlassBox(

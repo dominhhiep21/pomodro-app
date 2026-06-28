@@ -40,8 +40,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
@@ -50,77 +51,54 @@ import thong.kotlin.pomodoro.core.utils.secondsToMinutesText
 import thong.kotlin.pomodoro.core.utils.toDateTimeText
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.learning.mode.components.LearningStyleScreen
-import thong.kotlin.pomodoro.features.session.domain.CurrentLearningMode
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
-import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
-import thong.kotlin.pomodoro.features.session.domain.toLearningSessionRecord
+import thong.kotlin.pomodoro.features.session.domain.color
+import thong.kotlin.pomodoro.features.session.domain.toDisplayText
 
 class SessionHistoryScreen : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val database = remember { DependencyRegistry.database }
+        val learningSessionManager = remember { DependencyRegistry.learningSessionManager }
 
         var sessions by remember { mutableStateOf(emptyList<LearningSessionRecord>()) }
+        var isLoading by remember { mutableStateOf(true) }
         var totalFocusSeconds by remember { mutableLongStateOf(0L) }
-//        var showCreateModal by remember { mutableStateOf(false) }
 
-        fun refreshData() {
-            database?.sessionHistoryLocalQueries?.let { queries ->
-                sessions = queries.selectAllSessionHistory().executeAsList().map { it.toLearningSessionRecord() }
-                totalFocusSeconds = queries.selectTotalFocusSeconds().executeAsOne().toLong()
+        LaunchedEffect(Unit) {
+            isLoading = true
+
+            val result = withContext(Dispatchers.IO) {
+                val sessionList = learningSessionManager.getAllLearningSession()
+                val total = learningSessionManager.getTotalFocusSeconds()
+                sessionList to total
             }
-        }
 
-        LaunchedEffect(database) {
-            refreshData()
+            sessions = result.first
+            totalFocusSeconds = result.second
+            isLoading = false
         }
 
         SessionListUI(
+            isListLoading = isLoading,
             sessions = sessions,
             totalFocusSeconds = totalFocusSeconds,
-            navigator = navigator,
+            onBack = {
+                navigator.pop()
+            },
             onCreateSession = {
                 navigator.push(LearningStyleScreen())
             }
         )
-
-//        if (showCreateModal) {
-//            CreateSessionModal(
-//                onDismiss = { showCreateModal = false },
-//                onConfirm = { workMin, breakMin ->
-//                    database?.sessionHistoryLocalQueries?.let { queries ->
-//                        val now = Clock.System.now().toEpochMilliseconds()
-//                        val newSession = LearningSessionRecord(
-//                            sessionId = "manual_$now",
-//                            userId = null,
-//                            anonymousUserId = null,
-//                            sessionMode = LearningStyle.SOLO,
-//                            status = LearningSessionStatus.COMPLETED,
-//                            currentLearningMode = CurrentLearningMode.WORK,
-//                            startedAtMillis = now,
-//                            endedAtMillis = now + (workMin * 60 * 1000L),
-//                            lastPausedAtMillis = null,
-//                            plannedWorkMinutes = workMin,
-//                            plannedBreakMinutes = breakMin,
-//                            totalFocusSeconds = workMin * 60,
-//                            syncStatus = SyncStatus.LOCAL_ONLY
-//                        )
-//                        newSession.insertInto(queries)
-//                        refreshData()
-//                    }
-//                    showCreateModal = false
-//                }
-//            )
-//        }
     }
 }
 
 @Composable
 private fun SessionListUI(
+    isListLoading: Boolean,
     sessions: List<LearningSessionRecord>,
     totalFocusSeconds: Long,
-    navigator: Navigator,
+    onBack: () -> Unit,
     onCreateSession: () -> Unit
 ) {
     AuraBackground {
@@ -136,7 +114,7 @@ private fun SessionListUI(
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = { navigator.pop() }) {
+                        IconButton(onClick = onBack) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
                                 "Back",
@@ -175,103 +153,46 @@ private fun SessionListUI(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = PaddingValues(bottom = 24.dp)
-                ) {
-                    items(sessions) { session ->
-                        SessionItem(session)
+                when {
+                    isListLoading -> {
+                        Text(
+                            text = "Đang tải dữ liệu...",
+                            color = AuraColors.TextSecondary,
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(top = 16.dp)
+                        )
+                    }
+
+                    sessions.isEmpty() -> {
+                        Text(
+                            text = "Chưa có phiên làm việc nào",
+                            color = AuraColors.TextSecondary,
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(top = 16.dp)
+                        )
+                    }
+
+                    else -> {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = PaddingValues(bottom = 24.dp)
+                        ) {
+                            items(
+                                items = sessions,
+                                key = { it.sessionId }
+                            ) { session ->
+                                SessionItem(session)
+                            }
+                        }
                     }
                 }
             }
         }
     }
 }
-
-//@Composable
-//private fun CreateSessionModal(
-//    onDismiss: () -> Unit,
-//    onConfirm: (workMin: Int, breakMin: Int) -> Unit
-//) {
-//    var workMinutes by remember { mutableStateOf("25") }
-//    var breakMinutes by remember { mutableStateOf("5") }
-//
-//    Dialog(onDismissRequest = onDismiss) {
-//        GlassBox(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(16.dp),
-//            shape = RoundedCornerShape(24.dp),
-//            backgroundColor = AuraColors.BottomBarBackground.copy(alpha = 0.9f)
-//        ) {
-//            Column(
-//                modifier = Modifier.padding(24.dp),
-//                horizontalAlignment = Alignment.CenterHorizontally
-//            ) {
-//                Text(
-//                    "THÊM PHIÊN MỚI",
-//                    color = Color.White,
-//                    fontSize = 20.sp,
-//                    fontWeight = FontWeight.Black
-//                )
-//
-//                Spacer(modifier = Modifier.height(24.dp))
-//
-//                InputFieldLabel("Thời gian làm việc (phút)")
-//                AuraInputField(
-//                    value = workMinutes,
-//                    onValueChange = { if (it.all { char -> char.isDigit() }) workMinutes = it },
-//                    placeholder = "25",
-//                    modifier = Modifier.fillMaxWidth()
-//                )
-//
-//                Spacer(modifier = Modifier.height(16.dp))
-//
-//                InputFieldLabel("Thời gian nghỉ (phút)")
-//                AuraInputField(
-//                    value = breakMinutes,
-//                    onValueChange = { if (it.all { char -> char.isDigit() }) breakMinutes = it },
-//                    placeholder = "5",
-//                    modifier = Modifier.fillMaxWidth()
-//                )
-//
-//                Spacer(modifier = Modifier.height(32.dp))
-//
-//                Row(
-//                    modifier = Modifier.fillMaxWidth(),
-//                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-//                ) {
-//                    AuraButton(
-//                        onClick = onDismiss,
-//                        modifier = Modifier.weight(1f)
-//                    ) {
-//                        Text("Hủy", color = Color.White.copy(alpha = 0.7f))
-//                    }
-//                    AuraButton(
-//                        onClick = {
-//                            val w = workMinutes.toIntOrNull() ?: 25
-//                            val b = breakMinutes.toIntOrNull() ?: 5
-//                            onConfirm(w, b)
-//                        },
-//                        modifier = Modifier.weight(1f)
-//                    ) {
-//                        Text("Xác nhận", color = AuraColors.WorkMode, fontWeight = FontWeight.Bold)
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
-
-//@Composable
-//private fun InputFieldLabel(text: String) {
-//    Text(
-//        text = text,
-//        color = AuraColors.TextSecondary,
-//        fontSize = 12.sp,
-//        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-//    )
-//}
 
 @Composable
 private fun SummaryHeader(totalFocusSeconds: Long = 0L) {
@@ -286,7 +207,7 @@ private fun SummaryHeader(totalFocusSeconds: Long = 0L) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                Text("Tổng thời gian", color = AuraColors.TextSecondary, fontSize = 12.sp)
+                Text("Tổng thời gian focus", color = AuraColors.TextSecondary, fontSize = 12.sp)
                 Text(
                     text = secondsToHourMinuteText(totalFocusSeconds),
                     color = Color.White,
@@ -306,12 +227,7 @@ private fun SummaryHeader(totalFocusSeconds: Long = 0L) {
 
 @Composable
 private fun SessionItem(session: LearningSessionRecord) {
-    val statusColor = when (session.status) {
-        LearningSessionStatus.COMPLETED -> AuraColors.SessionCompletedMode
-        LearningSessionStatus.RUNNING -> AuraColors.WorkMode
-        LearningSessionStatus.PAUSED -> AuraColors.SessionPausedMode
-        LearningSessionStatus.IDLE -> AuraColors.SessionIdleMode
-    }
+    val statusColor = session.status.color()
 
     GlassBox(
         modifier = Modifier.fillMaxWidth(),
@@ -325,12 +241,7 @@ private fun SessionItem(session: LearningSessionRecord) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = when (session.currentLearningMode) {
-                        CurrentLearningMode.NOT_YET_STARTED -> "Chưa bắt đầu"
-                        CurrentLearningMode.WORK -> "Đang làm việc"
-                        CurrentLearningMode.BREAK -> "Nghỉ ngắn"
-                        CurrentLearningMode.LONG_BREAK -> "Nghỉ dài"
-                    },
+                    text = session.currentLearningMode.toDisplayText(),
                     color = Color.White,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
@@ -350,7 +261,7 @@ private fun SessionItem(session: LearningSessionRecord) {
                     fontWeight = FontWeight.Black
                 )
                 Text(
-                    text = session.status.toString().uppercase(),
+                    text = session.status.toDisplayText(),
                     color = statusColor,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold

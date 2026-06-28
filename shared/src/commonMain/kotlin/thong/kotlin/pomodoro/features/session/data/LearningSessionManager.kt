@@ -1,6 +1,7 @@
 package thong.kotlin.pomodoro.features.session.data
 
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.LearningSessionState
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
 import kotlin.time.Clock
 
@@ -90,6 +91,12 @@ class LearningSessionManager(
             )
         )
     }
+
+    fun getAllLearningSession() = repository.getAllLearningSessionRecords()
+
+    fun getTotalFocusSeconds() = repository.getTotalFocusSeconds()
+
+    fun insertSession(session: LearningSessionRecord) = repository.insertSession(session)
 
     private fun currentTimeMillis(): Long {
         return Clock.System.now().toEpochMilliseconds()

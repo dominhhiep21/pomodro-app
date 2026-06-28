@@ -7,10 +7,7 @@ import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.core.notification.NotificationManager
 import thong.kotlin.pomodoro.core.pomodoro.mini_client.KtorPomodoroMiniClient
 import thong.kotlin.pomodoro.database.AuraDatabase
-import thong.kotlin.pomodoro.features.pomodoro._base.data.local.LocalSettingsDataSource
-import thong.kotlin.pomodoro.features.pomodoro._base.data.repository.UserAppStateRepositoryImpl
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.LocalSettingsDataSourceV2
-import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepository
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryImplV2
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryV2
 import thong.kotlin.pomodoro.features.session.data.LearningSessionManager
@@ -72,7 +69,7 @@ object DependencyRegistry {
     }
 
     val learningSessionRepository: LearningSessionRepository by lazy {
-        LearningSessionRepositoryImpl(localLearningSessionDataSource)
+        LearningSessionRepositoryImpl(localLearningSessionDataSource, _database)
     }
 
     val learningSessionManager: LearningSessionManager by lazy {

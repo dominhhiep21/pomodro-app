@@ -63,7 +63,7 @@ class SessionHistoryScreen : Screen {
 
         var sessions by remember { mutableStateOf(emptyList<LearningSessionRecord>()) }
         var totalFocusSeconds by remember { mutableLongStateOf(0L) }
-        var showCreateModal by remember { mutableStateOf(false) }
+//        var showCreateModal by remember { mutableStateOf(false) }
 
         fun refreshData() {
             database?.sessionHistoryLocalQueries?.let { queries ->
@@ -81,7 +81,7 @@ class SessionHistoryScreen : Screen {
             totalFocusSeconds = totalFocusSeconds,
             navigator = navigator,
             onCreateSession = {
-                navigator.replace(LearningStyleScreen())
+                navigator.push(LearningStyleScreen())
             }
         )
 

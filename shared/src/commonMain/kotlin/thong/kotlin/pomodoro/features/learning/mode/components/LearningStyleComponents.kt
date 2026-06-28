@@ -17,6 +17,9 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -38,22 +42,54 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import pomodrokotlin.shared.generated.resources.Res
 import pomodrokotlin.shared.generated.resources.landspace_startup_bg
+import thong.kotlin.pomodoro.core.config.AppConfig
 import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
 import thong.kotlin.pomodoro.core.designsystem.components.AuraButton
 import thong.kotlin.pomodoro.core.designsystem.components.AuraInputField
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
+import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro._base.PomodoroScreenV2
+import thong.kotlin.pomodoro.features.session.domain.CurrentLearningMode
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
+import thong.kotlin.pomodoro.features.session.domain.SyncStatus
+import thong.kotlin.pomodoro.features.session.domain.insertInto
+import kotlin.time.Clock
 
 class LearningStyleScreen : Screen {
 
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
+        val database = remember { DependencyRegistry.database }
 
-        LearningStyleScreenUI(onFinish = { learningStyle, learningGroupConfig ->
+        LearningStyleScreenUI(
+            onBack = { navigator.pop() },
+            onFinish = { learningStyle, learningGroupConfig ->
+            database?.sessionHistoryLocalQueries?.let { queries ->
+                val now = Clock.System.now().toEpochMilliseconds()
+                val workMin = AppConfig.DEFAULT_WORK_MINUTES
+                val breakMin = AppConfig.DEFAULT_BREAK_MINUTES
+                val newSession = LearningSessionRecord(
+                    sessionId = "manual_$now",
+                    userId = null,
+                    anonymousUserId = null,
+                    sessionMode = LearningStyle.SOLO,
+                    status = LearningSessionStatus.COMPLETED,
+                    currentLearningMode = CurrentLearningMode.WORK,
+                    startedAtMillis = now,
+                    endedAtMillis = now + (workMin * 60 * 1000L),
+                    lastPausedAtMillis = null,
+                    plannedWorkMinutes = workMin,
+                    plannedBreakMinutes = breakMin,
+                    totalFocusSeconds = workMin * 60,
+                    syncStatus = SyncStatus.LOCAL_ONLY
+                )
+                newSession.insertInto(queries)
+            }
             navigator.push(
                 PomodoroScreenV2(learningStyle, learningGroupConfig)
             )
@@ -63,6 +99,7 @@ class LearningStyleScreen : Screen {
 
 @Composable
 private fun LearningStyleScreenUI(
+    onBack: () -> Unit,
     onFinish: (LearningStyle, LearningGroupConfig?) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -81,6 +118,31 @@ private fun LearningStyleScreenUI(
     ) {
         BoxWithConstraints(modifier = modifier.fillMaxSize()) {
             val isLandscape = maxWidth > maxHeight
+
+            // Back Button
+            Box(
+                modifier = Modifier
+                    .padding(top = if (isLandscape) 12.dp else 24.dp, start = if (isLandscape) 12.dp else 24.dp)
+                    .align(Alignment.TopStart)
+            ) {
+                GlassBox(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .clickable { onBack() },
+                    shape = CircleShape,
+                    backgroundColor = Color.White.copy(alpha = 0.1f)
+                ) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Quay lại",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+            }
 
             Column(
                 modifier = Modifier

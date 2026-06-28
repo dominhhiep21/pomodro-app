@@ -17,7 +17,8 @@ import androidx.core.view.WindowInsetsControllerCompat
 
 import thong.kotlin.pomodoro.core.media.AndroidSoundManager
 import thong.kotlin.pomodoro.core.notification.AndroidNotificationManager
-import thong.kotlin.pomodoro.database.initDatabaseContext
+import thong.kotlin.pomodoro.database.AuraDatabase
+import thong.kotlin.pomodoro.database.DatabaseDriverFactory
 
 class MainActivity : ComponentActivity() {
 
@@ -32,7 +33,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         
         // Khởi tạo Database context
-        initDatabaseContext(this)
+        val database = AuraDatabase(
+            DatabaseDriverFactory(this).createDriver()
+        )
 
         // Yêu cầu quyền thông báo trên Android 13+
         requestNotificationPermission()
@@ -54,6 +57,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             App(
+                database = database,
                 soundManager = soundManager,
                 notificationManager = notificationManager
             )

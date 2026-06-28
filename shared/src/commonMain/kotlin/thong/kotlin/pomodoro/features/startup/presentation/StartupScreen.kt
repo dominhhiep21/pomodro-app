@@ -22,11 +22,13 @@ import pomodrokotlin.shared.generated.resources.landspace_startup_bg
 import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
 import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.core.notification.NotificationManager
+import thong.kotlin.pomodoro.database.AuraDatabase
 import thong.kotlin.pomodoro.di.DependencyRegistry
-import thong.kotlin.pomodoro.features.learning.mode.components.LearningStyleScreen
 import thong.kotlin.pomodoro.features.onboarding.presentation.OnboardingScreen
+import thong.kotlin.pomodoro.features.session.presentation.SessionHistoryScreen
 
 class StartupLoadingScreen(
+    private val database: AuraDatabase? = null,
     private val soundManager: SoundManager? = null,
     private val notificationManager: NotificationManager?
 ) : Screen {
@@ -41,11 +43,11 @@ class StartupLoadingScreen(
             val userSettings = repositoryV2.getUserSettings()
             if (userSettings.hasCompletedOnboarding) {
                 navigator.replace(
-                    LearningStyleScreen(soundManager)
+                    SessionHistoryScreen(database, soundManager)
                 )
             } else {
                 navigator.replace(
-                    OnboardingScreen(soundManager)
+                    OnboardingScreen(database, soundManager)
                 )
             }
         }
@@ -60,7 +62,7 @@ private fun StartupScreenUI() {
     // AuraBackground đã hỗ trợ tự động đổi ảnh Landscape/Portrait và ContentScale.Crop (Full Fill)
     AuraBackground(
         landscapeImageRes = Res.drawable.landspace_startup_bg,
-        blurRadius = 0f, 
+        blurRadius = 0f,
         overlayAlpha = 0.2f
     ) {
         BoxWithConstraints(

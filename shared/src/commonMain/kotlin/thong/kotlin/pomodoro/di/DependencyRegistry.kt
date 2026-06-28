@@ -9,6 +9,10 @@ import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.LocalSett
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepository
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryImplV2
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryV2
+import thong.kotlin.pomodoro.features.session.data.LearningSessionManager
+import thong.kotlin.pomodoro.features.session.data.LearningSessionRepository
+import thong.kotlin.pomodoro.features.session.data.LearningSessionRepositoryImpl
+import thong.kotlin.pomodoro.features.session.data.LocalLearningSessionDataSource
 
 object DependencyRegistry {
 
@@ -20,17 +24,23 @@ object DependencyRegistry {
         LocalSettingsDataSourceV2(settings)
     }
 
-    private val localSettings by lazy { LocalSettingsDataSource(Settings()) }
-
-    val userAppStateRepository: UserAppStateRepository by lazy {
-        UserAppStateRepositoryImpl(localSettings)
-    }
-
     val userAppStateRepositoryV2: UserAppStateRepositoryV2 by lazy {
         UserAppStateRepositoryImplV2(localSettingsDataSource)
     }
 
     val ktorPomodoroMiniClient: KtorPomodoroMiniClient by lazy {
         KtorPomodoroMiniClient(AppConfig.DEFAULT_POMODORO_MINI_SERVER_URL)
+    }
+
+    private val localLearningSessionDataSource by lazy {
+        LocalLearningSessionDataSource(settings)
+    }
+
+    val learningSessionRepository: LearningSessionRepository by lazy {
+        LearningSessionRepositoryImpl(localLearningSessionDataSource)
+    }
+
+    val learningSessionManager: LearningSessionManager by lazy {
+        LearningSessionManager(learningSessionRepository)
     }
 }

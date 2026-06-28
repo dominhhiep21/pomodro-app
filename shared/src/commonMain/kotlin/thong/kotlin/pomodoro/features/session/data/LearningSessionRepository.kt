@@ -1,6 +1,7 @@
 package thong.kotlin.pomodoro.features.session.data
 
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.LearningSessionState
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 
 interface LearningSessionRepository {
 
@@ -12,4 +13,13 @@ interface LearningSessionRepository {
 
     fun saveCompletedSession(session: LearningSessionState)
 
+    fun getAllLearningSessionRecords(): List<LearningSessionRecord>
+
+    fun getTotalFocusSeconds(): Long
+
+    fun insertSession(session: LearningSessionRecord)
+
+    fun updateSession(session: LearningSessionRecord)
+
+    fun clearAllSessionsData()
 }

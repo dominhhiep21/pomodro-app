@@ -1,14 +1,17 @@
 package thong.kotlin.pomodoro.features.pomodoro._base.domain.model
 
+import thong.kotlin.pomodoro.core.config.AppConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
 
 data class UserSettingsV2(
-    val personalWorkMinutes: Int = 25,
-    val personalBreakMinutes: Int = 5,
-    val personalLongBreakMinutes: Int = 15,
-    val autoStartBreak: Boolean = false,
-    val autoStartWork: Boolean = false,
+    val currentSession : LearningSessionRecord? = null,
+    val personalWorkMinutes: Int = AppConfig.DEFAULT_WORK_MINUTES,
+    val personalBreakMinutes: Int = AppConfig.DEFAULT_BREAK_MINUTES,
+    val personalLongBreakMinutes: Int = AppConfig.DEFAULT_LONG_BREAK_MINUTES,
+    val autoStartBreak: Boolean = AppConfig.DEFAULT_AUTO_START_BREAK,
+    val autoStartWork: Boolean = AppConfig.DEFAULT_AUTO_START_WORK,
     val personalSelectedBackgroundId: String? = null,
     val personalLastSelectedMusicId: String? = null,
     val hasCompletedOnboarding: Boolean = false,

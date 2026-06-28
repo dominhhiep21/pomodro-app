@@ -1,12 +1,9 @@
 package thong.kotlin.pomodoro.features.session.domain
 
 import thong.kotlin.pomodoro.core.config.AppConfig
-import thong.kotlin.pomodoro.core.utils.toDateTimeText
-import thong.kotlin.pomodoro.core.utils.toDateTimeTextOrNull
 import thong.kotlin.pomodoro.core.utils.toEnumOrDefault
 import thong.kotlin.pomodoro.core.utils.toMillisFromDateTimeText
 import thong.kotlin.pomodoro.core.utils.toMillisFromDateTimeTextOrNull
-import thong.kotlin.pomodoro.database.SessionHistoryLocalQueries
 import thong.kotlin.pomodoro.database.Session_history_local
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 import kotlin.time.Clock
@@ -63,41 +60,4 @@ fun Session_history_local.toLearningSessionRecord(): LearningSessionRecord {
 
         syncStatus = sync_status.toEnumOrDefault(SyncStatus.LOCAL_ONLY)
     )
-}
-
-fun LearningSessionRecord.insertInto(
-    queries: SessionHistoryLocalQueries
-) {
-    queries.insertSessionHistory(
-        id = sessionId,
-        user_id = userId,
-        anonymous_user_id = anonymousUserId,
-        session_mode = sessionMode.name,
-        status = status.name,
-        current_learning_mode = currentLearningMode.name,
-
-        started_at = startedAtMillis.toDateTimeText(),
-        ended_at = endedAtMillis.toDateTimeTextOrNull(),
-        last_paused_at = lastPausedAtMillis.toDateTimeTextOrNull(),
-
-        planned_work_minutes = plannedWorkMinutes.toLong(),
-        planned_break_minutes = plannedBreakMinutes.toLong(),
-        completed_work_rounds = completedWorkRounds.toLong(),
-        completed_break_rounds = completedBreakRounds.toLong(),
-
-        total_focus_seconds = totalFocusSeconds.toLong(),
-        total_break_seconds = totalBreakSeconds.toLong(),
-        total_paused_seconds = totalPausedSeconds.toLong(),
-
-        created_at = createdAtMillis.toDateTimeText(),
-        updated_at = updatedAtMillis.toDateTimeText(),
-
-        sync_status = syncStatus.name
-    )
-}
-
-fun SessionHistoryLocalQueries.selectAllLearningSessionRecords(): List<LearningSessionRecord> {
-    return selectAllSessionHistory()
-        .executeAsList()
-        .map { row -> row.toLearningSessionRecord() }
 }

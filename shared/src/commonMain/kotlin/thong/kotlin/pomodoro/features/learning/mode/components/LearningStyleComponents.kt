@@ -26,6 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,7 +57,7 @@ import thong.kotlin.pomodoro.features.session.domain.CurrentLearningMode
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
 import thong.kotlin.pomodoro.features.session.domain.SyncStatus
-import thong.kotlin.pomodoro.features.session.domain.insertInto
+import thong.kotlin.pomodoro.features.session.presentation.SessionHistoryScreen
 import kotlin.time.Clock
 
 class LearningStyleScreen : Screen {
@@ -64,36 +65,38 @@ class LearningStyleScreen : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val database = remember { DependencyRegistry.database }
+        val learningSessionManager = remember { DependencyRegistry.learningSessionManager }
 
         LearningStyleScreenUI(
-            onBack = { navigator.pop() },
+            onBack = { navigator.replace(SessionHistoryScreen()) },
             onFinish = { learningStyle, learningGroupConfig ->
-            database?.sessionHistoryLocalQueries?.let { queries ->
                 val now = Clock.System.now().toEpochMilliseconds()
-                val workMin = AppConfig.DEFAULT_WORK_MINUTES
-                val breakMin = AppConfig.DEFAULT_BREAK_MINUTES
+                val workMin = learningGroupConfig?.workMinutes ?: AppConfig.DEFAULT_WORK_MINUTES
+                val breakMin = learningGroupConfig?.breakMinutes ?: AppConfig.DEFAULT_BREAK_MINUTES
                 val newSession = LearningSessionRecord(
                     sessionId = "manual_$now",
                     userId = null,
                     anonymousUserId = null,
-                    sessionMode = LearningStyle.SOLO,
-                    status = LearningSessionStatus.COMPLETED,
+                    sessionMode = learningStyle,
+                    status = LearningSessionStatus.IDLE,
                     currentLearningMode = CurrentLearningMode.WORK,
                     startedAtMillis = now,
-                    endedAtMillis = now + (workMin * 60 * 1000L),
                     lastPausedAtMillis = null,
                     plannedWorkMinutes = workMin,
                     plannedBreakMinutes = breakMin,
-                    totalFocusSeconds = workMin * 60,
+                    endedAtMillis = null,
+                    totalFocusSeconds = 0,
                     syncStatus = SyncStatus.LOCAL_ONLY
                 )
-                newSession.insertInto(queries)
-            }
-            navigator.push(
-                PomodoroScreenV2(learningStyle, learningGroupConfig)
-            )
-        })
+                learningSessionManager.insertSession(newSession)
+                navigator.push(
+                    PomodoroScreenV2(
+                        learningStyle = learningStyle,
+                        learningGroupConfig = learningGroupConfig,
+                        session = newSession
+                    )
+                )
+            })
     }
 }
 
@@ -103,13 +106,13 @@ private fun LearningStyleScreenUI(
     onFinish: (LearningStyle, LearningGroupConfig?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var selectedStyle by remember { mutableStateOf(LearningStyle.SOLO) }
     var showGroupSettingsPopup by remember { mutableStateOf(false) }
 
     // Group Settings State
-    var maxPeople by remember { mutableStateOf("4") }
-    var workMinutes by remember { mutableStateOf("25") }
-    var breakMinutes by remember { mutableStateOf("5") }
+    var selectedStyle by rememberSaveable { mutableStateOf(LearningStyle.SOLO) }
+    var maxPeople by rememberSaveable { mutableStateOf("4") }
+    var workMinutes by rememberSaveable { mutableStateOf("25") }
+    var breakMinutes by rememberSaveable { mutableStateOf("5") }
 
     AuraBackground(
         blurRadius = 8f,
@@ -122,7 +125,10 @@ private fun LearningStyleScreenUI(
             // Back Button
             Box(
                 modifier = Modifier
-                    .padding(top = if (isLandscape) 12.dp else 24.dp, start = if (isLandscape) 12.dp else 24.dp)
+                    .padding(
+                        top = if (isLandscape) 12.dp else 24.dp,
+                        start = if (isLandscape) 12.dp else 24.dp
+                    )
                     .align(Alignment.TopStart)
             ) {
                 GlassBox(
@@ -263,14 +269,27 @@ private fun LearningStyleScreenUI(
                         if (it.length <= 2) breakMinutes = it.filter { char -> char.isDigit() }
                     },
                     onDismiss = { showGroupSettingsPopup = false },
-                    onConfirm = {
+                    onConfirm = confirm@{
+                        val maxPeopleValue = maxPeople.toIntOrNull()
+                        val workMinutesValue = workMinutes.toIntOrNull()
+                        val breakMinutesValue = breakMinutes.toIntOrNull()
+
+                        if (
+                            maxPeopleValue == null || maxPeopleValue <= 0 ||
+                            workMinutesValue == null || workMinutesValue <= 0 ||
+                            breakMinutesValue == null || breakMinutesValue <= 0
+                        ) {
+                            return@confirm
+                        }
+
                         showGroupSettingsPopup = false
+
                         onFinish(
                             LearningStyle.GROUP,
                             LearningGroupConfig(
-                                maxPeople.toInt(),
-                                workMinutes.toInt(),
-                                breakMinutes.toInt()
+                                maxPeopleValue,
+                                workMinutesValue,
+                                breakMinutesValue
                             )
                         )
                     }

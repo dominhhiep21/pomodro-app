@@ -81,7 +81,7 @@ fun LandscapeCompactUI(
 
         CompactFloatingTimerComponent(
             timeLeft = timerUiState.timeLeft,
-            mode = workspaceUiState.currentMode,
+            mode = timerUiState.currentMode,
             isActive = timerUiState.isActive,
             onToggle = onToggleTimer,
             width = 200.dp,
@@ -175,7 +175,7 @@ fun PortraitCompactUI(
         CompactFloatingTimerComponent(
             showExitShortcut = true,
             timeLeft = timerUiState.timeLeft,
-            mode = workspaceUiState.currentMode,
+            mode = timerUiState.currentMode,
             isActive = timerUiState.isActive,
             onToggle = onToggleTimer,
             onToggleSettings = onToggleSettings,

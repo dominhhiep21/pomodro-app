@@ -1,29 +1,12 @@
 package thong.kotlin.pomodoro.features.session.data
 
-import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.LearningSessionState
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
 import kotlin.time.Clock
 
 class LearningSessionManager(
     private val repository: LearningSessionRepository
 ) {
-
-    fun startSession(workMinutes: Int) {
-        val now = currentTimeMillis()
-
-        val newSession = LearningSessionState(
-            sessionId = "session_$now",
-            status = LearningSessionStatus.RUNNING,
-            remainingSeconds = workMinutes * 60,
-            currentRound = 1,
-            startedAtMillis = now,
-            pausedAtMillis = null,
-            endedAtMillis = null,
-            completedByUser = false
-        )
-
-        repository.saveCurrentSession(newSession)
-    }
 
     fun pauseSessionBecauseAppInactive() {
         val current = repository.getCurrentSession()
@@ -90,6 +73,16 @@ class LearningSessionManager(
             )
         )
     }
+
+    fun getAllLearningSession() = repository.getAllLearningSessionRecords()
+
+    fun getTotalFocusSeconds() = repository.getTotalFocusSeconds()
+
+    fun insertSession(session: LearningSessionRecord) = repository.insertSession(session)
+
+    fun updateSession(session: LearningSessionRecord) = repository.updateSession(session)
+
+    fun clearAllSessionsData() = repository.clearAllSessionsData()
 
     private fun currentTimeMillis(): Long {
         return Clock.System.now().toEpochMilliseconds()

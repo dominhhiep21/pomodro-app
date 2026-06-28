@@ -10,11 +10,21 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import thong.kotlin.pomodoro.core.media.SoundManager
+import thong.kotlin.pomodoro.core.utils.getCurrentDateTimeString
+import thong.kotlin.pomodoro.database.AuraDatabase
+import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.EventType
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroConfig
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.SessionRecord
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettingsV2
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryV2
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.totalSeconds
+import thong.kotlin.pomodoro.features.session.data.LearningSessionManager
+import thong.kotlin.pomodoro.features.session.domain.CurrentLearningMode
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
+import kotlin.random.Random
+import kotlin.time.Clock
 
 data class TimerUiState(
     val isActive: Boolean = false,
@@ -23,15 +33,18 @@ data class TimerUiState(
     val config: PomodoroConfig = PomodoroConfig(),
     val pomodorosToday: Int = 0,
     val event: EventType = EventType.NOTHING,
-    val pendingNotification: String? = null
+    val pendingNotification: String? = null,
+    val currentSession: LearningSessionRecord
 )
 
 class TimerViewModel(
-    private val soundManager: SoundManager? = null,
-    private val repository: UserAppStateRepositoryV2? = null
+    private val soundManager: SoundManager? = DependencyRegistry.soundManager,
+    private val repository: UserAppStateRepositoryV2? = DependencyRegistry.userAppStateRepositoryV2,
+    private val learningSessionManager: LearningSessionManager = DependencyRegistry.learningSessionManager,
+    private val currentSession: LearningSessionRecord
 ) : ViewModel() {
     // Trạng thái độc lập chỉ dành cho UI Đồng hồ
-    private val _uiState = MutableStateFlow(TimerUiState())
+    private val _uiState = MutableStateFlow(TimerUiState(currentSession = currentSession))
     val uiState: StateFlow<TimerUiState> = _uiState.asStateFlow()
 
     // Job quản lý vòng lặp đếm ngược
@@ -169,55 +182,80 @@ class TimerViewModel(
         soundManager?.playChimeSound()
         pauseTimer()
         val currentState = _uiState.value
-//
-//        val (newMode, nextTime, eventType, notification) = if (currentState.currentMode == PomodoroMode.WORK) {
-//            // Học xong: Cộng điểm và nghỉ
-//            val nextMode = PomodoroMode.SHORT_BREAK
-//            val nextTime = nextMode.totalSeconds(currentState.config)
-//
-//            viewModelScope.launch {
-//                repository?.saveSession(
-//                    SessionRecord(
-//                        id = Random.nextInt().toString(),
-//                        startTime = getCurrentDateTimeString(),
-//                        endTime = getCurrentDateTimeString(),
-//                        mode = PomodoroMode.WORK.name,
-//                        durationMinutes = currentState.config.workMinutes,
-//                        status = "COMPLETED",
-//                        // Note: Bỏ đếm task ở đây vì logic task sẽ do TasksViewModel lo
-//                        tasksCompletedCount = 0
-//                    )
-//                )
-//                repository?.incrementDailyStats(
+        val currentSession = currentState.currentSession
+
+        val result = if (currentState.currentMode == PomodoroMode.WORK) {
+            val nextMode = PomodoroMode.SHORT_BREAK
+            val nextTime = nextMode.totalSeconds(currentState.config)
+
+            viewModelScope.launch {
+                learningSessionManager.updateSession(
+                    currentSession.copy(
+                        currentLearningMode = CurrentLearningMode.BREAK,
+                        completedWorkRounds = currentSession.completedWorkRounds + 1,
+                        totalFocusSeconds = currentSession.totalFocusSeconds +
+                                currentState.config.workMinutes * 60
+                    )
+                )
+//                learningSessionManager.incrementDailyStats(
 //                    sessionsCompleted = 1,
 //                    focusMinutes = currentState.config.workMinutes
 //                )
-//            }
-//
-//            listOf(nextMode, nextTime, EventType.WORK_END, "Work session completed. Time for a break!")
-//        } else {
-//            // Nghỉ xong: Quay lại làm việc
-//            val nextMode = PomodoroMode.WORK
-//            val nextTime = nextMode.totalSeconds(currentState.config)
-//
-//            viewModelScope.launch {
-//                repository?.incrementDailyStats(
+            }
+            TimerCompleteResult(
+                newMode = nextMode,
+                nextTime = nextTime,
+                eventType = EventType.WORK_END,
+                notification = "Work session completed. Time for a break!"
+            )
+        } else {
+            val nextMode = PomodoroMode.WORK
+            val nextTime = nextMode.totalSeconds(currentState.config)
+
+            viewModelScope.launch {
+                learningSessionManager.updateSession(
+                    currentSession.copy(
+                        currentLearningMode = CurrentLearningMode.WORK,
+                        completedBreakRounds = currentSession.completedBreakRounds + 1,
+                        totalBreakSeconds = currentSession.totalBreakSeconds +
+                                currentState.config.shortBreakMinutes * 60
+                    )
+                )
+
+//                learningSessionManager.incrementDailyStats(
 //                    breakMinutes = currentState.config.shortBreakMinutes
 //                )
-//            }
-//
-//            listOf(nextMode, nextTime, EventType.BREAK_END, "Break finished. Time to focus again!")
-//        }
-//
-//        _uiState.update { state ->
-//            state.copy(
-//                pomodorosToday = if (currentState.currentMode == PomodoroMode.WORK) state.pomodorosToday + 1 else state.pomodorosToday,
-//                currentMode = newMode as PomodoroMode,
-//                timeLeft = nextTime as Long,
-//                event = eventType as EventType,
-//                pendingNotification = notification as String
-//            )
-//        }
+            }
+
+            TimerCompleteResult(
+                newMode = nextMode,
+                nextTime = nextTime,
+                eventType = EventType.BREAK_END,
+                notification = "Break finished. Time to focus again!"
+            )
+        }
+
+        _uiState.update { state ->
+            val nextLearningMode = if (result.newMode == PomodoroMode.WORK) {
+                CurrentLearningMode.WORK
+            } else {
+                CurrentLearningMode.BREAK
+            }
+            state.copy(
+                pomodorosToday = if (result.eventType == EventType.WORK_END) {
+                    state.pomodorosToday + 1
+                } else {
+                    state.pomodorosToday
+                },
+                currentMode = result.newMode,
+                timeLeft = result.nextTime,
+                event = result.eventType,
+                pendingNotification = result.notification,
+                currentSession = state.currentSession.copy(
+                    currentLearningMode = nextLearningMode
+                )
+            )
+        }
     }
 
     fun clearPendingNotification() {
@@ -250,10 +288,9 @@ class TimerViewModel(
     }
 }
 
-fun PomodoroMode.totalSeconds(config: PomodoroConfig): Long {
-    return when (this) {
-        PomodoroMode.WORK -> config.workSeconds.toLong()
-        PomodoroMode.SHORT_BREAK -> config.shortBreakSeconds.toLong()
-        PomodoroMode.LONG_BREAK -> config.longBreakSeconds.toLong()
-    }
-}
+private data class TimerCompleteResult(
+    val newMode: PomodoroMode,
+    val nextTime: Long,
+    val eventType: EventType,
+    val notification: String
+)

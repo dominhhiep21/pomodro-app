@@ -35,239 +35,6 @@ ON session_history_local(status);
 CREATE INDEX IF NOT EXISTS session_history_local_updated_at_idx
 ON session_history_local(updated_at DESC);
 
-INSERT OR REPLACE INTO session_history_local (
-    id,
-    user_id,
-    anonymous_user_id,
-    session_mode,
-    status,
-    current_learning_mode,
-    started_at,
-    ended_at,
-    last_paused_at,
-    planned_work_minutes,
-    planned_break_minutes,
-    completed_work_rounds,
-    completed_break_rounds,
-    total_focus_seconds,
-    total_break_seconds,
-    total_paused_seconds,
-    created_at,
-    updated_at,
-    sync_status
-)
-VALUES
-(
-    'session_001',
-    'user_001',
-    NULL,
-    'SOLO',
-    'COMPLETED',
-    'WORK',
-    '2026-06-28T01:00:00Z',
-    '2026-06-28T01:30:00Z',
-    NULL,
-    25,
-    5,
-    1,
-    1,
-    1500,
-    300,
-    0,
-    '2026-06-28T01:00:00Z',
-    '2026-06-28T01:30:00Z',
-    'SYNCED'
-),
-(
-    'session_002',
-    'user_001',
-    NULL,
-    'SOLO',
-    'COMPLETED',
-    'BREAK',
-    '2026-06-28T02:00:00Z',
-    '2026-06-28T02:55:00Z',
-    NULL,
-    25,
-    5,
-    2,
-    2,
-    3525,
-    600,
-    0,
-    '2026-06-28T02:00:00Z',
-    '2026-06-28T02:55:00Z',
-    'LOCAL_ONLY'
-),
-(
-    'session_003',
-    'user_001',
-    NULL,
-    'GROUP',
-    'PAUSED',
-    'WORK',
-    '2026-06-28T03:00:00Z',
-    NULL,
-    '2026-06-28T03:18:00Z',
-    25,
-    5,
-    0,
-    0,
-    1080,
-    0,
-    120,
-    '2026-06-28T03:00:00Z',
-    '2026-06-28T03:18:00Z',
-    'LOCAL_ONLY'
-),
-(
-    'session_004',
-    NULL,
-    'anon_001',
-    'SOLO',
-    'COMPLETED',
-    'WORK',
-    '2026-06-27T09:00:00Z',
-    '2026-06-27T09:30:00Z',
-    NULL,
-    25,
-    5,
-    1,
-    1,
-    1500,
-    300,
-    0,
-    '2026-06-27T09:00:00Z',
-    '2026-06-27T09:30:00Z',
-    'PENDING_SYNC'
-),
-(
-    'session_005',
-    NULL,
-    'anon_001',
-    'SOLO',
-    'IDLE',
-    'NOT_YET_STARTED',
-    '2026-06-27T10:00:00Z',
-    NULL,
-    NULL,
-    50,
-    10,
-    0,
-    0,
-    0,
-    0,
-    0,
-    '2026-06-27T10:00:00Z',
-    '2026-06-27T10:00:00Z',
-    'LOCAL_ONLY'
-),
-(
-    'session_006',
-    'user_002',
-    NULL,
-    'GROUP',
-    'COMPLETED',
-    'LONG_BREAK',
-    '2026-06-26T13:00:00Z',
-    '2026-06-26T14:30:00Z',
-    NULL,
-    25,
-    5,
-    3,
-    3,
-    4500,
-    900,
-    0,
-    '2026-06-26T13:00:00Z',
-    '2026-06-26T14:30:00Z',
-    'SYNCED'
-),
-(
-    'session_007',
-    'user_002',
-    NULL,
-    'SOLO',
-    'PAUSED',
-    'BREAK',
-    '2026-06-26T15:00:00Z',
-    NULL,
-    '2026-06-26T15:35:00Z',
-    25,
-    5,
-    1,
-    1,
-    1500,
-    300,
-    60,
-    '2026-06-26T15:00:00Z',
-    '2026-06-26T15:35:00Z',
-    'PENDING_SYNC'
-),
-(
-    'session_008',
-    'user_003',
-    NULL,
-    'GROUP',
-    'COMPLETED',
-    'WORK',
-    '2026-06-25T08:00:00Z',
-    '2026-06-25T08:25:00Z',
-    NULL,
-    25,
-    5,
-    1,
-    0,
-    1500,
-    0,
-    0,
-    '2026-06-25T08:00:00Z',
-    '2026-06-25T08:25:00Z',
-    'SYNCED'
-),
-(
-    'session_009',
-    NULL,
-    'anon_002',
-    'SOLO',
-    'COMPLETED',
-    'BREAK',
-    '2026-06-25T20:00:00Z',
-    '2026-06-25T20:55:00Z',
-    NULL,
-    25,
-    5,
-    2,
-    2,
-    3000,
-    600,
-    0,
-    '2026-06-25T20:00:00Z',
-    '2026-06-25T20:55:00Z',
-    'LOCAL_ONLY'
-),
-(
-    'session_010',
-    'user_001',
-    NULL,
-    'SOLO',
-    'COMPLETED',
-    'WORK',
-    '2026-06-24T21:00:00Z',
-    '2026-06-24T22:00:00Z',
-    NULL,
-    50,
-    10,
-    1,
-    1,
-    3000,
-    600,
-    0,
-    '2026-06-24T21:00:00Z',
-    '2026-06-24T22:00:00Z',
-    'PENDING_SYNC'
-);
-
 insertSessionHistory:
 INSERT INTO session_history_local (
     id,
@@ -292,6 +59,32 @@ INSERT INTO session_history_local (
 )
 VALUES (?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
+updateSessionHistory:
+UPDATE session_history_local
+SET
+    user_id = ?,
+    anonymous_user_id = ?,
+    session_mode = ?,
+    current_learning_mode = ?,
+    status = ?,
+    ended_at = ?,
+    last_paused_at = ?,
+    planned_work_minutes = ?,
+    planned_break_minutes = ?,
+    completed_work_rounds = ?,
+    completed_break_rounds = ?,
+    total_focus_seconds = ?,
+    total_break_seconds = ?,
+    total_paused_seconds = ?,
+    updated_at = ?,
+    sync_status = ?
+WHERE id = ?;
+
+selectSessionHistoryById:
+SELECT *
+FROM session_history_local
+WHERE id = ?;
+
 selectAllSessionHistory:
 SELECT *
 FROM session_history_local
@@ -302,23 +95,11 @@ SELECT COALESCE(SUM(total_focus_seconds), 0)
 FROM session_history_local
 WHERE status = 'COMPLETED';
 
-selectSessionHistoryByUserId:
-SELECT *
-FROM session_history_local
-WHERE user_id = ?
-ORDER BY started_at DESC;
+deleteAllLearningSessionEvents:
+DELETE FROM learning_session_event_local;
 
-selectSessionHistoryByAnonymousUserId:
-SELECT *
-FROM session_history_local
-WHERE anonymous_user_id = ?
-ORDER BY started_at DESC;
-
-selectUnsyncedSessionHistory:
-SELECT *
-FROM session_history_local
-WHERE sync_status != 'SYNCED'
-ORDER BY updated_at ASC;
+deleteAllSessionHistory:
+DELETE FROM session_history_local;
 
 CREATE TABLE IF NOT EXISTS learning_session_event_local (
     event_id TEXT NOT NULL PRIMARY KEY,

@@ -1,8 +1,12 @@
 package thong.kotlin.pomodoro.di
 
+import app.cash.sqldelight.db.SqlDriver
 import com.russhwolf.settings.Settings
 import thong.kotlin.pomodoro.core.config.AppConfig
+import thong.kotlin.pomodoro.core.media.SoundManager
+import thong.kotlin.pomodoro.core.notification.NotificationManager
 import thong.kotlin.pomodoro.core.pomodoro.mini_client.KtorPomodoroMiniClient
+import thong.kotlin.pomodoro.database.AuraDatabase
 import thong.kotlin.pomodoro.features.pomodoro._base.data.local.LocalSettingsDataSource
 import thong.kotlin.pomodoro.features.pomodoro._base.data.repository.UserAppStateRepositoryImpl
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.LocalSettingsDataSourceV2
@@ -15,6 +19,37 @@ import thong.kotlin.pomodoro.features.session.data.LearningSessionRepositoryImpl
 import thong.kotlin.pomodoro.features.session.data.LocalLearningSessionDataSource
 
 object DependencyRegistry {
+
+    private var _database: AuraDatabase? = null
+
+    val database: AuraDatabase?
+        get() = _database
+
+    fun initDatabase(driver: SqlDriver) {
+        if (_database == null) {
+            _database = AuraDatabase(driver)
+        }
+    }
+
+    private var _soundManager: SoundManager? = null
+    val soundManager: SoundManager?
+        get() = _soundManager
+
+    fun initSoundManager(soundManager: SoundManager?) {
+        if (_soundManager == null) {
+            _soundManager = soundManager
+        }
+    }
+
+    private var _notificationManager: NotificationManager? = null
+    val notificationManager: NotificationManager?
+        get() = _notificationManager
+
+    fun initNotificationManager(notificationManager: NotificationManager?) {
+        if (_notificationManager == null) {
+            _notificationManager = notificationManager
+        }
+    }
 
     private val settings: Settings by lazy {
         Settings()

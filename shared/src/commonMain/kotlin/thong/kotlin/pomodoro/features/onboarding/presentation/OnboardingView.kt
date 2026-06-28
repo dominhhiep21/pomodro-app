@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -52,10 +53,7 @@ import thong.kotlin.pomodoro.features.learning.mode.components.LearningStyleScre
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettingsV2
 import thong.kotlin.pomodoro.features.settings.data.BackgroundRepository
 
-class OnboardingScreen(
-    private val database: AuraDatabase? = null,
-    private val soundManager: SoundManager?
-) : Screen {
+class OnboardingScreen : Screen {
 
     @Composable
     override fun Content() {
@@ -76,7 +74,7 @@ class OnboardingScreen(
                         hasCompletedOnboarding = true
                     )
                 )
-                navigator.replace(LearningStyleScreen(database, soundManager))
+                navigator.replace(LearningStyleScreen())
             }
         )
     }
@@ -119,7 +117,7 @@ private fun OnboardingScreenUI(
         )
     }
 
-    var currentStep by rememberSaveable { mutableStateOf(0) }
+    var currentStep by rememberSaveable { mutableIntStateOf(0) }
     val currentData = steps[currentStep]
 
     AuraBackground(

@@ -14,11 +14,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import app.cash.sqldelight.db.SqlDriver
 
 import thong.kotlin.pomodoro.core.media.AndroidSoundManager
 import thong.kotlin.pomodoro.core.notification.AndroidNotificationManager
 import thong.kotlin.pomodoro.database.AuraDatabase
 import thong.kotlin.pomodoro.database.DatabaseDriverFactory
+import thong.kotlin.pomodoro.di.DependencyRegistry
 
 class MainActivity : ComponentActivity() {
 
@@ -31,18 +33,19 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        
+
         // Khởi tạo Database context
-        val database = AuraDatabase(
-            DatabaseDriverFactory(this).createDriver()
-        )
+        val database = DatabaseDriverFactory(this).createDriver()
+        val soundManager = AndroidSoundManager.getInstance(this)
+        val notificationManager = AndroidNotificationManager(this)
+
+        DependencyRegistry.initDatabase(database)
+        DependencyRegistry.initSoundManager(soundManager)
+        DependencyRegistry.initNotificationManager(notificationManager)
 
         // Yêu cầu quyền thông báo trên Android 13+
         requestNotificationPermission()
 
-        val soundManager = AndroidSoundManager.getInstance(this)
-        val notificationManager = AndroidNotificationManager(this)
-        
         // Yêu cầu hệ thống cho phép ứng dụng vẽ tràn viền
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
@@ -56,11 +59,7 @@ class MainActivity : ComponentActivity() {
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 
         setContent {
-            App(
-                database = database,
-                soundManager = soundManager,
-                notificationManager = notificationManager
-            )
+            App()
         }
     }
 

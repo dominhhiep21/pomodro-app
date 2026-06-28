@@ -6,24 +6,21 @@ import thong.kotlin.pomodoro.core.media.JvmSoundManager
 import thong.kotlin.pomodoro.core.notification.JvmNotificationManager
 import thong.kotlin.pomodoro.database.AuraDatabase
 import thong.kotlin.pomodoro.database.DatabaseDriverFactory
+import thong.kotlin.pomodoro.di.DependencyRegistry
 
 fun main() = application {
     val soundManager = JvmSoundManager.instance
     val notificationManager = JvmNotificationManager()
-    // Khởi tạo Database context
-    val database = AuraDatabase(
-        DatabaseDriverFactory().createDriver()
-    )
+    val database = DatabaseDriverFactory().createDriver()
 
+    DependencyRegistry.initDatabase(database)
+    DependencyRegistry.initSoundManager(soundManager)
+    DependencyRegistry.initNotificationManager(notificationManager)
 
     Window(
         onCloseRequest = ::exitApplication,
         title = "Pomodrokotlin",
     ) {
-        App(
-            database = database,
-            soundManager = soundManager,
-            notificationManager = notificationManager
-        )
+        App()
     }
 }

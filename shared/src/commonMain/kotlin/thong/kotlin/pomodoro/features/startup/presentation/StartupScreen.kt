@@ -27,11 +27,7 @@ import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.onboarding.presentation.OnboardingScreen
 import thong.kotlin.pomodoro.features.session.presentation.SessionHistoryScreen
 
-class StartupLoadingScreen(
-    private val database: AuraDatabase? = null,
-    private val soundManager: SoundManager? = null,
-    private val notificationManager: NotificationManager?
-) : Screen {
+class StartupLoadingScreen : Screen {
 
     @Composable
     override fun Content() {
@@ -43,11 +39,11 @@ class StartupLoadingScreen(
             val userSettings = repositoryV2.getUserSettings()
             if (userSettings.hasCompletedOnboarding) {
                 navigator.replace(
-                    SessionHistoryScreen(database, soundManager)
+                    SessionHistoryScreen()
                 )
             } else {
                 navigator.replace(
-                    OnboardingScreen(database, soundManager)
+                    OnboardingScreen()
                 )
             }
         }

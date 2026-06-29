@@ -29,6 +29,7 @@ import kotlin.time.Clock
 
 data class TimerUiState(
     val isSessionStarted: Boolean = false,
+    val isJustEndedBreak: Boolean = false,
     val isActive: Boolean = false,
     val timeLeft: Int = 25 * 60,
     val currentMode: PomodoroMode = PomodoroMode.WORK,
@@ -175,7 +176,8 @@ class TimerViewModel(
                 it.copy(
                     isActive = true,
                     isSessionStarted = it.isSessionStarted || shouldInsertSessionStartedEvent,
-                    currentSession = updatedSession
+                    currentSession = updatedSession,
+                    isJustEndedBreak = false
                 )
             }
 
@@ -474,6 +476,7 @@ class TimerViewModel(
                 } else {
                     it.pomodorosToday
                 },
+                isJustEndedBreak = !isWorkMode,
                 currentMode = result.newMode,
                 timeLeft = result.nextTime,
                 event = result.eventType,
@@ -484,8 +487,8 @@ class TimerViewModel(
 
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                learningSessionManager.updateSession(updatedSession)
-                learningSessionManager.insertEvent(
+                updateSession(updatedSession)
+                insertEvent(
                     LearningSessionEvent(
                         eventId = "auto_event_${Clock.System.now().toEpochMilliseconds()}",
                         sessionId = session.sessionId,
@@ -517,10 +520,7 @@ class TimerViewModel(
 
     fun insertEvent(event: LearningSessionEvent) = learningSessionManager.insertEvent(event)
 
-    fun updateSession(session: LearningSessionRecord) {
-        learningSessionManager.updateSession(session)
-        _uiState.update { it.copy(currentSession = getSessionById()!!) }
-    }
+    fun updateSession(session: LearningSessionRecord) = learningSessionManager.updateSession(session)
 
     fun clearPendingNotification() {
         _uiState.update { it.copy(pendingNotification = null) }

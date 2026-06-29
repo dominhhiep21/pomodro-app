@@ -9,6 +9,7 @@ import thong.kotlin.pomodoro.core.utils.getCurrentDateTimeString
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryV2
 import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.Task
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import kotlin.random.Random
 
 data class TasksUiState(
@@ -18,7 +19,8 @@ data class TasksUiState(
 )
 
 class TasksViewModel(
-    private val repository: UserAppStateRepositoryV2 = DependencyRegistry.userAppStateRepositoryV2
+    private val repository: UserAppStateRepositoryV2 = DependencyRegistry.userAppStateRepositoryV2,
+    private val currentSession: LearningSessionRecord
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(TasksUiState())
     val uiState: StateFlow<TasksUiState> = _uiState.asStateFlow()

@@ -1,6 +1,7 @@
 package thong.kotlin.pomodoro.features.session.data
 
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.LearningSessionState
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionEvent
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 
 interface LearningSessionRepository {
@@ -20,6 +21,8 @@ interface LearningSessionRepository {
     fun insertSession(session: LearningSessionRecord)
 
     fun updateSession(session: LearningSessionRecord)
+
+    fun insertEvent(event: LearningSessionEvent)
 
     fun clearAllSessionsData()
 }

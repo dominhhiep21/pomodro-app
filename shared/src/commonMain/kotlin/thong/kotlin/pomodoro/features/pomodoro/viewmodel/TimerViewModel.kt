@@ -10,25 +10,23 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import thong.kotlin.pomodoro.core.media.SoundManager
-import thong.kotlin.pomodoro.core.utils.getCurrentDateTimeString
-import thong.kotlin.pomodoro.database.AuraDatabase
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.EventType
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroConfig
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
-import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.SessionRecord
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettingsV2
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryV2
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.totalSeconds
 import thong.kotlin.pomodoro.features.session.data.LearningSessionManager
 import thong.kotlin.pomodoro.features.session.domain.CurrentLearningMode
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionEvent
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionEventType
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
-import kotlin.random.Random
 import kotlin.time.Clock
 
 data class TimerUiState(
     val isActive: Boolean = false,
-    val timeLeft: Long = 25 * 60L,
+    val timeLeft: Int = 25 * 60,
     val currentMode: PomodoroMode = PomodoroMode.WORK,
     val config: PomodoroConfig = PomodoroConfig(),
     val pomodorosToday: Int = 0,
@@ -95,10 +93,101 @@ class TimerViewModel(
     }
 
     fun toggleTimer() {
-        if (_uiState.value.isActive) {
-            pauseTimer()
-        } else {
-            startTimer()
+        val state = _uiState.value
+        val session = state.currentSession
+
+        val workTotalSeconds = state.config.workMinutes * 60
+        val breakTotalSeconds = state.config.shortBreakMinutes * 60
+
+        fun insertTimerEvent(eventType: LearningSessionEventType, action: String, currentRound: Int) {
+            learningSessionManager.insertEvent(
+                LearningSessionEvent(
+                    sessionId = session.sessionId,
+                    eventType = eventType,
+                    remainingSeconds = state.timeLeft,
+                    currentRound = currentRound,
+                    metadata = mapOf(
+                        "source" to "toggle_timer",
+                        "action" to action
+                    )
+                )
+            )
+        }
+
+        fun insertStartSessionEvent() {
+            learningSessionManager.insertEvent(
+                LearningSessionEvent(
+                    sessionId = session.sessionId,
+                    eventType = LearningSessionEventType.SESSION_STARTED,
+                    remainingSeconds = state.timeLeft,
+                    currentRound = 0,
+                    metadata = mapOf(
+                        "source" to "toggle_timer",
+                        "action" to "start_session"
+                    )
+                )
+            )
+        }
+
+        when {
+            state.isActive && state.currentMode == PomodoroMode.WORK -> {
+                insertTimerEvent(
+                    eventType = LearningSessionEventType.WORK_ROUND_PAUSED,
+                    action = "pause_work",
+                    currentRound = session.completedWorkRounds
+                )
+                pauseTimer()
+            }
+
+            state.isActive && state.currentMode == PomodoroMode.SHORT_BREAK -> {
+                insertTimerEvent(
+                    eventType = LearningSessionEventType.BREAK_ROUND_PAUSED,
+                    action = "pause_break",
+                    currentRound = session.completedWorkRounds
+                )
+                pauseTimer()
+            }
+
+            !state.isActive && state.currentMode == PomodoroMode.WORK &&
+                    state.timeLeft in 1 until workTotalSeconds -> {
+                insertTimerEvent(
+                    eventType = LearningSessionEventType.WORK_ROUND_RESUMED,
+                    action = "resume_work",
+                    currentRound = session.completedWorkRounds
+                )
+                startTimer()
+            }
+
+            !state.isActive && state.currentMode == PomodoroMode.WORK &&
+                    state.timeLeft == workTotalSeconds -> {
+                if (session.completedWorkRounds == 0) insertStartSessionEvent()
+                insertTimerEvent(
+                    eventType = LearningSessionEventType.WORK_ROUND_STARTED,
+                    action = "start_work",
+                    currentRound = session.completedWorkRounds
+                )
+                startTimer()
+            }
+
+            !state.isActive && state.currentMode == PomodoroMode.SHORT_BREAK &&
+                    state.timeLeft in 1 until breakTotalSeconds -> {
+                insertTimerEvent(
+                    eventType = LearningSessionEventType.BREAK_ROUND_RESUMED,
+                    action = "resume_break",
+                    currentRound = session.completedBreakRounds
+                )
+                startTimer()
+            }
+
+            !state.isActive && state.currentMode == PomodoroMode.SHORT_BREAK &&
+                    state.timeLeft == breakTotalSeconds -> {
+                insertTimerEvent(
+                    eventType = LearningSessionEventType.BREAK_ROUND_STARTED,
+                    action = "start_break",
+                    currentRound = session.completedBreakRounds
+                )
+                startTimer()
+            }
         }
     }
 
@@ -184,6 +273,36 @@ class TimerViewModel(
         val currentState = _uiState.value
         val currentSession = currentState.currentSession
 
+        fun insertWorkRoundCompleteEvent(currentRound: Int) {
+            learningSessionManager.insertEvent(
+                LearningSessionEvent(
+                    eventId = "auto_event_${Clock.System.now().toEpochMilliseconds()}",
+                    sessionId = currentSession.sessionId,
+                    eventType = LearningSessionEventType.ROUND_COMPLETED,
+                    currentRound = currentRound,
+                    metadata = mapOf(
+                        "source" to "auto",
+                        "action" to "round_complete"
+                    )
+                )
+            )
+        }
+
+        fun insertBreakEndedEvent() {
+            learningSessionManager.insertEvent(
+                LearningSessionEvent(
+                    eventId = "auto_event_${Clock.System.now().toEpochMilliseconds()}",
+                    sessionId = currentSession.sessionId,
+                    eventType = LearningSessionEventType.BREAK_ROUND_ENDED,
+                    currentRound = currentState.currentSession.completedWorkRounds,
+                    metadata = mapOf(
+                        "source" to "auto",
+                        "action" to "break_ended"
+                    )
+                )
+            )
+        }
+
         val result = if (currentState.currentMode == PomodoroMode.WORK) {
             val nextMode = PomodoroMode.SHORT_BREAK
             val nextTime = nextMode.totalSeconds(currentState.config)
@@ -197,10 +316,7 @@ class TimerViewModel(
                                 currentState.config.workMinutes * 60
                     )
                 )
-//                learningSessionManager.incrementDailyStats(
-//                    sessionsCompleted = 1,
-//                    focusMinutes = currentState.config.workMinutes
-//                )
+                insertWorkRoundCompleteEvent(currentSession.completedWorkRounds + 1)
             }
             TimerCompleteResult(
                 newMode = nextMode,
@@ -221,10 +337,7 @@ class TimerViewModel(
                                 currentState.config.shortBreakMinutes * 60
                     )
                 )
-
-//                learningSessionManager.incrementDailyStats(
-//                    breakMinutes = currentState.config.shortBreakMinutes
-//                )
+                insertBreakEndedEvent()
             }
 
             TimerCompleteResult(
@@ -290,7 +403,7 @@ class TimerViewModel(
 
 private data class TimerCompleteResult(
     val newMode: PomodoroMode,
-    val nextTime: Long,
+    val nextTime: Int,
     val eventType: EventType,
     val notification: String
 )

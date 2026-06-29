@@ -16,6 +16,8 @@ interface LearningSessionRepository {
 
     fun getAllLearningSessionRecords(): List<LearningSessionRecord>
 
+    fun getSessionById(sessionId: String): LearningSessionRecord?
+
     fun getTotalFocusSeconds(): Long
 
     fun insertSession(session: LearningSessionRecord)

@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -41,6 +43,9 @@ import androidx.compose.ui.window.Dialog
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import pomodrokotlin.shared.generated.resources.Res
 import pomodrokotlin.shared.generated.resources.landspace_startup_bg
 import thong.kotlin.pomodoro.core.config.AppConfig
@@ -70,19 +75,50 @@ class LearningStyleScreen : Screen {
         val navigator = LocalNavigator.currentOrThrow
         val learningSessionManager = remember { DependencyRegistry.learningSessionManager }
 
+        val scope = rememberCoroutineScope()
+        var isFinishing by remember { mutableStateOf(false) }
+
         LearningStyleScreenUI(
-            onBack = { navigator.replace(SessionHistoryScreen()) },
+            isLoading = isFinishing,
+            onBack = {
+                if (!isFinishing) {
+                    navigator.replace(SessionHistoryScreen())
+                }
+            },
             onFinish = { learningStyle, learningGroupConfig ->
-                val newSession = addNewSessionToDbAndGet(learningGroupConfig, learningStyle, learningSessionManager)
-                addNewEventToDb(newSession.sessionId, learningSessionManager)
-                navigator.push(
-                    PomodoroScreenV2(
-                        learningStyle = learningStyle,
-                        learningGroupConfig = learningGroupConfig,
-                        currentSession = newSession
-                    )
-                )
-            })
+                if (isFinishing) return@LearningStyleScreenUI
+                isFinishing = true
+                scope.launch {
+                    val result = runCatching {
+                        withContext(Dispatchers.IO) {
+                            val newSession = addNewSessionToDbAndGet(
+                                learningGroupConfig = learningGroupConfig,
+                                learningStyle = learningStyle,
+                                learningSessionManager = learningSessionManager
+                            )
+                            addNewEventToDb(
+                                sessionId = newSession.sessionId,
+                                learningSessionManager = learningSessionManager
+                            )
+                            newSession
+                        }
+                    }
+                    result
+                        .onSuccess { newSession ->
+                            navigator.push(
+                                PomodoroScreenV2(
+                                    learningStyle = learningStyle,
+                                    learningGroupConfig = learningGroupConfig,
+                                    currentSession = newSession
+                                )
+                            )
+                        }
+                        .onFailure { _ ->
+                            isFinishing = false
+                        }
+                }
+            }
+        )
     }
 }
 
@@ -100,7 +136,7 @@ private fun addNewSessionToDbAndGet(
         anonymousUserId = null,
         sessionMode = learningStyle,
         status = LearningSessionStatus.IDLE,
-        currentLearningMode = CurrentLearningMode.WORK,
+        currentLearningMode = CurrentLearningMode.NOT_YET_STARTED,
         startedAtMillis = now,
         lastPausedAtMillis = null,
         plannedWorkMinutes = workMin,
@@ -126,6 +162,7 @@ private fun addNewEventToDb(
 
 @Composable
 private fun LearningStyleScreenUI(
+    isLoading: Boolean,
     onBack: () -> Unit,
     onFinish: (LearningStyle, LearningGroupConfig?) -> Unit,
     modifier: Modifier = Modifier
@@ -268,12 +305,16 @@ private fun LearningStyleScreenUI(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "Tiếp tục",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
+                    if (isLoading) {
+                        CircularProgressIndicator()
+                    } else {
+                        Text(
+                            text = "Tiếp tục",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
                 }
             }
 

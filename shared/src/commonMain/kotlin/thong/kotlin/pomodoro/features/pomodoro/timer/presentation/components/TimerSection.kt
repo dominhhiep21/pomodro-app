@@ -70,7 +70,7 @@ fun TimerSectionComponent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            if (workspaceUiState.isJustEndedBreak) {
+            if (timerUiState.isJustEndedBreak) {
                 BreakEndBanner()
                 Spacer(modifier = Modifier.height(16.dp))
             }

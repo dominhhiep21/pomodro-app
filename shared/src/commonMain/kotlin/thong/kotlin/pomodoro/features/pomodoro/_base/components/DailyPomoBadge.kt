@@ -18,7 +18,7 @@ fun DailyPomoBadge(count: Int) {
         modifier = Modifier.padding(vertical = 12.dp)
     ) {
         Text(
-            text = "🔥 $count Pomo hôm nay",
+            text = "🔥 $count Pomo trong phiên học",
             color = Color.White,
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,

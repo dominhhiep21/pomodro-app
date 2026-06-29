@@ -53,7 +53,10 @@ import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro._base.PomodoroScreenV2
+import thong.kotlin.pomodoro.features.session.data.LearningSessionManager
 import thong.kotlin.pomodoro.features.session.domain.CurrentLearningMode
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionEvent
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionEventType
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
 import thong.kotlin.pomodoro.features.session.domain.SyncStatus
@@ -70,34 +73,55 @@ class LearningStyleScreen : Screen {
         LearningStyleScreenUI(
             onBack = { navigator.replace(SessionHistoryScreen()) },
             onFinish = { learningStyle, learningGroupConfig ->
-                val now = Clock.System.now().toEpochMilliseconds()
-                val workMin = learningGroupConfig?.workMinutes ?: AppConfig.DEFAULT_WORK_MINUTES
-                val breakMin = learningGroupConfig?.breakMinutes ?: AppConfig.DEFAULT_BREAK_MINUTES
-                val newSession = LearningSessionRecord(
-                    sessionId = "manual_$now",
-                    userId = null,
-                    anonymousUserId = null,
-                    sessionMode = learningStyle,
-                    status = LearningSessionStatus.IDLE,
-                    currentLearningMode = CurrentLearningMode.WORK,
-                    startedAtMillis = now,
-                    lastPausedAtMillis = null,
-                    plannedWorkMinutes = workMin,
-                    plannedBreakMinutes = breakMin,
-                    endedAtMillis = null,
-                    totalFocusSeconds = 0,
-                    syncStatus = SyncStatus.LOCAL_ONLY
-                )
-                learningSessionManager.insertSession(newSession)
+                val newSession = addNewSessionToDbAndGet(learningGroupConfig, learningStyle, learningSessionManager)
+                addNewEventToDb(newSession.sessionId, learningSessionManager)
                 navigator.push(
                     PomodoroScreenV2(
                         learningStyle = learningStyle,
                         learningGroupConfig = learningGroupConfig,
-                        session = newSession
+                        currentSession = newSession
                     )
                 )
             })
     }
+}
+
+private fun addNewSessionToDbAndGet(
+    learningGroupConfig: LearningGroupConfig?,
+    learningStyle: LearningStyle,
+    learningSessionManager: LearningSessionManager
+): LearningSessionRecord {
+    val now = Clock.System.now().toEpochMilliseconds()
+    val workMin = learningGroupConfig?.workMinutes ?: AppConfig.DEFAULT_WORK_MINUTES
+    val breakMin = learningGroupConfig?.breakMinutes ?: AppConfig.DEFAULT_BREAK_MINUTES
+    val newSession = LearningSessionRecord(
+        sessionId = "manual_$now",
+        userId = null,
+        anonymousUserId = null,
+        sessionMode = learningStyle,
+        status = LearningSessionStatus.IDLE,
+        currentLearningMode = CurrentLearningMode.WORK,
+        startedAtMillis = now,
+        lastPausedAtMillis = null,
+        plannedWorkMinutes = workMin,
+        plannedBreakMinutes = breakMin,
+        endedAtMillis = null,
+        totalFocusSeconds = 0,
+        syncStatus = SyncStatus.LOCAL_ONLY
+    )
+    learningSessionManager.insertSession(newSession)
+    return newSession
+}
+
+private fun addNewEventToDb(
+    sessionId: String,
+    learningSessionManager: LearningSessionManager
+) {
+    val newEvent = LearningSessionEvent(
+        sessionId = sessionId,
+        eventType = LearningSessionEventType.SESSION_CREATED
+    )
+    learningSessionManager.insertEvent(newEvent)
 }
 
 @Composable

@@ -44,7 +44,7 @@ import thong.kotlin.pomodoro.features.session.presentation.SessionHistoryScreen
 class PomodoroScreenV2(
     private val learningStyle: LearningStyle = LearningStyle.SOLO,
     private val learningGroupConfig: LearningGroupConfig? = null,
-    private val session : LearningSessionRecord,
+    private val currentSession : LearningSessionRecord,
     private val soundManager: SoundManager? = DependencyRegistry.soundManager
 ) : Screen {
 
@@ -52,10 +52,9 @@ class PomodoroScreenV2(
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
 
-        val timerViewModel: TimerViewModel = viewModel { TimerViewModel(currentSession = session) }
-        val tasksViewModel: TasksViewModel = viewModel { TasksViewModel() }
-        val workspaceViewModel: WorkspaceViewModel =
-            viewModel { WorkspaceViewModel() }
+        val timerViewModel: TimerViewModel = viewModel { TimerViewModel(currentSession = currentSession) }
+        val tasksViewModel: TasksViewModel = viewModel { TasksViewModel(currentSession = currentSession) }
+        val workspaceViewModel: WorkspaceViewModel = viewModel { WorkspaceViewModel() }
 
         val workspaceState by workspaceViewModel.uiState.collectAsState()
 
@@ -250,12 +249,8 @@ fun PomodoroScreenUIv2(
                             onExit = { onExit(soundManager, navigator) }
                         )
                     }
-
-                    PomodoroUiState(
-                        isCompact = true,
-                        isLandscape = false,
-                        style = LearningStyle.SOLO
-                    ) -> {
+                    // Gen UI Portrait Compact Solo
+                    PomodoroUiState(isCompact = true, isLandscape = false, style = LearningStyle.SOLO) -> {
                         PortraitCompactUI(
                             workspaceUiState = workspaceState,
                             timerUiState = timerState,
@@ -294,12 +289,9 @@ fun PomodoroScreenUIv2(
                             onToggleSettings = workspaceViewModel::toggleSettings,
                             onExit = { onExit(soundManager, navigator) }
                         )
-                    }// Gen UI Portrait Compact Solo
-                    PomodoroUiState(
-                        isCompact = false,
-                        isLandscape = true,
-                        style = LearningStyle.GROUP
-                    ) -> {
+                    }
+                    // Gen UI Landscape Group
+                    PomodoroUiState(isCompact = false, isLandscape = true, style = LearningStyle.GROUP) -> {
                         LandscapePomodoroGroupUI(
                             workspaceUiState = workspaceState,
                             timerUiState = timerState,
@@ -322,12 +314,9 @@ fun PomodoroScreenUIv2(
                             onToggleTasksExpanded = tasksViewModel::toggleTasksExpanded,
                             onExit = { onExit(soundManager, navigator) }
                         )
-                    }// Gen UI Landscape Group
-                    PomodoroUiState(
-                        isCompact = false,
-                        isLandscape = true,
-                        style = LearningStyle.SOLO
-                    ) -> {
+                    }
+                    // Gen UI Landscape Solo
+                    PomodoroUiState(isCompact = false, isLandscape = true, style = LearningStyle.SOLO) -> {
                         LandscapePomodoroUI(
                             workspaceUiState = workspaceState,
                             timerUiState = timerState,
@@ -349,12 +338,9 @@ fun PomodoroScreenUIv2(
                             onToggleTasksExpanded = tasksViewModel::toggleTasksExpanded,
                             onExit = { onExit(soundManager, navigator) }
                         )
-                    }// Gen UI Landscape Solo
-                    PomodoroUiState(
-                        isCompact = false,
-                        isLandscape = false,
-                        style = LearningStyle.GROUP
-                    ) -> {
+                    }
+                    // Gen UI Portrait Group
+                    PomodoroUiState(isCompact = false, isLandscape = false, style = LearningStyle.GROUP) -> {
                         PortraitPomodoroGroupUI(
                             workspaceUiState = workspaceState,
                             timerUiState = timerState,
@@ -377,12 +363,9 @@ fun PomodoroScreenUIv2(
                             onSelectBackground = workspaceViewModel::selectBackground,
                             onExit = { onExit(soundManager, navigator) }
                         )
-                    }// Gen UI Portrait Group
-                    PomodoroUiState(
-                        isCompact = false,
-                        isLandscape = false,
-                        style = LearningStyle.SOLO
-                    ) -> {
+                    }
+                    // Gen UI Portrait Solo
+                    PomodoroUiState(isCompact = false, isLandscape = false, style = LearningStyle.SOLO) -> {
                         PortraitPomodoroUI(
                             workspaceUiState = workspaceState,
                             timerUiState = timerState,
@@ -404,7 +387,7 @@ fun PomodoroScreenUIv2(
                             onSelectBackground = workspaceViewModel::selectBackground,
                             onExit = { onExit(soundManager, navigator) }
                         )
-                    }// Gen UI Portrait Solo
+                    }
                 }
             }
 

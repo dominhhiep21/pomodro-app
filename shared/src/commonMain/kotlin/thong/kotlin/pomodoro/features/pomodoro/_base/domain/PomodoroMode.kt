@@ -6,10 +6,10 @@ enum class PomodoroMode(val label: String) {
     LONG_BREAK("Nghỉ dài")    // 15 phút
 }
 
-fun PomodoroMode.totalSeconds(config: PomodoroConfig): Long {
+fun PomodoroMode.totalSeconds(config: PomodoroConfig): Int {
     return when (this) {
-        PomodoroMode.WORK -> config.workSeconds.toLong()
-        PomodoroMode.SHORT_BREAK -> config.shortBreakSeconds.toLong()
-        PomodoroMode.LONG_BREAK -> config.longBreakSeconds.toLong()
+        PomodoroMode.WORK -> config.workSeconds
+        PomodoroMode.SHORT_BREAK -> config.shortBreakSeconds
+        PomodoroMode.LONG_BREAK -> config.longBreakSeconds
     }
 }

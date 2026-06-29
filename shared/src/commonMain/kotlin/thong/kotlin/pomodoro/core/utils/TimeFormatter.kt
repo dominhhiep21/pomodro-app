@@ -21,6 +21,16 @@ fun Long.formatToMmSs(): String {
     return "$minString:$secString"
 }
 
+fun Int.formatToMmSs(): String {
+    val minutes = this / 60
+    val seconds = this % 60
+
+    val minString = minutes.toString().padStart(2, '0')
+    val secString = seconds.toString().padStart(2, '0')
+
+    return "$minString:$secString"
+}
+
 fun Long.toIsoString(): String {
     return Instant.fromEpochMilliseconds(this).toString()
 }

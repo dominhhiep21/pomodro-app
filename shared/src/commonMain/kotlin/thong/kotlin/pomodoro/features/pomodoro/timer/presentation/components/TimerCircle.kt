@@ -106,7 +106,7 @@ fun TimerCircleComponent(
 
 @Composable
 fun CompactFloatingTimerComponent(
-    timeLeft: Long,
+    timeLeft: Int,
     mode: PomodoroMode,
     isActive: Boolean,
     onToggle: () -> Unit,

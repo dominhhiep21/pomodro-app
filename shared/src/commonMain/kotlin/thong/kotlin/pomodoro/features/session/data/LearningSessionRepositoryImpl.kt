@@ -1,11 +1,14 @@
 package thong.kotlin.pomodoro.features.session.data
 
+import kotlinx.serialization.json.Json
 import thong.kotlin.pomodoro.core.utils.toDateTimeText
 import thong.kotlin.pomodoro.core.utils.toDateTimeTextOrNull
 import thong.kotlin.pomodoro.database.AuraDatabase
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.LearningSessionState
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.LocalSettingsDataSourceV2
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionEvent
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
+import thong.kotlin.pomodoro.features.session.domain.insertInto
 import thong.kotlin.pomodoro.features.session.domain.toLearningSessionRecord
 import kotlin.time.Clock
 
@@ -103,6 +106,11 @@ class LearningSessionRepositoryImpl(
                 id = session.sessionId
             )
         }
+    }
+
+    override fun insertEvent(event: LearningSessionEvent) {
+        val queries = database?.sessionHistoryLocalQueries ?: return
+        event.insertInto(queries)
     }
 
     override fun clearAllSessionsData() {

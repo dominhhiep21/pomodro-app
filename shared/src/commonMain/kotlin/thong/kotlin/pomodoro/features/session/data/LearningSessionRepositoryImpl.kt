@@ -1,6 +1,5 @@
 package thong.kotlin.pomodoro.features.session.data
 
-import kotlinx.serialization.json.Json
 import thong.kotlin.pomodoro.core.utils.toDateTimeText
 import thong.kotlin.pomodoro.core.utils.toDateTimeTextOrNull
 import thong.kotlin.pomodoro.database.AuraDatabase
@@ -37,8 +36,17 @@ class LearningSessionRepositoryImpl(
     }
 
     override fun getAllLearningSessionRecords(): List<LearningSessionRecord> {
-        return database?.sessionHistoryLocalQueries?.selectAllSessionHistory()?.executeAsList()
+        return database?.sessionHistoryLocalQueries
+            ?.selectAllSessionHistory()
+            ?.executeAsList()
             ?.map { row -> row.toLearningSessionRecord() } ?: emptyList()
+    }
+
+    override fun getSessionById(sessionId: String): LearningSessionRecord? {
+        return database?.sessionHistoryLocalQueries
+            ?.selectSessionHistoryById(sessionId)
+            ?.executeAsOneOrNull()
+            ?.toLearningSessionRecord()
     }
 
 

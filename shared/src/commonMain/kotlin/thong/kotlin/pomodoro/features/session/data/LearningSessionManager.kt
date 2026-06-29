@@ -77,6 +77,7 @@ class LearningSessionManager(
 
     fun getAllLearningSession() = repository.getAllLearningSessionRecords()
 
+    fun getSessionById(sessionId: String) = repository.getSessionById(sessionId)
     fun getTotalFocusSeconds() = repository.getTotalFocusSeconds()
 
     fun insertSession(session: LearningSessionRecord) = repository.insertSession(session)

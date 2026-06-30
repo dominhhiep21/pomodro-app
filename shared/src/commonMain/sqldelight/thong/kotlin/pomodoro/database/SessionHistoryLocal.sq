@@ -88,6 +88,7 @@ WHERE id = ?;
 selectAllSessionHistory:
 SELECT *
 FROM session_history_local
+WHERE status <> 'DELETED'
 ORDER BY started_at DESC;
 
 selectTotalFocusSeconds:

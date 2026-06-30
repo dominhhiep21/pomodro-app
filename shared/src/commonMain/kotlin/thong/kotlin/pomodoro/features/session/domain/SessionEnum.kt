@@ -78,3 +78,9 @@ fun LearningSessionStatus.color() : Color =
         LearningSessionStatus.IDLE -> AuraColors.SessionIdleMode
         LearningSessionStatus.DELETED -> AuraColors.SessionDeletedMode
     }
+
+fun thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle.toDisplayText(): String =
+    when (this) {
+        thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle.SOLO -> "Cá nhân"
+        thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle.GROUP -> "Nhóm"
+    }

@@ -22,16 +22,12 @@ import thong.kotlin.pomodoro.features.learning.mode.components.ExpandableMembers
 import thong.kotlin.pomodoro.features.learning.mode.components.RoomIdBadge
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.CompactSection
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TasksUiState
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TimerUiState
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
 import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.CompactFloatingTimerComponent
+import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TotallyPomodoroUiState
 
 @Composable
 fun LandscapeCompactUI(
-    workspaceUiState: WorkspaceUiState,
-    timerUiState: TimerUiState,
-    tasksUiState: TasksUiState,
+    totallyPomodoroUiState: TotallyPomodoroUiState,
     learningStyle: LearningStyle = LearningStyle.SOLO,
     onToggleTimer: () -> Unit,
     onToggleCompactMode: () -> Unit,
@@ -62,10 +58,10 @@ fun LandscapeCompactUI(
                 horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.Start)
             ) {
                 RoomIdBadge("1234")
-                DailyPomoBadge(count = timerUiState.pomodorosToday)
+                DailyPomoBadge(count = totallyPomodoroUiState.timerUiState.pomodorosToday)
             }
         } else {
-            DailyPomoBadge(count = timerUiState.pomodorosToday)
+            DailyPomoBadge(count = totallyPomodoroUiState.timerUiState.pomodorosToday)
         }
 
         IconButton(
@@ -80,9 +76,9 @@ fun LandscapeCompactUI(
         }
 
         CompactFloatingTimerComponent(
-            timeLeft = timerUiState.timeLeft,
-            mode = timerUiState.currentMode,
-            isActive = timerUiState.isActive,
+            timeLeft = totallyPomodoroUiState.timerUiState.timeLeft,
+            mode = totallyPomodoroUiState.timerUiState.currentMode,
+            isActive = totallyPomodoroUiState.timerUiState.isActive,
             onToggle = onToggleTimer,
             width = 200.dp,
             height = 80.dp,
@@ -95,7 +91,7 @@ fun LandscapeCompactUI(
         )
 
         CompactMenuComponent(
-            isExpanded = workspaceUiState.isCompactMenuExpanded,
+            isExpanded = totallyPomodoroUiState.workspaceUiState.isCompactMenuExpanded,
             onToggleExpand = onToggleCompactMenu,
             onSelectSection = onSelectCompactSection,
             onExitCompactMode = onToggleCompactMode,
@@ -117,13 +113,12 @@ fun LandscapeCompactUI(
         }
 
         CompactSectionOverlayComponent(
-            activeSection = workspaceUiState.activeCompactSection,
+            activeSection = totallyPomodoroUiState.workspaceUiState.activeCompactSection,
             onClose = onCloseCompactSection
         ) { section ->
             CompactSectionUiComponent(
+                totallyPomodoroUiState = totallyPomodoroUiState,
                 section = section,
-                workspaceUiState = workspaceUiState,
-                tasksUiState = tasksUiState,
                 onToggleMusic = onToggleMusic,
                 onSelectTrack = onSelectTrack,
                 onToggleAmbientSound = onToggleAmbientSound,
@@ -143,9 +138,7 @@ fun LandscapeCompactUI(
 
 @Composable
 fun PortraitCompactUI(
-    workspaceUiState: WorkspaceUiState,
-    timerUiState: TimerUiState,
-    tasksUiState: TasksUiState,
+    totallyPomodoroUiState: TotallyPomodoroUiState,
     learningStyle: LearningStyle = LearningStyle.SOLO,
     onToggleSettings: () -> Unit = {},
     onToggleTimer: () -> Unit,
@@ -174,9 +167,9 @@ fun PortraitCompactUI(
     ) {
         CompactFloatingTimerComponent(
             showExitShortcut = true,
-            timeLeft = timerUiState.timeLeft,
-            mode = timerUiState.currentMode,
-            isActive = timerUiState.isActive,
+            timeLeft = totallyPomodoroUiState.timerUiState.timeLeft,
+            mode = totallyPomodoroUiState.timerUiState.currentMode,
+            isActive = totallyPomodoroUiState.timerUiState.isActive,
             onToggle = onToggleTimer,
             onToggleSettings = onToggleSettings,
             onExitClick = onToggleCompactMode,
@@ -184,7 +177,7 @@ fun PortraitCompactUI(
         )
 
         CompactMenuComponent(
-            isExpanded = workspaceUiState.isCompactMenuExpanded,
+            isExpanded = totallyPomodoroUiState.workspaceUiState.isCompactMenuExpanded,
             onToggleExpand = onToggleCompactMenu,
             onSelectSection = onSelectCompactSection,
             onExitCompactMode = onToggleCompactMode,
@@ -192,13 +185,12 @@ fun PortraitCompactUI(
         )
 
         CompactSectionOverlayComponent(
-            activeSection = workspaceUiState.activeCompactSection,
+            activeSection = totallyPomodoroUiState.workspaceUiState.activeCompactSection,
             onClose = onCloseCompactSection
         ) { section ->
             CompactSectionUiComponent(
+                totallyPomodoroUiState = totallyPomodoroUiState,
                 section = section,
-                workspaceUiState = workspaceUiState,
-                tasksUiState = tasksUiState,
                 onToggleMusic = onToggleMusic,
                 onSelectTrack = onSelectTrack,
                 onToggleAmbientSound = onToggleAmbientSound,
@@ -244,10 +236,10 @@ fun PortraitCompactUI(
                 horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.Start)
             ) {
                 RoomIdBadge("1234")
-                DailyPomoBadge(count = timerUiState.pomodorosToday)
+                DailyPomoBadge(count = totallyPomodoroUiState.timerUiState.pomodorosToday)
             }
         } else {
-            DailyPomoBadge(count = timerUiState.pomodorosToday)
+            DailyPomoBadge(count = totallyPomodoroUiState.timerUiState.pomodorosToday)
         }
     }
 }

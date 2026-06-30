@@ -7,7 +7,8 @@ enum class LearningSessionStatus {
     IDLE,       // Chưa có session nào
     RUNNING,   // Đang học
     PAUSED,    // Tạm dừng
-    COMPLETED  // Đã kết thúc chính thức
+    COMPLETED,  // Đã kết thúc chính thức
+    DELETED,    // Đã xóa
 }
 
 enum class CurrentLearningMode {
@@ -27,6 +28,11 @@ enum class SyncStatus {
 
 enum class LearningSessionEventType {
     SESSION_CREATED,
+    SESSION_STARTED,
+    UPDATED_SESSION_SETTINGS,
+    SESSION_COMPLETED_BY_USER,
+    SESSION_PAUSED_BY_USER,
+    SESSION_DELETED_BY_USER,
     WORK_ROUND_PAUSED,
     WORK_ROUND_STARTED,
     WORK_ROUND_RESUMED,
@@ -39,14 +45,12 @@ enum class LearningSessionEventType {
     BREAK_ROUND_ENDED,
     BREAK_ROUND_RESET,
     BREAK_ROUND_SKIPPED,
-    SESSION_STARTED,
     APP_EXITED,
     APP_WENT_BACKGROUND,
     USER_RETURNED_HOME,
     BACKGROUND_CHANGED,
     SOUND_MUTED,
-    SOUND_UNMUTED,
-    SESSION_COMPLETED_BY_USER
+    SOUND_UNMUTED
 }
 
 fun LearningSessionStatus.toDisplayText(): String =
@@ -55,6 +59,7 @@ fun LearningSessionStatus.toDisplayText(): String =
         LearningSessionStatus.RUNNING -> "Đang chạy"
         LearningSessionStatus.PAUSED -> "Tạm dừng"
         LearningSessionStatus.COMPLETED -> "Hoàn thành"
+        LearningSessionStatus.DELETED -> "Đã xóa"
     }
 
 fun CurrentLearningMode.toDisplayText(): String =
@@ -71,4 +76,5 @@ fun LearningSessionStatus.color() : Color =
         LearningSessionStatus.RUNNING -> AuraColors.WorkMode
         LearningSessionStatus.PAUSED -> AuraColors.SessionPausedMode
         LearningSessionStatus.IDLE -> AuraColors.SessionIdleMode
+        LearningSessionStatus.DELETED -> AuraColors.SessionDeletedMode
     }

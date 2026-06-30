@@ -34,16 +34,12 @@ import thong.kotlin.pomodoro.features.pomodoro.music.presentation.MusicSection
 import thong.kotlin.pomodoro.features.pomodoro.task.components.TaskBottomBar
 import thong.kotlin.pomodoro.features.pomodoro.task.components.TaskSideBar
 import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.TimerSectionComponent
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TasksUiState
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TimerUiState
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
+import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TotallyPomodoroUiState
 import kotlin.math.roundToInt
 
 @Composable
 fun LandscapePomodoroUI(
-    workspaceUiState: WorkspaceUiState,
-    timerUiState: TimerUiState,
-    tasksUiState: TasksUiState,
+    totallyPomodoroUiState: TotallyPomodoroUiState,
     themeColor: Color,
     onToggleTimer: () -> Unit,
     onResetTimer: () -> Unit,
@@ -74,12 +70,11 @@ fun LandscapePomodoroUI(
             ) {
                 ApplicationHeaderComponent(onToggleCompactMode, onToggleSettings, onExit)
 
-                DailyPomoBadge(count = timerUiState.pomodorosToday)
+                DailyPomoBadge(count = totallyPomodoroUiState.timerUiState.pomodorosToday)
 
                 Box(modifier = Modifier.fillMaxWidth()) {
                     TimerSectionComponent(
-                        timerUiState = timerUiState,
-                        workspaceUiState = workspaceUiState,
+                        totallyPomodoroUiState = totallyPomodoroUiState,
                         themeColor = themeColor,
                         onToggleTimer = onToggleTimer,
                         onResetTimer = onResetTimer,
@@ -95,9 +90,9 @@ fun LandscapePomodoroUI(
             ) {
 
                 MusicSection(
-                    availableTracks = workspaceUiState.availableTracks,
-                    selectedTrackId = workspaceUiState.selectedTrackId,
-                    isMusicPlaying = workspaceUiState.isMusicPlaying,
+                    availableTracks = totallyPomodoroUiState.workspaceUiState.availableTracks,
+                    selectedTrackId = totallyPomodoroUiState.workspaceUiState.selectedTrackId,
+                    isMusicPlaying = totallyPomodoroUiState.workspaceUiState.isMusicPlaying,
                     onToggleMusic = onToggleMusic,
                     onSelectTrack = onSelectTrack,
                     modifier = Modifier.fillMaxWidth()
@@ -106,8 +101,8 @@ fun LandscapePomodoroUI(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 BackgroundSection(
-                    availableBackgrounds = workspaceUiState.availableBackgrounds,
-                    selectedBackgroundId = workspaceUiState.selectedBackgroundId,
+                    availableBackgrounds = totallyPomodoroUiState.workspaceUiState.availableBackgrounds,
+                    selectedBackgroundId = totallyPomodoroUiState.workspaceUiState.selectedBackgroundId,
                     onSelectBackground = onSelectBackground,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -115,8 +110,8 @@ fun LandscapePomodoroUI(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 AmbientSoundSection(
-                    availableSounds = workspaceUiState.availableAmbientSounds,
-                    activeSoundIds = workspaceUiState.activeAmbientSoundIds,
+                    availableSounds = totallyPomodoroUiState.workspaceUiState.availableAmbientSounds,
+                    activeSoundIds = totallyPomodoroUiState.workspaceUiState.activeAmbientSoundIds,
                     onToggleSound = onToggleAmbientSound,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -124,10 +119,10 @@ fun LandscapePomodoroUI(
         }
 
         TaskSideBar(
-            tasks = tasksUiState.tasks,
-            isExpanded = tasksUiState.isTasksExpanded,
+            tasks = totallyPomodoroUiState.tasksUiState.tasks,
+            isExpanded = totallyPomodoroUiState.tasksUiState.isTasksExpanded,
             onToggleExpand = onToggleTasksExpanded,
-            newTaskText = tasksUiState.newTaskText,
+            newTaskText = totallyPomodoroUiState.tasksUiState.newTaskText,
             onAddTask = onAddTask,
             onDeleteTask = onDeleteTask,
             onToggleTask = onToggleTask,
@@ -141,9 +136,7 @@ fun LandscapePomodoroUI(
 
 @Composable
 fun LandscapePomodoroGroupUI(
-    workspaceUiState: WorkspaceUiState,
-    timerUiState: TimerUiState,
-    tasksUiState: TasksUiState,
+    totallyPomodoroUiState: TotallyPomodoroUiState,
     groupConfig: LearningGroupConfig,
     themeColor: Color,
     onToggleTimer: () -> Unit,
@@ -180,14 +173,13 @@ fun LandscapePomodoroGroupUI(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    DailyPomoBadge(count = timerUiState.pomodorosToday)
+                    DailyPomoBadge(count = totallyPomodoroUiState.timerUiState.pomodorosToday)
                     RoomIdBadge("1234")
                 }
 
                 Box(modifier = Modifier.fillMaxWidth()) {
                     TimerSectionComponent(
-                        timerUiState = timerUiState,
-                        workspaceUiState = workspaceUiState,
+                        totallyPomodoroUiState = totallyPomodoroUiState,
                         themeColor = themeColor,
                         onToggleTimer = onToggleTimer,
                         onResetTimer = onResetTimer,
@@ -205,9 +197,9 @@ fun LandscapePomodoroGroupUI(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 MusicSection(
-                    availableTracks = workspaceUiState.availableTracks,
-                    selectedTrackId = workspaceUiState.selectedTrackId,
-                    isMusicPlaying = workspaceUiState.isMusicPlaying,
+                    availableTracks = totallyPomodoroUiState.workspaceUiState.availableTracks,
+                    selectedTrackId = totallyPomodoroUiState.workspaceUiState.selectedTrackId,
+                    isMusicPlaying = totallyPomodoroUiState.workspaceUiState.isMusicPlaying,
                     onToggleMusic = onToggleMusic,
                     onSelectTrack = onSelectTrack,
                     modifier = Modifier.fillMaxWidth()
@@ -216,8 +208,8 @@ fun LandscapePomodoroGroupUI(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 BackgroundSection(
-                    availableBackgrounds = workspaceUiState.availableBackgrounds,
-                    selectedBackgroundId = workspaceUiState.selectedBackgroundId,
+                    availableBackgrounds = totallyPomodoroUiState.workspaceUiState.availableBackgrounds,
+                    selectedBackgroundId = totallyPomodoroUiState.workspaceUiState.selectedBackgroundId,
                     onSelectBackground = onSelectBackground,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -225,8 +217,8 @@ fun LandscapePomodoroGroupUI(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 AmbientSoundSection(
-                    availableSounds = workspaceUiState.availableAmbientSounds,
-                    activeSoundIds = workspaceUiState.activeAmbientSoundIds,
+                    availableSounds = totallyPomodoroUiState.workspaceUiState.availableAmbientSounds,
+                    activeSoundIds = totallyPomodoroUiState.workspaceUiState.activeAmbientSoundIds,
                     onToggleSound = onToggleAmbientSound,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -243,10 +235,10 @@ fun LandscapePomodoroGroupUI(
             ExpandableChatPanel()
 
             TaskSideBar(
-                tasks = tasksUiState.tasks,
-                isExpanded = tasksUiState.isTasksExpanded,
+                tasks = totallyPomodoroUiState.tasksUiState.tasks,
+                isExpanded = totallyPomodoroUiState.tasksUiState.isTasksExpanded,
                 onToggleExpand = onToggleTasksExpanded,
-                newTaskText = tasksUiState.newTaskText,
+                newTaskText = totallyPomodoroUiState.tasksUiState.newTaskText,
                 onAddTask = onAddTask,
                 onDeleteTask = onDeleteTask,
                 onToggleTask = onToggleTask,
@@ -258,9 +250,7 @@ fun LandscapePomodoroGroupUI(
 
 @Composable
 fun PortraitPomodoroUI(
-    workspaceUiState: WorkspaceUiState,
-    timerUiState: TimerUiState,
-    tasksUiState: TasksUiState,
+    totallyPomodoroUiState: TotallyPomodoroUiState,
     themeColor: Color,
     onToggleTimer: () -> Unit,
     onResetTimer: () -> Unit,
@@ -288,12 +278,11 @@ fun PortraitPomodoroUI(
         ) {
             ApplicationHeaderComponent(onToggleCompactMode, onToggleSettings, onExit)
 
-            DailyPomoBadge(count = timerUiState.pomodorosToday)
+            DailyPomoBadge(count = totallyPomodoroUiState.timerUiState.pomodorosToday)
 
             Box(modifier = Modifier.fillMaxWidth()) {
                 TimerSectionComponent(
-                    timerUiState = timerUiState,
-                    workspaceUiState = workspaceUiState,
+                    totallyPomodoroUiState = totallyPomodoroUiState,
                     themeColor = themeColor,
                     onToggleTimer = onToggleTimer,
                     onResetTimer = onResetTimer,
@@ -305,9 +294,9 @@ fun PortraitPomodoroUI(
             Spacer(modifier = Modifier.height(24.dp))
 
             MusicSection(
-                availableTracks = workspaceUiState.availableTracks,
-                selectedTrackId = workspaceUiState.selectedTrackId,
-                isMusicPlaying = workspaceUiState.isMusicPlaying,
+                availableTracks = totallyPomodoroUiState.workspaceUiState.availableTracks,
+                selectedTrackId = totallyPomodoroUiState.workspaceUiState.selectedTrackId,
+                isMusicPlaying = totallyPomodoroUiState.workspaceUiState.isMusicPlaying,
                 onToggleMusic = onToggleMusic,
                 onSelectTrack = onSelectTrack,
                 modifier = Modifier.fillMaxWidth()
@@ -316,8 +305,8 @@ fun PortraitPomodoroUI(
             Spacer(modifier = Modifier.height(24.dp))
 
             BackgroundSection(
-                availableBackgrounds = workspaceUiState.availableBackgrounds,
-                selectedBackgroundId = workspaceUiState.selectedBackgroundId,
+                availableBackgrounds = totallyPomodoroUiState.workspaceUiState.availableBackgrounds,
+                selectedBackgroundId = totallyPomodoroUiState.workspaceUiState.selectedBackgroundId,
                 onSelectBackground = onSelectBackground,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -325,8 +314,8 @@ fun PortraitPomodoroUI(
             Spacer(modifier = Modifier.height(24.dp))
 
             AmbientSoundSection(
-                availableSounds = workspaceUiState.availableAmbientSounds,
-                activeSoundIds = workspaceUiState.activeAmbientSoundIds,
+                availableSounds = totallyPomodoroUiState.workspaceUiState.availableAmbientSounds,
+                activeSoundIds = totallyPomodoroUiState.workspaceUiState.activeAmbientSoundIds,
                 onToggleSound = onToggleAmbientSound,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -335,10 +324,10 @@ fun PortraitPomodoroUI(
         }
 
         TaskBottomBar(
-            tasks = tasksUiState.tasks,
-            isExpanded = tasksUiState.isTasksExpanded,
+            tasks = totallyPomodoroUiState.tasksUiState.tasks,
+            isExpanded = totallyPomodoroUiState.tasksUiState.isTasksExpanded,
             onToggleExpand = onToggleTasksExpanded,
-            newTaskText = tasksUiState.newTaskText,
+            newTaskText = totallyPomodoroUiState.tasksUiState.newTaskText,
             onAddTask = onAddTask,
             onDeleteTask = onDeleteTask,
             onToggleTask = onToggleTask,
@@ -354,9 +343,7 @@ fun PortraitPomodoroUI(
 
 @Composable
 fun PortraitPomodoroGroupUI(
-    workspaceUiState: WorkspaceUiState,
-    timerUiState: TimerUiState,
-    tasksUiState: TasksUiState,
+    totallyPomodoroUiState: TotallyPomodoroUiState,
     groupConfig: LearningGroupConfig,
     themeColor: Color,
     onToggleTimer: () -> Unit,
@@ -388,15 +375,14 @@ fun PortraitPomodoroGroupUI(
             ApplicationHeaderComponent(onToggleCompactMode, onToggleSettings, onExit)
 
             RoomIdBadge("1234")
-            DailyPomoBadge(count = timerUiState.pomodorosToday)
+            DailyPomoBadge(count = totallyPomodoroUiState.timerUiState.pomodorosToday)
 
             ExpandableMembersPanel()
             Spacer(modifier = Modifier.height(24.dp))
 
             Box(modifier = Modifier.fillMaxWidth()) {
                 TimerSectionComponent(
-                    timerUiState = timerUiState,
-                    workspaceUiState = workspaceUiState,
+                    totallyPomodoroUiState = totallyPomodoroUiState,
                     themeColor = themeColor,
                     onToggleTimer = onToggleTimer,
                     onResetTimer = onResetTimer,
@@ -408,9 +394,9 @@ fun PortraitPomodoroGroupUI(
             Spacer(modifier = Modifier.height(24.dp))
 
             MusicSection(
-                availableTracks = workspaceUiState.availableTracks,
-                selectedTrackId = workspaceUiState.selectedTrackId,
-                isMusicPlaying = workspaceUiState.isMusicPlaying,
+                availableTracks = totallyPomodoroUiState.workspaceUiState.availableTracks,
+                selectedTrackId = totallyPomodoroUiState.workspaceUiState.selectedTrackId,
+                isMusicPlaying = totallyPomodoroUiState.workspaceUiState.isMusicPlaying,
                 onToggleMusic = onToggleMusic,
                 onSelectTrack = onSelectTrack,
                 modifier = Modifier.fillMaxWidth()
@@ -419,8 +405,8 @@ fun PortraitPomodoroGroupUI(
             Spacer(modifier = Modifier.height(24.dp))
 
             BackgroundSection(
-                availableBackgrounds = workspaceUiState.availableBackgrounds,
-                selectedBackgroundId = workspaceUiState.selectedBackgroundId,
+                availableBackgrounds = totallyPomodoroUiState.workspaceUiState.availableBackgrounds,
+                selectedBackgroundId = totallyPomodoroUiState.workspaceUiState.selectedBackgroundId,
                 onSelectBackground = onSelectBackground,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -428,8 +414,8 @@ fun PortraitPomodoroGroupUI(
             Spacer(modifier = Modifier.height(24.dp))
 
             AmbientSoundSection(
-                availableSounds = workspaceUiState.availableAmbientSounds,
-                activeSoundIds = workspaceUiState.activeAmbientSoundIds,
+                availableSounds = totallyPomodoroUiState.workspaceUiState.availableAmbientSounds,
+                activeSoundIds = totallyPomodoroUiState.workspaceUiState.activeAmbientSoundIds,
                 onToggleSound = onToggleAmbientSound,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -438,10 +424,10 @@ fun PortraitPomodoroGroupUI(
         }
 
         TaskBottomBar(
-            tasks = tasksUiState.tasks,
-            isExpanded = tasksUiState.isTasksExpanded,
+            tasks = totallyPomodoroUiState.tasksUiState.tasks,
+            isExpanded = totallyPomodoroUiState.tasksUiState.isTasksExpanded,
             onToggleExpand = onToggleTasksExpanded,
-            newTaskText = tasksUiState.newTaskText,
+            newTaskText = totallyPomodoroUiState.tasksUiState.newTaskText,
             onAddTask = onAddTask,
             onDeleteTask = onDeleteTask,
             onToggleTask = onToggleTask,

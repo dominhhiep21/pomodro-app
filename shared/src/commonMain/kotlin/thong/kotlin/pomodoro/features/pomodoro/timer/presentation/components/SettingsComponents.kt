@@ -32,14 +32,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import thong.kotlin.pomodoro.core.designsystem.components.AuraButton
+import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
+import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TotallyPomodoroUiState
 
 @Composable
 fun PomodoroSettingsModal(
-    workspaceUiState: WorkspaceUiState,
+    totallyPomodoroUiState: TotallyPomodoroUiState,
     onWorkChange: (String) -> Unit,
     onBreakChange: (String) -> Unit,
     onSave: () -> Unit,
@@ -68,7 +72,7 @@ fun PomodoroSettingsModal(
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
             SettingsContent(
-                workspaceUiState = workspaceUiState,
+                totallyPomodoroUiState = totallyPomodoroUiState,
                 onWorkChange = onWorkChange,
                 onBreakChange = onBreakChange,
                 onSave = onSave,
@@ -81,7 +85,7 @@ fun PomodoroSettingsModal(
 
 @Composable
 fun SettingsContent(
-    workspaceUiState: WorkspaceUiState,
+    totallyPomodoroUiState: TotallyPomodoroUiState,
     onWorkChange: (String) -> Unit,
     onBreakChange: (String) -> Unit,
     onSave: () -> Unit,
@@ -114,13 +118,13 @@ fun SettingsContent(
                 ) {
                     DurationInput(
                         label = "Tập trung",
-                        value = workspaceUiState.editingWorkMinutes,
+                        value = totallyPomodoroUiState.workspaceUiState.editingWorkMinutes,
                         onValueChange = onWorkChange,
                         modifier = Modifier.weight(1f)
                     )
                     DurationInput(
                         label = "Nghỉ ngơi",
-                        value = workspaceUiState.editingBreakMinutes,
+                        value = totallyPomodoroUiState.workspaceUiState.editingBreakMinutes,
                         onValueChange = onBreakChange,
                         modifier = Modifier.weight(1f)
                     )
@@ -132,12 +136,12 @@ fun SettingsContent(
                 ) {
                     DurationInput(
                         label = "Tập trung",
-                        value = workspaceUiState.editingWorkMinutes,
+                        value = totallyPomodoroUiState.workspaceUiState.editingWorkMinutes,
                         onValueChange = onWorkChange
                     )
                     DurationInput(
                         label = "Nghỉ ngơi",
-                        value = workspaceUiState.editingBreakMinutes,
+                        value = totallyPomodoroUiState.workspaceUiState.editingBreakMinutes,
                         onValueChange = onBreakChange
                     )
                 }
@@ -146,7 +150,7 @@ fun SettingsContent(
 
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = workspaceUiState.settingsError,
+            text = totallyPomodoroUiState.workspaceUiState.settingsError,
             color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodySmall
         )
@@ -186,6 +190,93 @@ fun SettingsContent(
             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error.copy(alpha = 0.7f))
         ) {
             Text("Xóa tất cả dữ liệu & Cài đặt", fontSize = 12.sp)
+        }
+    }
+}
+
+@Composable
+fun ExitConfirmationModal(
+    onDismiss: () -> Unit,
+    onEndSession: () -> Unit,
+    onPauseSession: () -> Unit,
+    onDeleteSession: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        GlassBox(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(28.dp),
+            backgroundColor = Color.Black.copy(alpha = 0.9f)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Xác nhận thoát",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Black
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = "Bạn muốn làm gì với phiên học hiện tại?",
+                    color = Color.White.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                // Option: End Session
+                AuraButton(
+                    onClick = onEndSession,
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalPadding = 16.dp
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Kết thúc phiên học", color = AuraColors.SessionCompletedMode, fontWeight = FontWeight.Bold)
+                        Text("Lưu lại kết quả và đóng phiên", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Option: Pause Session
+                AuraButton(
+                    onClick = onPauseSession,
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalPadding = 16.dp
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Tạm dừng & Thoát", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text("Tiếp tục lại vào lần sau", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Option: Delete Session
+                AuraButton(
+                    onClick = onDeleteSession,
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalPadding = 16.dp
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Xóa phiên học", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+                        Text("Dữ liệu phiên này sẽ không được lưu", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                TextButton(onClick = onDismiss) {
+                    Text("Quay lại", color = Color.White.copy(alpha = 0.4f))
+                }
+            }
         }
     }
 }

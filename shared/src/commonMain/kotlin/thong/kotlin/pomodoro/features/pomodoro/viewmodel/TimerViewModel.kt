@@ -2,7 +2,6 @@ package thong.kotlin.pomodoro.features.pomodoro.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,14 +9,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.EventType
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroConfig
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
-import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettingsV2
-import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryV2
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.totalSeconds
 import thong.kotlin.pomodoro.features.session.data.LearningSessionManager
 import thong.kotlin.pomodoro.features.session.domain.CurrentLearningMode
@@ -42,7 +38,6 @@ data class TimerUiState(
 
 class TimerViewModel(
     private val soundManager: SoundManager? = DependencyRegistry.soundManager,
-    private val repository: UserAppStateRepositoryV2? = DependencyRegistry.userAppStateRepositoryV2,
     private val learningSessionManager: LearningSessionManager = DependencyRegistry.learningSessionManager,
     private val currentSession: LearningSessionRecord
 ) : ViewModel() {
@@ -59,23 +54,34 @@ class TimerViewModel(
     }
 
     private fun loadInitialData() {
-        viewModelScope.launch {
-            val savedSettings = repository?.getUserSettings() ?: UserSettingsV2()
-
-            _uiState.update { state ->
-                state.copy(
-                    config = state.config.copy(
-                        workMinutes = savedSettings.personalWorkMinutes,
-                        shortBreakMinutes = savedSettings.personalBreakMinutes
-                    ),
-                    timeLeft = PomodoroMode.WORK.totalSeconds(
-                        PomodoroConfig(
-                            savedSettings.personalWorkMinutes,
-                            savedSettings.personalBreakMinutes
-                        )
-                    )
-                )
+        _uiState.update { state ->
+            val session = state.currentSession
+            val mode = when (session.currentLearningMode) {
+                CurrentLearningMode.WORK -> PomodoroMode.WORK
+                CurrentLearningMode.BREAK -> PomodoroMode.SHORT_BREAK
+                CurrentLearningMode.LONG_BREAK -> PomodoroMode.LONG_BREAK
+                CurrentLearningMode.NOT_YET_STARTED -> PomodoroMode.WORK
             }
+
+            val config = PomodoroConfig(
+                workMinutes = session.plannedWorkMinutes,
+                shortBreakMinutes = session.plannedBreakMinutes,
+                longBreakMinutes = session.plannedLongBreakMinutes
+            )
+
+            state.copy(
+                config = config,
+                currentMode = mode,
+                timeLeft = mode.totalSeconds(config),
+                pomodorosToday = session.completedWorkRounds,
+                isSessionStarted = session.status != LearningSessionStatus.IDLE,
+                isActive = session.status == LearningSessionStatus.RUNNING
+            )
+        }
+
+        // Nếu phiên đang chạy thì bắt đầu đếm ngược ngay lập tức
+        if (_uiState.value.isActive) {
+            startTimer()
         }
     }
 
@@ -194,37 +200,35 @@ class TimerViewModel(
         }
 
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                updateSession(updatedSession)
+            updateSession(updatedSession)
 
-                if (shouldInsertSessionStartedEvent) {
-                    insertEvent(
-                        LearningSessionEvent(
-                            sessionId = session.sessionId,
-                            eventType = LearningSessionEventType.SESSION_STARTED,
-                            remainingSeconds = state.timeLeft,
-                            metadata = mapOf(
-                                "source" to "toggle_timer",
-                                "action" to "start_session"
-                            )
-                        )
-                    )
-                }
-
+            if (shouldInsertSessionStartedEvent) {
                 insertEvent(
                     LearningSessionEvent(
                         sessionId = session.sessionId,
-                        eventType = eventType,
+                        eventType = LearningSessionEventType.SESSION_STARTED,
                         remainingSeconds = state.timeLeft,
-                        currentRound = state.pomodorosToday,
                         metadata = mapOf(
                             "source" to "toggle_timer",
-                            "action" to action,
-                            "mode" to currentMode.name
+                            "action" to "start_session"
                         )
                     )
                 )
             }
+
+            insertEvent(
+                LearningSessionEvent(
+                    sessionId = session.sessionId,
+                    eventType = eventType,
+                    remainingSeconds = state.timeLeft,
+                    currentRound = state.pomodorosToday,
+                    metadata = mapOf(
+                        "source" to "toggle_timer",
+                        "action" to action,
+                        "mode" to currentMode.name
+                    )
+                )
+            )
         }
     }
 
@@ -290,35 +294,33 @@ class TimerViewModel(
         if (!hasStarted) return
 
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                val eventType = when (state.currentMode) {
-                    PomodoroMode.WORK -> LearningSessionEventType.WORK_ROUND_RESET
-                    PomodoroMode.SHORT_BREAK -> LearningSessionEventType.BREAK_ROUND_RESET
-                    PomodoroMode.LONG_BREAK -> LearningSessionEventType.BREAK_ROUND_RESET
-                }
+            val eventType = when (state.currentMode) {
+                PomodoroMode.WORK -> LearningSessionEventType.WORK_ROUND_RESET
+                PomodoroMode.SHORT_BREAK -> LearningSessionEventType.BREAK_ROUND_RESET
+                PomodoroMode.LONG_BREAK -> LearningSessionEventType.BREAK_ROUND_RESET
+            }
 
-                val action = when (state.currentMode) {
-                    PomodoroMode.WORK -> "reset_work"
-                    PomodoroMode.SHORT_BREAK -> "reset_break"
-                    PomodoroMode.LONG_BREAK -> "reset_long_break"
-                }
+            val action = when (state.currentMode) {
+                PomodoroMode.WORK -> "reset_work"
+                PomodoroMode.SHORT_BREAK -> "reset_break"
+                PomodoroMode.LONG_BREAK -> "reset_long_break"
+            }
 
-                insertEvent(
-                    LearningSessionEvent(
-                        sessionId = currentSession.sessionId,
-                        eventType = eventType,
-                        remainingSeconds = state.timeLeft,
-                        currentRound = state.pomodorosToday,
-                        metadata = mapOf(
-                            "source" to "reset_timer",
-                            "action" to action,
-                            "mode" to state.currentMode.name
-                        )
+            insertEvent(
+                LearningSessionEvent(
+                    sessionId = currentSession.sessionId,
+                    eventType = eventType,
+                    remainingSeconds = state.timeLeft,
+                    currentRound = state.pomodorosToday,
+                    metadata = mapOf(
+                        "source" to "reset_timer",
+                        "action" to action,
+                        "mode" to state.currentMode.name
                     )
                 )
+            )
 
-                updateSession(updatedSession)
-            }
+            updateSession(updatedSession)
         }
     }
 
@@ -373,37 +375,35 @@ class TimerViewModel(
         }
 
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                val eventType = when (currentMode) {
-                    PomodoroMode.WORK -> LearningSessionEventType.WORK_ROUND_SKIPPED
-                    PomodoroMode.SHORT_BREAK,
-                    PomodoroMode.LONG_BREAK -> LearningSessionEventType.BREAK_ROUND_SKIPPED
-                }
+            val eventType = when (currentMode) {
+                PomodoroMode.WORK -> LearningSessionEventType.WORK_ROUND_SKIPPED
+                PomodoroMode.SHORT_BREAK,
+                PomodoroMode.LONG_BREAK -> LearningSessionEventType.BREAK_ROUND_SKIPPED
+            }
 
-                val action = when (currentMode) {
-                    PomodoroMode.WORK -> "skip_work"
-                    PomodoroMode.SHORT_BREAK -> "skip_break"
-                    PomodoroMode.LONG_BREAK -> "skip_long_break"
-                }
+            val action = when (currentMode) {
+                PomodoroMode.WORK -> "skip_work"
+                PomodoroMode.SHORT_BREAK -> "skip_break"
+                PomodoroMode.LONG_BREAK -> "skip_long_break"
+            }
 
-                updateSession(updatedSession)
+            updateSession(updatedSession)
 
-                insertEvent(
-                    LearningSessionEvent(
-                        sessionId = currentSession.sessionId,
-                        eventType = eventType,
-                        remainingSeconds = state.timeLeft,
-                        currentRound = state.pomodorosToday,
-                        metadata = mapOf(
-                            "source" to "toggle_skip_timer",
-                            "action" to action,
-                            "from_mode" to currentMode.name,
-                            "to_mode" to nextMode.name,
-                            "elapsed_seconds" to elapsedSeconds.toString()
-                        )
+            insertEvent(
+                LearningSessionEvent(
+                    sessionId = currentSession.sessionId,
+                    eventType = eventType,
+                    remainingSeconds = state.timeLeft,
+                    currentRound = state.pomodorosToday,
+                    metadata = mapOf(
+                        "source" to "toggle_skip_timer",
+                        "action" to action,
+                        "from_mode" to currentMode.name,
+                        "to_mode" to nextMode.name,
+                        "elapsed_seconds" to elapsedSeconds.toString()
                     )
                 )
-            }
+            )
         }
     }
 
@@ -486,28 +486,26 @@ class TimerViewModel(
         }
 
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                updateSession(updatedSession)
-                insertEvent(
-                    LearningSessionEvent(
-                        eventId = "auto_event_${Clock.System.now().toEpochMilliseconds()}",
-                        sessionId = session.sessionId,
-                        eventType = eventType,
-                        remainingSeconds = 0,
-                        currentRound = currentRound,
-                        metadata = mapOf(
-                            "source" to "auto",
-                            "action" to if (isWorkMode) {
-                                "work_round_complete"
-                            } else {
-                                "break_ended"
-                            },
-                            "from_mode" to currentMode.name,
-                            "to_mode" to nextMode.name
-                        )
+            updateSession(updatedSession)
+            insertEvent(
+                LearningSessionEvent(
+                    eventId = "auto_event_${Clock.System.now().toEpochMilliseconds()}",
+                    sessionId = session.sessionId,
+                    eventType = eventType,
+                    remainingSeconds = 0,
+                    currentRound = currentRound,
+                    metadata = mapOf(
+                        "source" to "auto",
+                        "action" to if (isWorkMode) {
+                            "work_round_complete"
+                        } else {
+                            "break_ended"
+                        },
+                        "from_mode" to currentMode.name,
+                        "to_mode" to nextMode.name
                     )
                 )
-            }
+            )
         }
     }
 
@@ -516,11 +514,10 @@ class TimerViewModel(
         timerJob = null
     }
 
-    fun getSessionById(): LearningSessionRecord? = learningSessionManager.getSessionById(currentSession.sessionId)
+    suspend fun insertEvent(event: LearningSessionEvent) = learningSessionManager.insertEvent(event)
 
-    fun insertEvent(event: LearningSessionEvent) = learningSessionManager.insertEvent(event)
-
-    fun updateSession(session: LearningSessionRecord) = learningSessionManager.updateSession(session)
+    suspend fun updateSession(session: LearningSessionRecord) =
+        learningSessionManager.updateSession(session)
 
     fun clearPendingNotification() {
         _uiState.update { it.copy(pendingNotification = null) }
@@ -531,6 +528,7 @@ class TimerViewModel(
         return when (state.event) {
             EventType.NOTHING,
             EventType.CLICK_PAUSE_WORK -> EventType.CLICK_START_WORK
+
             EventType.CLICK_PAUSE_BREAK -> EventType.CLICK_START_BREAK
             EventType.CLICK_START_WORK,
             EventType.BREAK_END,
@@ -552,9 +550,13 @@ class TimerViewModel(
     }
 }
 
-private data class TimerCompleteResult(
+data class TimerCompleteResult(
     val newMode: PomodoroMode,
     val nextTime: Int,
     val eventType: EventType,
     val notification: String
 )
+
+fun stopTimerJobOnly(timerJob: Job?) {
+    timerJob?.cancel()
+}

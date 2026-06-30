@@ -90,18 +90,16 @@ class LearningStyleScreen : Screen {
                 isFinishing = true
                 scope.launch {
                     val result = runCatching {
-                        withContext(Dispatchers.IO) {
-                            val newSession = addNewSessionToDbAndGet(
-                                learningGroupConfig = learningGroupConfig,
-                                learningStyle = learningStyle,
-                                learningSessionManager = learningSessionManager
-                            )
-                            addNewEventToDb(
-                                sessionId = newSession.sessionId,
-                                learningSessionManager = learningSessionManager
-                            )
-                            newSession
-                        }
+                        val newSession = addNewSessionToDbAndGet(
+                            learningGroupConfig = learningGroupConfig,
+                            learningStyle = learningStyle,
+                            learningSessionManager = learningSessionManager
+                        )
+                        addNewEventToDb(
+                            sessionId = newSession.sessionId,
+                            learningSessionManager = learningSessionManager
+                        )
+                        newSession
                     }
                     result
                         .onSuccess { newSession ->
@@ -122,7 +120,7 @@ class LearningStyleScreen : Screen {
     }
 }
 
-private fun addNewSessionToDbAndGet(
+private suspend fun addNewSessionToDbAndGet(
     learningGroupConfig: LearningGroupConfig?,
     learningStyle: LearningStyle,
     learningSessionManager: LearningSessionManager
@@ -149,7 +147,7 @@ private fun addNewSessionToDbAndGet(
     return newSession
 }
 
-private fun addNewEventToDb(
+private suspend fun addNewEventToDb(
     sessionId: String,
     learningSessionManager: LearningSessionManager
 ) {

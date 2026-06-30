@@ -46,13 +46,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TasksUiState
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
-import thong.kotlin.pomodoro.features.pomodoro.task.components.CompactTaskSectionComponent
-import thong.kotlin.pomodoro.features.pomodoro.music.presentation.CompactMusicSectionComponent
-import thong.kotlin.pomodoro.features.settings.presentation.components.SettingsUiComponent
-import thong.kotlin.pomodoro.features.pomodoro.ambient.presentation.components.AmbientSoundSection
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.CompactSection
+import thong.kotlin.pomodoro.features.pomodoro.ambient.presentation.components.AmbientSoundSection
+import thong.kotlin.pomodoro.features.pomodoro.music.presentation.CompactMusicSectionComponent
+import thong.kotlin.pomodoro.features.pomodoro.task.components.CompactTaskSectionComponent
+import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TotallyPomodoroUiState
+import thong.kotlin.pomodoro.features.settings.presentation.components.SettingsUiComponent
 
 @Composable
 fun CompactMenuComponent(
@@ -167,6 +166,7 @@ private fun CompactMenuItemComponent(
     }
 }
 
+@Suppress("UnusedBoxWithConstraintsScope")
 @Composable
 fun CompactSectionOverlayComponent(
     activeSection: CompactSection?,
@@ -211,9 +211,8 @@ fun CompactSectionOverlayComponent(
 
 @Composable
 fun CompactSectionUiComponent(
+    totallyPomodoroUiState: TotallyPomodoroUiState,
     section: CompactSection,
-    workspaceUiState: WorkspaceUiState,
-    tasksUiState: TasksUiState,
     onToggleMusic: () -> Unit,
     onSelectTrack: (String) -> Unit,
     onToggleAmbientSound: (String) -> Unit,
@@ -230,8 +229,8 @@ fun CompactSectionUiComponent(
     when (section) {
         CompactSection.TASKS -> {
             CompactTaskSectionComponent(
-                tasks = tasksUiState.tasks,
-                newTaskText = tasksUiState.newTaskText,
+                tasks = totallyPomodoroUiState.tasksUiState.tasks,
+                newTaskText = totallyPomodoroUiState.tasksUiState.newTaskText,
                 onAddTask = onAddTask,
                 onDeleteTask = onDeleteTask,
                 onToggleTask = onToggleTask,
@@ -243,9 +242,9 @@ fun CompactSectionUiComponent(
 
         CompactSection.MUSIC -> {
             CompactMusicSectionComponent(
-                availableTracks = workspaceUiState.availableTracks,
-                selectedTrackId = workspaceUiState.selectedTrackId,
-                isMusicPlaying = workspaceUiState.isMusicPlaying,
+                availableTracks = totallyPomodoroUiState.workspaceUiState.availableTracks,
+                selectedTrackId = totallyPomodoroUiState.workspaceUiState.selectedTrackId,
+                isMusicPlaying = totallyPomodoroUiState.workspaceUiState.isMusicPlaying,
                 onToggleMusic = onToggleMusic,
                 onSelectTrack = onSelectTrack,
                 modifier = Modifier.fillMaxSize()
@@ -254,8 +253,8 @@ fun CompactSectionUiComponent(
 
         CompactSection.BACKGROUND -> {
             BackgroundSection(
-                availableBackgrounds = workspaceUiState.availableBackgrounds,
-                selectedBackgroundId = workspaceUiState.selectedBackgroundId,
+                availableBackgrounds = totallyPomodoroUiState.workspaceUiState.availableBackgrounds,
+                selectedBackgroundId = totallyPomodoroUiState.workspaceUiState.selectedBackgroundId,
                 onSelectBackground = onSelectBackground,
                 modifier = Modifier.fillMaxSize()
             )
@@ -263,8 +262,8 @@ fun CompactSectionUiComponent(
 
         CompactSection.AMBIENT -> {
             AmbientSoundSection(
-                availableSounds = workspaceUiState.availableAmbientSounds,
-                activeSoundIds = workspaceUiState.activeAmbientSoundIds,
+                availableSounds = totallyPomodoroUiState.workspaceUiState.availableAmbientSounds,
+                activeSoundIds = totallyPomodoroUiState.workspaceUiState.activeAmbientSoundIds,
                 onToggleSound = onToggleAmbientSound,
                 modifier = Modifier.fillMaxSize()
             )
@@ -272,7 +271,7 @@ fun CompactSectionUiComponent(
 
         CompactSection.SETTINGS -> {
             SettingsUiComponent(
-                workspaceUiState = workspaceUiState,
+                totallyPomodoroUiState = totallyPomodoroUiState,
                 onWorkChange = onWorkChange,
                 onBreakChange = onBreakChange,
                 onSave = onSaveSettings,

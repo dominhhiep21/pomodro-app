@@ -36,35 +36,33 @@ import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraGradients
 import thong.kotlin.pomodoro.core.utils.formatToMmSs
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TimerUiState
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
 import thong.kotlin.pomodoro.features.background.model.PerformanceMode
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.totalSeconds
 import thong.kotlin.pomodoro.features.pomodoro.timer.domain.TimerSizes
+import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TotallyPomodoroUiState
 
 @Composable
 fun TimerCircleComponent(
-    workspaceUiState: WorkspaceUiState,
-    timerUiState: TimerUiState,
+    totallyPomodoroUiState: TotallyPomodoroUiState,
     themeColor: Color,
     timerBackgroundColor: Color,
     sizes: TimerSizes
 ) {
-    val performanceMode = workspaceUiState.backgroundConfig?.performanceMode
+    val performanceMode = totallyPomodoroUiState.workspaceUiState.backgroundConfig?.performanceMode
 
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.size(sizes.outerSize)
     ) {
-        val totalSeconds = remember(timerUiState.currentMode, timerUiState.config) {
-            timerUiState.currentMode.totalSeconds(timerUiState.config)
+        val totalSeconds = remember(totallyPomodoroUiState.timerUiState.currentMode, totallyPomodoroUiState.timerUiState.config) {
+            totallyPomodoroUiState.timerUiState.currentMode.totalSeconds(totallyPomodoroUiState.timerUiState.config)
         }
-        val progress = remember(totalSeconds, timerUiState.timeLeft) {
-            (totalSeconds - timerUiState.timeLeft).toFloat() / totalSeconds
+        val progress = remember(totalSeconds, totallyPomodoroUiState.timerUiState.timeLeft) {
+            (totalSeconds - totallyPomodoroUiState.timerUiState.timeLeft).toFloat() / totalSeconds
         }
-        val progressBrush = remember(timerUiState.currentMode) {
-            if (timerUiState.currentMode == PomodoroMode.WORK) {
+        val progressBrush = remember(totallyPomodoroUiState.timerUiState.currentMode) {
+            if (totallyPomodoroUiState.timerUiState.currentMode == PomodoroMode.WORK) {
                 AuraGradients.WorkFlow
             } else {
                 AuraGradients.BreakFlow
@@ -87,13 +85,13 @@ fun TimerCircleComponent(
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = timerUiState.timeLeft.formatToMmSs(),
+                    text = totallyPomodoroUiState.timerUiState.timeLeft.formatToMmSs(),
                     color = AuraColors.TextPrimary,
                     fontSize = sizes.textSize,
                     fontWeight = FontWeight.Black
                 )
                 Text(
-                    text = timerUiState.currentMode.label.uppercase(),
+                    text = totallyPomodoroUiState.timerUiState.currentMode.label.uppercase(),
                     color = themeColor,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,

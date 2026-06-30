@@ -28,11 +28,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
+import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TotallyPomodoroUiState
 
 @Composable
 fun SettingsUiComponent(
-    workspaceUiState: WorkspaceUiState,
+    totallyPomodoroUiState: TotallyPomodoroUiState,
     onWorkChange: (String) -> Unit,
     onBreakChange: (String) -> Unit,
     onSave: () -> Unit,
@@ -65,13 +65,13 @@ fun SettingsUiComponent(
                 ) {
                     DurationInput(
                         label = "Tập trung",
-                        value = workspaceUiState.editingWorkMinutes,
+                        value = totallyPomodoroUiState.workspaceUiState.editingWorkMinutes,
                         onValueChange = onWorkChange,
                         modifier = Modifier.weight(1f)
                     )
                     DurationInput(
                         label = "Nghỉ ngơi",
-                        value = workspaceUiState.editingBreakMinutes,
+                        value = totallyPomodoroUiState.workspaceUiState.editingBreakMinutes,
                         onValueChange = onBreakChange,
                         modifier = Modifier.weight(1f)
                     )
@@ -83,12 +83,12 @@ fun SettingsUiComponent(
                 ) {
                     DurationInput(
                         label = "Tập trung",
-                        value = workspaceUiState.editingWorkMinutes,
+                        value = totallyPomodoroUiState.workspaceUiState.editingWorkMinutes,
                         onValueChange = onWorkChange
                     )
                     DurationInput(
                         label = "Nghỉ ngơi",
-                        value = workspaceUiState.editingBreakMinutes,
+                        value = totallyPomodoroUiState.workspaceUiState.editingBreakMinutes,
                         onValueChange = onBreakChange
                     )
                 }
@@ -97,7 +97,7 @@ fun SettingsUiComponent(
 
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = workspaceUiState.settingsError,
+            text = totallyPomodoroUiState.workspaceUiState.settingsError,
             color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodySmall
         )

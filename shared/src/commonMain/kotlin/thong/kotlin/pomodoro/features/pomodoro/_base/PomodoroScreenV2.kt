@@ -35,10 +35,8 @@ import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.PomodoroUiState
 import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.ExitConfirmationModal
 import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.PomodoroSettingsModal
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TasksViewModel
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TimerViewModel
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceViewModel
+import thong.kotlin.pomodoro.features.pomodoro.viewmodel.AppViewModel
+import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TotallyPomodoroUiState
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.presentation.SessionHistoryScreen
 
@@ -53,19 +51,15 @@ class PomodoroScreenV2(
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
 
-        val timerViewModel: TimerViewModel = viewModel { TimerViewModel(currentSession = currentSession) }
-        val tasksViewModel: TasksViewModel = viewModel { TasksViewModel(currentSession = currentSession) }
-        val workspaceViewModel: WorkspaceViewModel = viewModel { WorkspaceViewModel(currentSession = currentSession) }
+        val appViewModel: AppViewModel = viewModel { AppViewModel(currentSession = currentSession) }
 
-        val workspaceState by workspaceViewModel.uiState.collectAsState()
+        val appState by appViewModel.uiState.collectAsState()
 
         LaunchedEffect(Unit) {
-            restoreAudioState(workspaceState, soundManager)
+            restoreAudioState(appState, soundManager)
         }
         PomodoroScreenUIv2(
-            timerViewModel = timerViewModel,
-            tasksViewModel = tasksViewModel,
-            workspaceViewModel = workspaceViewModel,
+            appViewModel = appViewModel,
             learningStyle = learningStyle,
             learningGroupConfig = learningGroupConfig,
             soundManager = soundManager,
@@ -75,22 +69,22 @@ class PomodoroScreenV2(
 }
 
 private fun restoreAudioState(
-    workspaceUiState: WorkspaceUiState,
+    totallyPomodoroUiState: TotallyPomodoroUiState,
     soundManager: SoundManager?
 ) {
     if (soundManager == null) return
 
     // Phục hồi nhạc nền
     val shouldPlayBackground =
-        workspaceUiState.isMusicPlaying && !soundManager.isBackgroundMusicPlaying()
+        totallyPomodoroUiState.workspaceUiState.isMusicPlaying && !soundManager.isBackgroundMusicPlaying()
     if (shouldPlayBackground) {
-        workspaceUiState.selectedTrackId?.let { trackId ->
+        totallyPomodoroUiState.workspaceUiState.selectedTrackId?.let { trackId ->
             soundManager.playBackgroundMusic(trackId)
         }
     }
 
     // Phục hồi âm thanh môi trường (Ambient)
-    workspaceUiState.activeAmbientSoundIds.forEach { soundId ->
+    totallyPomodoroUiState.workspaceUiState.activeAmbientSoundIds.forEach { soundId ->
         if (!soundManager.isAmbientSoundPlaying(soundId)) {
             soundManager.playAmbientSound(soundId)
         }
@@ -99,338 +93,319 @@ private fun restoreAudioState(
 
 @Composable
 fun PomodoroScreenUIv2(
-    timerViewModel: TimerViewModel,
-    tasksViewModel: TasksViewModel,
-    workspaceViewModel: WorkspaceViewModel,
+    appViewModel: AppViewModel,
     learningStyle: LearningStyle = LearningStyle.SOLO,
     learningGroupConfig: LearningGroupConfig? = null,
     soundManager: SoundManager? = DependencyRegistry.soundManager,
     navigator: Navigator
 ) {
-    val timerState by timerViewModel.uiState.collectAsState()
-    val workspaceState by workspaceViewModel.uiState.collectAsState()
-    val tasksState by tasksViewModel.uiState.collectAsState()
+    val totalPomodoroUiState by appViewModel.uiState.collectAsState()
 
     val currentBackground =
-        workspaceState.availableBackgrounds.find { it.id == workspaceState.selectedBackgroundId }
+        totalPomodoroUiState.workspaceUiState.availableBackgrounds
+            .find { it.id == totalPomodoroUiState.workspaceUiState.selectedBackgroundId }
 
     AuraBackground(
         imageRes = currentBackground?.resource ?: Res.drawable.startup_bg,
         landscapeImageRes = currentBackground?.landscapeResource,
-        blurRadius = if (workspaceState.isCompactMode) 0f else rememberBreathingEffect().blur,
-        overlayAlpha = if (workspaceState.isCompactMode) 0.15f else rememberBreathingEffect().alpha
+        blurRadius = if (totalPomodoroUiState.workspaceUiState.isCompactMode) 0f else rememberBreathingEffect().blur,
+        overlayAlpha = if (totalPomodoroUiState.workspaceUiState.isCompactMode) 0.15f else rememberBreathingEffect().alpha
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                 val isLandscape = maxWidth > maxHeight
-                val currentState = PomodoroUiState(workspaceState.isCompactMode, isLandscape, learningStyle)
+                val currentState = PomodoroUiState(totalPomodoroUiState.workspaceUiState.isCompactMode, isLandscape, learningStyle)
                 when (currentState) {
                     // Gen UI Landscape Compact Group
                     PomodoroUiState(isCompact = true, isLandscape = true, style = LearningStyle.GROUP) -> {
                         LandscapeCompactUI(
-                            workspaceUiState = workspaceState,
-                            timerUiState = timerState,
-                            tasksUiState = tasksState,
+                            totallyPomodoroUiState = totalPomodoroUiState,
                             learningStyle = learningStyle,
-                            onToggleTimer = timerViewModel::toggleTimer,
-                            onToggleCompactMode = workspaceViewModel::toggleCompactMode,
-                            onToggleCompactMenu = workspaceViewModel::toggleCompactMenu,
-                            onSelectCompactSection = workspaceViewModel::setActiveCompactSection,
+                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleCompactMode = appViewModel::toggleCompactMode,
+                            onToggleCompactMenu = appViewModel::toggleCompactMenu,
+                            onSelectCompactSection = appViewModel::setActiveCompactSection,
                             onCloseCompactSection = {
-                                workspaceViewModel.setActiveCompactSection(
+                                appViewModel.setActiveCompactSection(
                                     null
                                 )
                             },
                             // Section-specific actions
-                            onToggleMusic = workspaceViewModel::toggleMusic,
-                            onSelectTrack = workspaceViewModel::selectTrack,
-                            onToggleAmbientSound = workspaceViewModel::toggleAmbientSound,
-                            onSelectBackground = workspaceViewModel::selectBackground,
-                            onAddTask = tasksViewModel::addTask,
-                            onDeleteTask = tasksViewModel::deleteTask,
-                            onToggleTask = tasksViewModel::toggleTask,
-                            onNewTaskTextChange = tasksViewModel::onNewTaskTextChange,
-                            onWorkChange = workspaceViewModel::onWorkMinutesChange,
-                            onBreakChange = workspaceViewModel::onBreakMinutesChange,
+                            onToggleMusic = appViewModel::toggleMusic,
+                            onSelectTrack = appViewModel::selectTrack,
+                            onToggleAmbientSound = appViewModel::toggleAmbientSound,
+                            onSelectBackground = appViewModel::selectBackground,
+                            onAddTask = appViewModel::addTask,
+                            onDeleteTask = appViewModel::deleteTask,
+                            onToggleTask = appViewModel::toggleTask,
+                            onNewTaskTextChange = appViewModel::onNewTaskTextChange,
+                            onWorkChange = appViewModel::onWorkMinutesChange,
+                            onBreakChange = appViewModel::onBreakMinutesChange,
                             onSaveSettings = {
-                                workspaceViewModel.saveSettings { work, breakTime ->
-                                    timerViewModel.updateConfig(
-                                        timerState.config.copy(
+                                appViewModel.saveSettings { work, breakTime ->
+                                    appViewModel.updateConfig(
+                                        totalPomodoroUiState.timerUiState.config.copy(
                                             workMinutes = work,
                                             shortBreakMinutes = breakTime
                                         )
                                     )
                                 }
                             },
-                            onResetSettings = workspaceViewModel::resetSettingsToDefault,
-                            onToggleSettings = workspaceViewModel::toggleSettings,
-                            onExit = workspaceViewModel::toggleExitModal
+                            onResetSettings = appViewModel::resetSettingsToDefault,
+                            onToggleSettings = appViewModel::toggleSettings,
+                            onExit = appViewModel::toggleExitModal
                         )
                     }
                     // Gen UI Landscape Compact Solo
                     PomodoroUiState(isCompact = true, isLandscape = true, style = LearningStyle.SOLO) -> {
                         LandscapeCompactUI(
-                            workspaceUiState = workspaceState,
-                            timerUiState = timerState,
-                            tasksUiState = tasksState,
-                            onToggleTimer = timerViewModel::toggleTimer,
-                            onToggleCompactMode = workspaceViewModel::toggleCompactMode,
-                            onToggleCompactMenu = workspaceViewModel::toggleCompactMenu,
-                            onSelectCompactSection = workspaceViewModel::setActiveCompactSection,
+                            totallyPomodoroUiState = totalPomodoroUiState,
+                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleCompactMode = appViewModel::toggleCompactMode,
+                            onToggleCompactMenu = appViewModel::toggleCompactMenu,
+                            onSelectCompactSection = appViewModel::setActiveCompactSection,
                             onCloseCompactSection = {
-                                workspaceViewModel.setActiveCompactSection(
+                                appViewModel.setActiveCompactSection(
                                     null
                                 )
                             },
                             // Section-specific actions
-                            onToggleMusic = workspaceViewModel::toggleMusic,
-                            onSelectTrack = workspaceViewModel::selectTrack,
-                            onToggleAmbientSound = workspaceViewModel::toggleAmbientSound,
-                            onSelectBackground = workspaceViewModel::selectBackground,
-                            onAddTask = tasksViewModel::addTask,
-                            onDeleteTask = tasksViewModel::deleteTask,
-                            onToggleTask = tasksViewModel::toggleTask,
-                            onNewTaskTextChange = tasksViewModel::onNewTaskTextChange,
-                            onWorkChange = workspaceViewModel::onWorkMinutesChange,
-                            onBreakChange = workspaceViewModel::onBreakMinutesChange,
+                            onToggleMusic = appViewModel::toggleMusic,
+                            onSelectTrack = appViewModel::selectTrack,
+                            onToggleAmbientSound = appViewModel::toggleAmbientSound,
+                            onSelectBackground = appViewModel::selectBackground,
+                            onAddTask = appViewModel::addTask,
+                            onDeleteTask = appViewModel::deleteTask,
+                            onToggleTask = appViewModel::toggleTask,
+                            onNewTaskTextChange = appViewModel::onNewTaskTextChange,
+                            onWorkChange = appViewModel::onWorkMinutesChange,
+                            onBreakChange = appViewModel::onBreakMinutesChange,
                             onSaveSettings = {
-                                workspaceViewModel.saveSettings { work, breakTime ->
-                                    timerViewModel.updateConfig(
-                                        timerState.config.copy(
+                                appViewModel.saveSettings { work, breakTime ->
+                                    appViewModel.updateConfig(
+                                        totalPomodoroUiState.timerUiState.config.copy(
                                             workMinutes = work,
                                             shortBreakMinutes = breakTime
                                         )
                                     )
                                 }
                             },
-                            onResetSettings = workspaceViewModel::resetSettingsToDefault,
-                            onToggleSettings = workspaceViewModel::toggleSettings,
-                            onExit = workspaceViewModel::toggleExitModal
+                            onResetSettings = appViewModel::resetSettingsToDefault,
+                            onToggleSettings = appViewModel::toggleSettings,
+                            onExit = appViewModel::toggleExitModal
                         )
                     }
                     // Gen UI Portrait Compact Group
                     PomodoroUiState(isCompact = true, isLandscape = false, style = LearningStyle.GROUP) -> {
                         PortraitCompactUI(
-                            workspaceUiState = workspaceState,
-                            timerUiState = timerState,
-                            tasksUiState = tasksState,
+                            totallyPomodoroUiState = totalPomodoroUiState,
                             learningStyle = learningStyle,
-                            onToggleSettings = workspaceViewModel::toggleSettings,
-                            onToggleTimer = timerViewModel::toggleTimer,
-                            onToggleCompactMode = workspaceViewModel::toggleCompactMode,
-                            onToggleCompactMenu = workspaceViewModel::toggleCompactMenu,
-                            onSelectCompactSection = workspaceViewModel::setActiveCompactSection,
+                            onToggleSettings = appViewModel::toggleSettings,
+                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleCompactMode = appViewModel::toggleCompactMode,
+                            onToggleCompactMenu = appViewModel::toggleCompactMenu,
+                            onSelectCompactSection = appViewModel::setActiveCompactSection,
                             onCloseCompactSection = {
-                                workspaceViewModel.setActiveCompactSection(
+                                appViewModel.setActiveCompactSection(
                                     null
                                 )
                             },
                             // Section-specific actions
-                            onToggleMusic = workspaceViewModel::toggleMusic,
-                            onSelectTrack = workspaceViewModel::selectTrack,
-                            onToggleAmbientSound = workspaceViewModel::toggleAmbientSound,
-                            onSelectBackground = workspaceViewModel::selectBackground,
-                            onAddTask = tasksViewModel::addTask,
-                            onDeleteTask = tasksViewModel::deleteTask,
-                            onToggleTask = tasksViewModel::toggleTask,
-                            onNewTaskTextChange = tasksViewModel::onNewTaskTextChange,
-                            onWorkChange = workspaceViewModel::onWorkMinutesChange,
-                            onBreakChange = workspaceViewModel::onBreakMinutesChange,
+                            onToggleMusic = appViewModel::toggleMusic,
+                            onSelectTrack = appViewModel::selectTrack,
+                            onToggleAmbientSound = appViewModel::toggleAmbientSound,
+                            onSelectBackground = appViewModel::selectBackground,
+                            onAddTask = appViewModel::addTask,
+                            onDeleteTask = appViewModel::deleteTask,
+                            onToggleTask = appViewModel::toggleTask,
+                            onNewTaskTextChange = appViewModel::onNewTaskTextChange,
+                            onWorkChange = appViewModel::onWorkMinutesChange,
+                            onBreakChange = appViewModel::onBreakMinutesChange,
                             onSaveSettings = {
-                                workspaceViewModel.saveSettings { work, breakTime ->
-                                    timerViewModel.updateConfig(
-                                        timerState.config.copy(
+                                appViewModel.saveSettings { work, breakTime ->
+                                    appViewModel.updateConfig(
+                                        totalPomodoroUiState.timerUiState.config.copy(
                                             workMinutes = work,
                                             shortBreakMinutes = breakTime
                                         )
                                     )
                                 }
                             },
-                            onResetSettings = workspaceViewModel::resetSettingsToDefault,
-                            onExit = workspaceViewModel::toggleExitModal
+                            onResetSettings = appViewModel::resetSettingsToDefault,
+                            onExit = appViewModel::toggleExitModal
                         )
                     }
                     // Gen UI Portrait Compact Solo
                     PomodoroUiState(isCompact = true, isLandscape = false, style = LearningStyle.SOLO) -> {
                         PortraitCompactUI(
-                            workspaceUiState = workspaceState,
-                            timerUiState = timerState,
-                            tasksUiState = tasksState,
-                            onToggleTimer = timerViewModel::toggleTimer,
-                            onToggleCompactMode = workspaceViewModel::toggleCompactMode,
-                            onToggleCompactMenu = workspaceViewModel::toggleCompactMenu,
-                            onSelectCompactSection = workspaceViewModel::setActiveCompactSection,
+                            totallyPomodoroUiState = totalPomodoroUiState,
+                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleCompactMode = appViewModel::toggleCompactMode,
+                            onToggleCompactMenu = appViewModel::toggleCompactMenu,
+                            onSelectCompactSection = appViewModel::setActiveCompactSection,
                             onCloseCompactSection = {
-                                workspaceViewModel.setActiveCompactSection(
+                                appViewModel.setActiveCompactSection(
                                     null
                                 )
                             },
                             // Section-specific actions
-                            onToggleMusic = workspaceViewModel::toggleMusic,
-                            onSelectTrack = workspaceViewModel::selectTrack,
-                            onToggleAmbientSound = workspaceViewModel::toggleAmbientSound,
-                            onSelectBackground = workspaceViewModel::selectBackground,
-                            onAddTask = tasksViewModel::addTask,
-                            onDeleteTask = tasksViewModel::deleteTask,
-                            onToggleTask = tasksViewModel::toggleTask,
-                            onNewTaskTextChange = tasksViewModel::onNewTaskTextChange,
-                            onWorkChange = workspaceViewModel::onWorkMinutesChange,
-                            onBreakChange = workspaceViewModel::onBreakMinutesChange,
+                            onToggleMusic = appViewModel::toggleMusic,
+                            onSelectTrack = appViewModel::selectTrack,
+                            onToggleAmbientSound = appViewModel::toggleAmbientSound,
+                            onSelectBackground = appViewModel::selectBackground,
+                            onAddTask = appViewModel::addTask,
+                            onDeleteTask = appViewModel::deleteTask,
+                            onToggleTask = appViewModel::toggleTask,
+                            onNewTaskTextChange = appViewModel::onNewTaskTextChange,
+                            onWorkChange = appViewModel::onWorkMinutesChange,
+                            onBreakChange = appViewModel::onBreakMinutesChange,
                             onSaveSettings = {
-                                workspaceViewModel.saveSettings { work, breakTime ->
-                                    timerViewModel.updateConfig(
-                                        timerState.config.copy(
+                                appViewModel.saveSettings { work, breakTime ->
+                                    appViewModel.updateConfig(
+                                        totalPomodoroUiState.timerUiState.config.copy(
                                             workMinutes = work,
                                             shortBreakMinutes = breakTime
                                         )
                                     )
                                 }
                             },
-                            onResetSettings = workspaceViewModel::resetSettingsToDefault,
-                            onToggleSettings = workspaceViewModel::toggleSettings,
-                            onExit = workspaceViewModel::toggleExitModal
+                            onResetSettings = appViewModel::resetSettingsToDefault,
+                            onToggleSettings = appViewModel::toggleSettings,
+                            onExit = appViewModel::toggleExitModal
                         )
                     }
                     // Gen UI Landscape Group
                     PomodoroUiState(isCompact = false, isLandscape = true, style = LearningStyle.GROUP) -> {
                         LandscapePomodoroGroupUI(
-                            workspaceUiState = workspaceState,
-                            timerUiState = timerState,
-                            tasksUiState = tasksState,
+                            totallyPomodoroUiState = totalPomodoroUiState,
                             groupConfig = learningGroupConfig ?: LearningGroupConfig(),
-                            themeColor = rememberPomodoroThemeColor(timerState.currentMode),
-                            onToggleTimer = timerViewModel::toggleTimer,
-                            onResetTimer = timerViewModel::resetTimer,
-                            onSkipTimer = timerViewModel::skipTimer,
-                            onToggleSettings = workspaceViewModel::toggleSettings,
-                            onToggleCompactMode = workspaceViewModel::toggleCompactMode,
-                            onToggleMusic = workspaceViewModel::toggleMusic,
-                            onSelectTrack = workspaceViewModel::selectTrack,
-                            onToggleAmbientSound = workspaceViewModel::toggleAmbientSound,
-                            onSelectBackground = workspaceViewModel::selectBackground,
-                            onAddTask = tasksViewModel::addTask,
-                            onDeleteTask = tasksViewModel::deleteTask,
-                            onToggleTask = tasksViewModel::toggleTask,
-                            onNewTaskTextChange = tasksViewModel::onNewTaskTextChange,
-                            onToggleTasksExpanded = tasksViewModel::toggleTasksExpanded,
-                            onExit = workspaceViewModel::toggleExitModal
+                            themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.timerUiState.currentMode),
+                            onToggleTimer = appViewModel::toggleTimer,
+                            onResetTimer = appViewModel::resetTimer,
+                            onSkipTimer = appViewModel::skipTimer,
+                            onToggleSettings = appViewModel::toggleSettings,
+                            onToggleCompactMode = appViewModel::toggleCompactMode,
+                            onToggleMusic = appViewModel::toggleMusic,
+                            onSelectTrack = appViewModel::selectTrack,
+                            onToggleAmbientSound = appViewModel::toggleAmbientSound,
+                            onSelectBackground = appViewModel::selectBackground,
+                            onAddTask = appViewModel::addTask,
+                            onDeleteTask = appViewModel::deleteTask,
+                            onToggleTask = appViewModel::toggleTask,
+                            onNewTaskTextChange = appViewModel::onNewTaskTextChange,
+                            onToggleTasksExpanded = appViewModel::toggleTasksExpanded,
+                            onExit = appViewModel::toggleExitModal
                         )
                     }
                     // Gen UI Landscape Solo
                     PomodoroUiState(isCompact = false, isLandscape = true, style = LearningStyle.SOLO) -> {
                         LandscapePomodoroUI(
-                            workspaceUiState = workspaceState,
-                            timerUiState = timerState,
-                            tasksUiState = tasksState,
-                            themeColor = rememberPomodoroThemeColor(timerState.currentMode),
-                            onToggleTimer = timerViewModel::toggleTimer,
-                            onResetTimer = timerViewModel::resetTimer,
-                            onSkipTimer = timerViewModel::skipTimer,
-                            onToggleSettings = workspaceViewModel::toggleSettings,
-                            onToggleCompactMode = workspaceViewModel::toggleCompactMode,
-                            onToggleMusic = workspaceViewModel::toggleMusic,
-                            onSelectTrack = workspaceViewModel::selectTrack,
-                            onToggleAmbientSound = workspaceViewModel::toggleAmbientSound,
-                            onSelectBackground = workspaceViewModel::selectBackground,
-                            onAddTask = tasksViewModel::addTask,
-                            onDeleteTask = tasksViewModel::deleteTask,
-                            onToggleTask = tasksViewModel::toggleTask,
-                            onNewTaskTextChange = tasksViewModel::onNewTaskTextChange,
-                            onToggleTasksExpanded = tasksViewModel::toggleTasksExpanded,
-                            onExit = workspaceViewModel::toggleExitModal
+                            totallyPomodoroUiState = totalPomodoroUiState,
+                            themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.timerUiState.currentMode),
+                            onToggleTimer = appViewModel::toggleTimer,
+                            onResetTimer = appViewModel::resetTimer,
+                            onSkipTimer = appViewModel::skipTimer,
+                            onToggleSettings = appViewModel::toggleSettings,
+                            onToggleCompactMode = appViewModel::toggleCompactMode,
+                            onToggleMusic = appViewModel::toggleMusic,
+                            onSelectTrack = appViewModel::selectTrack,
+                            onToggleAmbientSound = appViewModel::toggleAmbientSound,
+                            onSelectBackground = appViewModel::selectBackground,
+                            onAddTask = appViewModel::addTask,
+                            onDeleteTask = appViewModel::deleteTask,
+                            onToggleTask = appViewModel::toggleTask,
+                            onNewTaskTextChange = appViewModel::onNewTaskTextChange,
+                            onToggleTasksExpanded = appViewModel::toggleTasksExpanded,
+                            onExit = appViewModel::toggleExitModal
                         )
                     }
                     // Gen UI Portrait Group
                     PomodoroUiState(isCompact = false, isLandscape = false, style = LearningStyle.GROUP) -> {
                         PortraitPomodoroGroupUI(
-                            workspaceUiState = workspaceState,
-                            timerUiState = timerState,
-                            tasksUiState = tasksState,
+                            totallyPomodoroUiState = totalPomodoroUiState,
                             groupConfig = learningGroupConfig ?: LearningGroupConfig(),
-                            themeColor = rememberPomodoroThemeColor(timerState.currentMode),
-                            onToggleTimer = timerViewModel::toggleTimer,
-                            onResetTimer = timerViewModel::resetTimer,
-                            onSkipTimer = timerViewModel::skipTimer,
-                            onToggleSettings = workspaceViewModel::toggleSettings,
-                            onToggleCompactMode = workspaceViewModel::toggleCompactMode,
-                            onAddTask = tasksViewModel::addTask,
-                            onDeleteTask = tasksViewModel::deleteTask,
-                            onToggleTasksExpanded = tasksViewModel::toggleTasksExpanded,
-                            onToggleTask = tasksViewModel::toggleTask,
-                            onNewTaskTextChange = tasksViewModel::onNewTaskTextChange,
-                            onToggleMusic = workspaceViewModel::toggleMusic,
-                            onSelectTrack = workspaceViewModel::selectTrack,
-                            onToggleAmbientSound = workspaceViewModel::toggleAmbientSound,
-                            onSelectBackground = workspaceViewModel::selectBackground,
-                            onExit = workspaceViewModel::toggleExitModal
+                            themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.timerUiState.currentMode),
+                            onToggleTimer = appViewModel::toggleTimer,
+                            onResetTimer = appViewModel::resetTimer,
+                            onSkipTimer = appViewModel::skipTimer,
+                            onToggleSettings = appViewModel::toggleSettings,
+                            onToggleCompactMode = appViewModel::toggleCompactMode,
+                            onAddTask = appViewModel::addTask,
+                            onDeleteTask = appViewModel::deleteTask,
+                            onToggleTasksExpanded = appViewModel::toggleTasksExpanded,
+                            onToggleTask = appViewModel::toggleTask,
+                            onNewTaskTextChange = appViewModel::onNewTaskTextChange,
+                            onToggleMusic = appViewModel::toggleMusic,
+                            onSelectTrack = appViewModel::selectTrack,
+                            onToggleAmbientSound = appViewModel::toggleAmbientSound,
+                            onSelectBackground = appViewModel::selectBackground,
+                            onExit = appViewModel::toggleExitModal
                         )
                     }
                     // Gen UI Portrait Solo
                     PomodoroUiState(isCompact = false, isLandscape = false, style = LearningStyle.SOLO) -> {
                         PortraitPomodoroUI(
-                            workspaceUiState = workspaceState,
-                            timerUiState = timerState,
-                            tasksUiState = tasksState,
-                            themeColor = rememberPomodoroThemeColor(timerState.currentMode),
-                            onToggleTimer = timerViewModel::toggleTimer,
-                            onResetTimer = timerViewModel::resetTimer,
-                            onSkipTimer = timerViewModel::skipTimer,
-                            onToggleSettings = workspaceViewModel::toggleSettings,
-                            onToggleCompactMode = workspaceViewModel::toggleCompactMode,
-                            onAddTask = tasksViewModel::addTask,
-                            onDeleteTask = tasksViewModel::deleteTask,
-                            onToggleTasksExpanded = tasksViewModel::toggleTasksExpanded,
-                            onToggleTask = tasksViewModel::toggleTask,
-                            onNewTaskTextChange = tasksViewModel::onNewTaskTextChange,
-                            onToggleMusic = workspaceViewModel::toggleMusic,
-                            onSelectTrack = workspaceViewModel::selectTrack,
-                            onToggleAmbientSound = workspaceViewModel::toggleAmbientSound,
-                            onSelectBackground = workspaceViewModel::selectBackground,
-                            onExit = workspaceViewModel::toggleExitModal
+                            totallyPomodoroUiState = totalPomodoroUiState,
+                            themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.timerUiState.currentMode),
+                            onToggleTimer = appViewModel::toggleTimer,
+                            onResetTimer = appViewModel::resetTimer,
+                            onSkipTimer = appViewModel::skipTimer,
+                            onToggleSettings = appViewModel::toggleSettings,
+                            onToggleCompactMode = appViewModel::toggleCompactMode,
+                            onAddTask = appViewModel::addTask,
+                            onDeleteTask = appViewModel::deleteTask,
+                            onToggleTasksExpanded = appViewModel::toggleTasksExpanded,
+                            onToggleTask = appViewModel::toggleTask,
+                            onNewTaskTextChange = appViewModel::onNewTaskTextChange,
+                            onToggleMusic = appViewModel::toggleMusic,
+                            onSelectTrack = appViewModel::selectTrack,
+                            onToggleAmbientSound = appViewModel::toggleAmbientSound,
+                            onSelectBackground = appViewModel::selectBackground,
+                            onExit = appViewModel::toggleExitModal
                         )
                     }
                 }
             }
 
             // Settings Modal
-            if (workspaceState.isSettingsVisible) {
+            if (totalPomodoroUiState.workspaceUiState.isSettingsVisible) {
                 PomodoroSettingsModal(
-                    workspaceUiState = workspaceState,
-                    onWorkChange = workspaceViewModel::onWorkMinutesChange,
-                    onBreakChange = workspaceViewModel::onBreakMinutesChange,
+                    totallyPomodoroUiState = totalPomodoroUiState,
+                    onWorkChange = appViewModel::onWorkMinutesChange,
+                    onBreakChange = appViewModel::onBreakMinutesChange,
                     onSave = {
-                        workspaceViewModel.saveSettings { work, breakTime ->
-                            timerViewModel.updateConfig(
-                                timerState.config.copy(
+                        appViewModel.saveSettings { work, breakTime ->
+                            appViewModel.updateConfig(
+                                totalPomodoroUiState.timerUiState.config.copy(
                                     workMinutes = work,
                                     shortBreakMinutes = breakTime
                                 )
                             )
                         }
                     },
-                    onCancel = workspaceViewModel::toggleSettings,
-                    onReset = workspaceViewModel::resetSettingsToDefault
+                    onCancel = appViewModel::toggleSettings,
+                    onReset = appViewModel::resetSettingsToDefault
                 )
             }
 
             // Exit Confirmation Modal
-            if (workspaceState.isExitModalVisible) {
+            if (totalPomodoroUiState.workspaceUiState.isExitModalVisible) {
                 ExitConfirmationModal(
-                    onDismiss = workspaceViewModel::toggleExitModal,
+                    onDismiss = appViewModel::toggleExitModal,
                     onEndSession = {
-                        workspaceViewModel.endSession {
+                        appViewModel.endSession {
                             soundManager?.stopAllSounds()
                             navigator.replace(SessionHistoryScreen())
                         }
                     },
                     onPauseSession = {
-                        workspaceViewModel.pauseSession {
+                        appViewModel.pauseSession {
                             soundManager?.stopAllSounds()
                             navigator.replace(SessionHistoryScreen())
                         }
                     },
                     onDeleteSession = {
-                        workspaceViewModel.deleteSession {
+                        appViewModel.deleteSession {
                             soundManager?.stopAllSounds()
                             navigator.replace(SessionHistoryScreen())
                         }

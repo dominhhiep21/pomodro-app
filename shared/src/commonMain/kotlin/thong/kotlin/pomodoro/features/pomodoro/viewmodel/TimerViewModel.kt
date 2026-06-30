@@ -550,9 +550,13 @@ class TimerViewModel(
     }
 }
 
-private data class TimerCompleteResult(
+data class TimerCompleteResult(
     val newMode: PomodoroMode,
     val nextTime: Int,
     val eventType: EventType,
     val notification: String
 )
+
+fun stopTimerJobOnly(timerJob: Job?) {
+    timerJob?.cancel()
+}

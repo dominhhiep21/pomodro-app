@@ -39,11 +39,11 @@ import androidx.compose.ui.window.Dialog
 import thong.kotlin.pomodoro.core.designsystem.components.AuraButton
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
+import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TotallyPomodoroUiState
 
 @Composable
 fun PomodoroSettingsModal(
-    workspaceUiState: WorkspaceUiState,
+    totallyPomodoroUiState: TotallyPomodoroUiState,
     onWorkChange: (String) -> Unit,
     onBreakChange: (String) -> Unit,
     onSave: () -> Unit,
@@ -72,7 +72,7 @@ fun PomodoroSettingsModal(
             elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
             SettingsContent(
-                workspaceUiState = workspaceUiState,
+                totallyPomodoroUiState = totallyPomodoroUiState,
                 onWorkChange = onWorkChange,
                 onBreakChange = onBreakChange,
                 onSave = onSave,
@@ -85,7 +85,7 @@ fun PomodoroSettingsModal(
 
 @Composable
 fun SettingsContent(
-    workspaceUiState: WorkspaceUiState,
+    totallyPomodoroUiState: TotallyPomodoroUiState,
     onWorkChange: (String) -> Unit,
     onBreakChange: (String) -> Unit,
     onSave: () -> Unit,
@@ -118,13 +118,13 @@ fun SettingsContent(
                 ) {
                     DurationInput(
                         label = "Tập trung",
-                        value = workspaceUiState.editingWorkMinutes,
+                        value = totallyPomodoroUiState.workspaceUiState.editingWorkMinutes,
                         onValueChange = onWorkChange,
                         modifier = Modifier.weight(1f)
                     )
                     DurationInput(
                         label = "Nghỉ ngơi",
-                        value = workspaceUiState.editingBreakMinutes,
+                        value = totallyPomodoroUiState.workspaceUiState.editingBreakMinutes,
                         onValueChange = onBreakChange,
                         modifier = Modifier.weight(1f)
                     )
@@ -136,12 +136,12 @@ fun SettingsContent(
                 ) {
                     DurationInput(
                         label = "Tập trung",
-                        value = workspaceUiState.editingWorkMinutes,
+                        value = totallyPomodoroUiState.workspaceUiState.editingWorkMinutes,
                         onValueChange = onWorkChange
                     )
                     DurationInput(
                         label = "Nghỉ ngơi",
-                        value = workspaceUiState.editingBreakMinutes,
+                        value = totallyPomodoroUiState.workspaceUiState.editingBreakMinutes,
                         onValueChange = onBreakChange
                     )
                 }
@@ -150,7 +150,7 @@ fun SettingsContent(
 
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = workspaceUiState.settingsError,
+            text = totallyPomodoroUiState.workspaceUiState.settingsError,
             color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodySmall
         )

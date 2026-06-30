@@ -43,8 +43,6 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
@@ -69,17 +67,19 @@ class SessionHistoryScreen : Screen {
         var totalFocusSeconds by remember { mutableLongStateOf(0L) }
 
         LaunchedEffect(Unit) {
-            isLoading = true
-
-            val result = withContext(Dispatchers.IO) {
+            try {
+                isLoading = true
                 val sessionList = learningSessionManager.getAllLearningSession()
                 val total = learningSessionManager.getTotalFocusSeconds()
-                sessionList to total
-            }
 
-            sessions = result.first
-            totalFocusSeconds = result.second
-            isLoading = false
+                sessions = sessionList.sortedByDescending { it.startedAtMillis }
+                totalFocusSeconds = total
+            } catch (_: Exception) {
+                sessions = emptyList()
+                totalFocusSeconds = 0L
+            } finally {
+                isLoading = false
+            }
         }
 
         SessionListUI(

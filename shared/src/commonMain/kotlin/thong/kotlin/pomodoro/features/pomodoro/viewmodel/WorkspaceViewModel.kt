@@ -20,14 +20,20 @@ import thong.kotlin.pomodoro.features.pomodoro.ambient.data.AmbientSoundReposito
 import thong.kotlin.pomodoro.features.pomodoro.ambient.domain.AmbientSound
 import thong.kotlin.pomodoro.features.pomodoro.music.data.MusicRepository
 import thong.kotlin.pomodoro.features.pomodoro.music.domain.MusicTrack
+import thong.kotlin.pomodoro.features.session.data.LearningSessionManager
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionEvent
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionEventType
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
 import thong.kotlin.pomodoro.features.settings.data.BackgroundRepository
 import thong.kotlin.pomodoro.features.settings.domain.AppBackground
+import kotlin.time.Clock
 
 data class WorkspaceUiState(
     val currentMode: PomodoroMode = PomodoroMode.WORK,
     val learningStyle: LearningStyle = LearningStyle.SOLO,
     val learningGroupConfig: LearningGroupConfig? = null,
-
+    val currentSession: LearningSessionRecord,
     val isChatExpanded: Boolean = false,
 
     // Background
@@ -55,16 +61,21 @@ data class WorkspaceUiState(
     val isSettingsVisible: Boolean = false,
     val editingWorkMinutes: String = "25",
     val editingBreakMinutes: String = "5",
-    val settingsError: String = ""
+    val settingsError: String = "",
+
+    // Exit Modal
+    val isExitModalVisible: Boolean = false
 )
 
 class WorkspaceViewModel(
     private val soundManager: SoundManager? = DependencyRegistry.soundManager,
-    private val repository: UserAppStateRepositoryV2 = DependencyRegistry.userAppStateRepositoryV2
+    private val repository: UserAppStateRepositoryV2 = DependencyRegistry.userAppStateRepositoryV2,
+    private val learningSessionManager: LearningSessionManager = DependencyRegistry.learningSessionManager,
+    private val currentSession: LearningSessionRecord
 ) : ViewModel() {
 
     // Chỉ có ViewModel mới có quyền lấy ra và gán giá trị mới (sửa state).
-    private val _uiState = MutableStateFlow(WorkspaceUiState())
+    private val _uiState = MutableStateFlow(WorkspaceUiState(currentSession = currentSession))
 
     // UI (Màn hình) chỉ được phép đọc biến này.
     val uiState: StateFlow<WorkspaceUiState> = _uiState.asStateFlow()
@@ -102,18 +113,20 @@ class WorkspaceViewModel(
 
     // --- MUSIC & AUDIO ---
     fun toggleMusic() {
+        if (soundManager == null) return
+
         _uiState.update { state ->
             val newIsPlaying = !state.isMusicPlaying
             if (newIsPlaying) {
                 // Sử dụng default track nếu chưa có track nào được chọn
                 val trackToPlay = state.selectedTrackId ?: MusicRepository.DEFAULT_TRACK_ID
-                soundManager?.playBackgroundMusic(trackToPlay)
+                soundManager.playBackgroundMusic(trackToPlay)
             } else {
-                soundManager?.pauseBackgroundMusic()
+                soundManager.pauseBackgroundMusic()
             }
             state.copy(
                 isMusicPlaying = newIsPlaying,
-                musicPosition = soundManager?.getCurrentPosition() ?: 0L
+                musicPosition = soundManager.getCurrentPosition()
             )
         }
     }
@@ -228,8 +241,11 @@ class WorkspaceViewModel(
     }
 
     fun saveSettings(onSettingsSaved: ((Int, Int) -> Unit)? = null) {
-        val workMin = _uiState.value.editingWorkMinutes.toIntOrNull()
-        val breakMin = _uiState.value.editingBreakMinutes.toIntOrNull()
+        val state = _uiState.value
+        val currentSession = state.currentSession
+
+        val workMin = state.editingWorkMinutes.trim().toIntOrNull()
+        val breakMin = state.editingBreakMinutes.trim().toIntOrNull()
 
         if (workMin == null || breakMin == null) {
             _uiState.update { it.copy(settingsError = "Vui lòng nhập số hợp lệ") }
@@ -246,18 +262,56 @@ class WorkspaceViewModel(
             return
         }
 
-        _uiState.update { it.copy(isSettingsVisible = false) }
+        val updatedSession = currentSession.copy(
+            plannedWorkMinutes = workMin,
+            plannedBreakMinutes = breakMin,
+        )
+
+        _uiState.update {
+            it.copy(
+                isSettingsVisible = false,
+                settingsError = "",
+                editingWorkMinutes = workMin.toString(),
+                editingBreakMinutes = breakMin.toString(),
+                currentSession = updatedSession
+            )
+        }
 
         viewModelScope.launch {
-            repository.let { repo ->
-                val currentSettings = repo.getUserSettings()
-                repo.saveUserSettings(
+            try {
+                val currentSettings = repository.getUserSettings()
+
+                repository.saveUserSettings(
                     currentSettings.copy(
                         personalWorkMinutes = workMin,
                         personalBreakMinutes = breakMin
                     )
                 )
+                updateSession(updatedSession)
+                insertEvent(
+                    LearningSessionEvent(
+                        sessionId = updatedSession.sessionId,
+                        eventType = LearningSessionEventType.UPDATED_SESSION_SETTINGS,
+                        metadata = mapOf(
+                            "source" to "settings_ui",
+                            "action" to "save_settings",
+                            "old_work_minutes" to currentSession.plannedWorkMinutes.toString(),
+                            "old_break_minutes" to currentSession.plannedBreakMinutes.toString(),
+                            "new_work_minutes" to workMin.toString(),
+                            "new_break_minutes" to breakMin.toString()
+                        )
+                    )
+                )
                 onSettingsSaved?.invoke(workMin, breakMin)
+
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        settingsError = "Không thể lưu cài đặt. Vui lòng thử lại: ${e.message}",
+                        isSettingsVisible = true,
+                        currentSession = currentSession
+                    )
+                }
             }
         }
     }
@@ -271,4 +325,126 @@ class WorkspaceViewModel(
             )
         }
     }
+
+    // --- EXIT ACTIONS ---
+    fun toggleExitModal() {
+        _uiState.update { it.copy(isExitModalVisible = !it.isExitModalVisible) }
+    }
+
+    fun endSession(onComplete: () -> Unit) {
+        val session = _uiState.value.currentSession
+        val now = Clock.System.now().toEpochMilliseconds()
+        val updatedSession = session.copy(
+            status = LearningSessionStatus.COMPLETED,
+            endedAtMillis = now,
+            updatedAtMillis = now
+        )
+        _uiState.update { it.copy(currentSession = updatedSession) }
+        viewModelScope.launch {
+            try {
+                updateSession(updatedSession)
+                insertEvent(
+                    LearningSessionEvent(
+                        sessionId = updatedSession.sessionId,
+                        eventType = LearningSessionEventType.SESSION_COMPLETED_BY_USER,
+                        metadata = mapOf(
+                            "source" to "session_ui",
+                            "action" to "session_completed_by_user",
+                        )
+                    )
+                )
+                val userSettings = repository.getUserSettings()
+                repository.saveUserSettings(
+                    userSettings.copy(currentSessionId = null)
+                )
+                onComplete()
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        currentSession = session,
+                        settingsError = "Không thể kết thúc phiên học. Vui lòng thử lại: ${e.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    fun pauseSession(onComplete: () -> Unit) {
+        val session = _uiState.value.currentSession
+        val now = Clock.System.now().toEpochMilliseconds()
+
+        val updatedSession = session.copy(
+            status = LearningSessionStatus.PAUSED,
+            lastPausedAtMillis = now,
+            updatedAtMillis = now
+        )
+
+        _uiState.update {
+            it.copy(currentSession = updatedSession)
+        }
+
+        viewModelScope.launch {
+            try {
+                updateSession(updatedSession)
+                val userSettings = repository.getUserSettings()
+                repository.saveUserSettings(
+                    userSettings.copy(currentSessionId = updatedSession.sessionId)
+                )
+                insertEvent(
+                    LearningSessionEvent(
+                        sessionId = updatedSession.sessionId,
+                        eventType = LearningSessionEventType.SESSION_PAUSED_BY_USER,
+                        metadata = mapOf(
+                            "source" to "session_ui",
+                            "action" to "session_paused_by_user",
+                        )
+                    )
+                )
+                onComplete()
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        currentSession = session,
+                        settingsError = "Không thể tạm dừng phiên học. Vui lòng thử lại: ${e.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    fun deleteSession(onComplete: () -> Unit) {
+        val session = _uiState.value.currentSession
+        val sessionId = session.sessionId
+
+        viewModelScope.launch {
+            try {
+                learningSessionManager.deleteSessionById(sessionId)
+                val userSettings = repository.getUserSettings()
+                repository.saveUserSettings(
+                    userSettings.copy(currentSessionId = null)
+                )
+                insertEvent(
+                    LearningSessionEvent(
+                        sessionId = sessionId,
+                        eventType = LearningSessionEventType.SESSION_DELETED_BY_USER,
+                        metadata = mapOf(
+                            "source" to "session_ui",
+                            "action" to "session_deleted_by_user",
+                        )
+                    )
+                )
+                onComplete()
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        settingsError = "Không thể xóa phiên học. Vui lòng thử lại: ${e.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    suspend fun insertEvent(event: LearningSessionEvent) = learningSessionManager.insertEvent(event)
+
+    suspend fun updateSession(session: LearningSessionRecord) = learningSessionManager.updateSession(session)
 }

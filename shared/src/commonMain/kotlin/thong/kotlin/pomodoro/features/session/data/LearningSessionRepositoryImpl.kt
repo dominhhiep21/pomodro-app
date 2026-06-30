@@ -116,6 +116,10 @@ class LearningSessionRepositoryImpl(
         }
     }
 
+    override fun deleteSessionById(sessionId: String) {
+        database?.sessionHistoryLocalQueries?.deleteSessionHistoryById(sessionId)
+    }
+
     override fun insertEvent(event: LearningSessionEvent) {
         val queries = database?.sessionHistoryLocalQueries ?: return
         event.insertInto(queries)

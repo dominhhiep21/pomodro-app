@@ -1,92 +1,64 @@
 package thong.kotlin.pomodoro.features.session.data
 
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionEvent
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
 import kotlin.time.Clock
 
 class LearningSessionManager(
-    private val repository: LearningSessionRepository
+    private val repository: LearningSessionRepository,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
 
-    fun pauseSessionBecauseAppInactive() {
-        val current = repository.getCurrentSession()
-
-        if (current.status != LearningSessionStatus.RUNNING) {
-            return
+    suspend fun getAllLearningSession(): List<LearningSessionRecord> {
+        return withContext(ioDispatcher) {
+            repository.getAllLearningSessionRecords()
         }
-
-        repository.saveCurrentSession(
-            current.copy(
-                status = LearningSessionStatus.PAUSED,
-                pausedAtMillis = currentTimeMillis()
-            )
-        )
     }
 
-    fun resumeSession() {
-        val current = repository.getCurrentSession()
-
-        if (current.status != LearningSessionStatus.PAUSED) {
-            return
+    suspend fun getSessionById(sessionId: String): LearningSessionRecord? {
+        return withContext(ioDispatcher) {
+            repository.getSessionById(sessionId)
         }
-
-        repository.saveCurrentSession(
-            current.copy(
-                status = LearningSessionStatus.RUNNING,
-                pausedAtMillis = null
-            )
-        )
+    }
+    suspend fun getTotalFocusSeconds(): Long {
+        return withContext(ioDispatcher) {
+            repository.getTotalFocusSeconds()
+        }
     }
 
-    fun finishSessionByUser() {
-        val current = repository.getCurrentSession()
-
-        if (
-            current.status != LearningSessionStatus.RUNNING &&
-            current.status != LearningSessionStatus.PAUSED
-        ) {
-            return
+    suspend fun insertSession(session: LearningSessionRecord) {
+        withContext(ioDispatcher) {
+            repository.insertSession(session)
         }
-
-        val finishedSession = current.copy(
-            status = LearningSessionStatus.COMPLETED,
-            endedAtMillis = currentTimeMillis(),
-            completedByUser = true
-        )
-
-        repository.saveCompletedSession(finishedSession)
-        repository.clearCurrentSession()
     }
 
-    fun onTick() {
-        val current = repository.getCurrentSession()
-
-        if (current.status != LearningSessionStatus.RUNNING) {
-            return
+    suspend fun updateSession(session: LearningSessionRecord) {
+        withContext(ioDispatcher) {
+            repository.updateSession(session)
         }
-
-        val newRemainingSeconds = current.remainingSeconds - 1
-
-        repository.saveCurrentSession(
-            current.copy(
-                remainingSeconds = newRemainingSeconds.coerceAtLeast(0)
-            )
-        )
     }
 
-    fun getAllLearningSession() = repository.getAllLearningSessionRecords()
+    suspend fun deleteSessionById(sessionId: String) {
+        withContext(ioDispatcher) {
+            repository.deleteSessionById(sessionId)
+        }
+    }
 
-    fun getSessionById(sessionId: String) = repository.getSessionById(sessionId)
-    fun getTotalFocusSeconds() = repository.getTotalFocusSeconds()
+    suspend fun insertEvent(event: LearningSessionEvent) {
+        withContext(ioDispatcher) {
+            repository.insertEvent(event)
+        }
+    }
 
-    fun insertSession(session: LearningSessionRecord) = repository.insertSession(session)
-
-    fun updateSession(session: LearningSessionRecord) = repository.updateSession(session)
-
-    fun insertEvent(event: LearningSessionEvent) = repository.insertEvent(event)
-
-    fun clearAllSessionsData() = repository.clearAllSessionsData()
+    suspend fun clearAllSessionsData() {
+        withContext(ioDispatcher) {
+            repository.clearAllSessionsData()
+        }
+    }
 
     private fun currentTimeMillis(): Long {
         return Clock.System.now().toEpochMilliseconds()

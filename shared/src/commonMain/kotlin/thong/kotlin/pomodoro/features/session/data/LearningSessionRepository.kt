@@ -24,6 +24,8 @@ interface LearningSessionRepository {
 
     fun updateSession(session: LearningSessionRecord)
 
+    fun deleteSessionById(sessionId: String)
+
     fun insertEvent(event: LearningSessionEvent)
 
     fun clearAllSessionsData()

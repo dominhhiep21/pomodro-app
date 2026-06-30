@@ -33,6 +33,7 @@ import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoro
 import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoroUI
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.PomodoroUiState
+import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.ExitConfirmationModal
 import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.PomodoroSettingsModal
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TasksViewModel
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TimerViewModel
@@ -54,7 +55,7 @@ class PomodoroScreenV2(
 
         val timerViewModel: TimerViewModel = viewModel { TimerViewModel(currentSession = currentSession) }
         val tasksViewModel: TasksViewModel = viewModel { TasksViewModel(currentSession = currentSession) }
-        val workspaceViewModel: WorkspaceViewModel = viewModel { WorkspaceViewModel() }
+        val workspaceViewModel: WorkspaceViewModel = viewModel { WorkspaceViewModel(currentSession = currentSession) }
 
         val workspaceState by workspaceViewModel.uiState.collectAsState()
 
@@ -62,13 +63,13 @@ class PomodoroScreenV2(
             restoreAudioState(workspaceState, soundManager)
         }
         PomodoroScreenUIv2(
-            soundManager,
-            timerViewModel,
-            tasksViewModel,
-            workspaceViewModel,
-            learningStyle,
-            learningGroupConfig,
-            navigator
+            timerViewModel = timerViewModel,
+            tasksViewModel = tasksViewModel,
+            workspaceViewModel = workspaceViewModel,
+            learningStyle = learningStyle,
+            learningGroupConfig = learningGroupConfig,
+            soundManager = soundManager,
+            navigator = navigator
         )
     }
 }
@@ -98,12 +99,12 @@ private fun restoreAudioState(
 
 @Composable
 fun PomodoroScreenUIv2(
-    soundManager: SoundManager?,
     timerViewModel: TimerViewModel,
     tasksViewModel: TasksViewModel,
     workspaceViewModel: WorkspaceViewModel,
     learningStyle: LearningStyle = LearningStyle.SOLO,
     learningGroupConfig: LearningGroupConfig? = null,
+    soundManager: SoundManager? = DependencyRegistry.soundManager,
     navigator: Navigator
 ) {
     val timerState by timerViewModel.uiState.collectAsState()
@@ -163,7 +164,7 @@ fun PomodoroScreenUIv2(
                             },
                             onResetSettings = workspaceViewModel::resetSettingsToDefault,
                             onToggleSettings = workspaceViewModel::toggleSettings,
-                            onExit = { onExit(soundManager, navigator) }
+                            onExit = workspaceViewModel::toggleExitModal
                         )
                     }
                     // Gen UI Landscape Compact Solo
@@ -204,7 +205,7 @@ fun PomodoroScreenUIv2(
                             },
                             onResetSettings = workspaceViewModel::resetSettingsToDefault,
                             onToggleSettings = workspaceViewModel::toggleSettings,
-                            onExit = { onExit(soundManager, navigator) }
+                            onExit = workspaceViewModel::toggleExitModal
                         )
                     }
                     // Gen UI Portrait Compact Group
@@ -246,7 +247,7 @@ fun PomodoroScreenUIv2(
                                 }
                             },
                             onResetSettings = workspaceViewModel::resetSettingsToDefault,
-                            onExit = { onExit(soundManager, navigator) }
+                            onExit = workspaceViewModel::toggleExitModal
                         )
                     }
                     // Gen UI Portrait Compact Solo
@@ -287,7 +288,7 @@ fun PomodoroScreenUIv2(
                             },
                             onResetSettings = workspaceViewModel::resetSettingsToDefault,
                             onToggleSettings = workspaceViewModel::toggleSettings,
-                            onExit = { onExit(soundManager, navigator) }
+                            onExit = workspaceViewModel::toggleExitModal
                         )
                     }
                     // Gen UI Landscape Group
@@ -312,7 +313,7 @@ fun PomodoroScreenUIv2(
                             onToggleTask = tasksViewModel::toggleTask,
                             onNewTaskTextChange = tasksViewModel::onNewTaskTextChange,
                             onToggleTasksExpanded = tasksViewModel::toggleTasksExpanded,
-                            onExit = { onExit(soundManager, navigator) }
+                            onExit = workspaceViewModel::toggleExitModal
                         )
                     }
                     // Gen UI Landscape Solo
@@ -336,7 +337,7 @@ fun PomodoroScreenUIv2(
                             onToggleTask = tasksViewModel::toggleTask,
                             onNewTaskTextChange = tasksViewModel::onNewTaskTextChange,
                             onToggleTasksExpanded = tasksViewModel::toggleTasksExpanded,
-                            onExit = { onExit(soundManager, navigator) }
+                            onExit = workspaceViewModel::toggleExitModal
                         )
                     }
                     // Gen UI Portrait Group
@@ -361,7 +362,7 @@ fun PomodoroScreenUIv2(
                             onSelectTrack = workspaceViewModel::selectTrack,
                             onToggleAmbientSound = workspaceViewModel::toggleAmbientSound,
                             onSelectBackground = workspaceViewModel::selectBackground,
-                            onExit = { onExit(soundManager, navigator) }
+                            onExit = workspaceViewModel::toggleExitModal
                         )
                     }
                     // Gen UI Portrait Solo
@@ -385,7 +386,7 @@ fun PomodoroScreenUIv2(
                             onSelectTrack = workspaceViewModel::selectTrack,
                             onToggleAmbientSound = workspaceViewModel::toggleAmbientSound,
                             onSelectBackground = workspaceViewModel::selectBackground,
-                            onExit = { onExit(soundManager, navigator) }
+                            onExit = workspaceViewModel::toggleExitModal
                         )
                     }
                 }
@@ -411,6 +412,31 @@ fun PomodoroScreenUIv2(
                     onReset = workspaceViewModel::resetSettingsToDefault
                 )
             }
+
+            // Exit Confirmation Modal
+            if (workspaceState.isExitModalVisible) {
+                ExitConfirmationModal(
+                    onDismiss = workspaceViewModel::toggleExitModal,
+                    onEndSession = {
+                        workspaceViewModel.endSession {
+                            soundManager?.stopAllSounds()
+                            navigator.replace(SessionHistoryScreen())
+                        }
+                    },
+                    onPauseSession = {
+                        workspaceViewModel.pauseSession {
+                            soundManager?.stopAllSounds()
+                            navigator.replace(SessionHistoryScreen())
+                        }
+                    },
+                    onDeleteSession = {
+                        workspaceViewModel.deleteSession {
+                            soundManager?.stopAllSounds()
+                            navigator.replace(SessionHistoryScreen())
+                        }
+                    }
+                )
+            }
         }
     }
 }
@@ -427,9 +453,4 @@ fun rememberPomodoroThemeColor(currentMode: PomodoroMode): Color {
         label = "ThemeColorTransition",
     )
     return animatedThemeColor
-}
-
-private fun onExit(soundManager: SoundManager?, navigator: Navigator) {
-    soundManager?.stopAllSounds()
-    navigator.replace(SessionHistoryScreen())
 }

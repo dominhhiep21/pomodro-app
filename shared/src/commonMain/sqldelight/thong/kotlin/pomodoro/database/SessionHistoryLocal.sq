@@ -101,6 +101,11 @@ DELETE FROM learning_session_event_local;
 deleteAllSessionHistory:
 DELETE FROM session_history_local;
 
+deleteSessionHistoryById:
+UPDATE session_history_local
+SET status = 'DELETED'
+WHERE id = ?;
+
 CREATE TABLE IF NOT EXISTS learning_session_event_local (
     event_id TEXT NOT NULL PRIMARY KEY,
     session_id TEXT NOT NULL,

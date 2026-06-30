@@ -6,7 +6,7 @@ import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
 
 data class UserSettingsV2(
-    val currentSession : LearningSessionRecord? = null,
+    val currentSessionId : String? = null,
     val personalWorkMinutes: Int = AppConfig.DEFAULT_WORK_MINUTES,
     val personalBreakMinutes: Int = AppConfig.DEFAULT_BREAK_MINUTES,
     val personalLongBreakMinutes: Int = AppConfig.DEFAULT_LONG_BREAK_MINUTES,
@@ -15,7 +15,6 @@ data class UserSettingsV2(
     val personalSelectedBackgroundId: String? = null,
     val personalLastSelectedMusicId: String? = null,
     val hasCompletedOnboarding: Boolean = false,
-    val isSessionStopped : Boolean = true,
     val isNotificationEnabled: Boolean = false
 )
 

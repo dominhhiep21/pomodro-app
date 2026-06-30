@@ -1,5 +1,6 @@
 package thong.kotlin.pomodoro.features.session.presentation
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -34,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -51,6 +53,7 @@ import thong.kotlin.pomodoro.core.utils.secondsToMinutesText
 import thong.kotlin.pomodoro.core.utils.toDateTimeText
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.learning.mode.components.LearningStyleScreen
+import thong.kotlin.pomodoro.features.pomodoro._base.PomodoroScreenV2
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.color
 import thong.kotlin.pomodoro.features.session.domain.toDisplayText
@@ -88,6 +91,14 @@ class SessionHistoryScreen : Screen {
             },
             onCreateSession = {
                 navigator.push(LearningStyleScreen())
+            },
+            onSessionClick = { session ->
+                navigator.push(
+                    PomodoroScreenV2(
+                        learningStyle = session.sessionMode,
+                        currentSession = session
+                    )
+                )
             }
         )
     }
@@ -99,7 +110,8 @@ private fun SessionListUI(
     sessions: List<LearningSessionRecord>,
     totalFocusSeconds: Long,
     onBack: () -> Unit,
-    onCreateSession: () -> Unit
+    onCreateSession: () -> Unit,
+    onSessionClick: (LearningSessionRecord) -> Unit
 ) {
     AuraBackground {
         Scaffold(
@@ -184,7 +196,10 @@ private fun SessionListUI(
                                 items = sessions,
                                 key = { it.sessionId }
                             ) { session ->
-                                SessionItem(session)
+                                SessionItem(
+                                    session = session,
+                                    onClick = { onSessionClick(session) }
+                                )
                             }
                         }
                     }
@@ -226,11 +241,17 @@ private fun SummaryHeader(totalFocusSeconds: Long = 0L) {
 }
 
 @Composable
-private fun SessionItem(session: LearningSessionRecord) {
+private fun SessionItem(
+    session: LearningSessionRecord,
+    onClick: () -> Unit
+) {
     val statusColor = session.status.color()
 
     GlassBox(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(16.dp),
         backgroundColor = AuraColors.BottomBarBackground.copy(alpha = 0.5f)
     ) {

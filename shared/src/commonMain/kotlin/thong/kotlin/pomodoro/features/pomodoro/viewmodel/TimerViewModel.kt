@@ -16,8 +16,6 @@ import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.EventType
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroConfig
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
-import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettingsV2
-import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryV2
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.totalSeconds
 import thong.kotlin.pomodoro.features.session.data.LearningSessionManager
 import thong.kotlin.pomodoro.features.session.domain.CurrentLearningMode
@@ -42,7 +40,6 @@ data class TimerUiState(
 
 class TimerViewModel(
     private val soundManager: SoundManager? = DependencyRegistry.soundManager,
-    private val repository: UserAppStateRepositoryV2? = DependencyRegistry.userAppStateRepositoryV2,
     private val learningSessionManager: LearningSessionManager = DependencyRegistry.learningSessionManager,
     private val currentSession: LearningSessionRecord
 ) : ViewModel() {
@@ -59,23 +56,34 @@ class TimerViewModel(
     }
 
     private fun loadInitialData() {
-        viewModelScope.launch {
-            val savedSettings = repository?.getUserSettings() ?: UserSettingsV2()
-
-            _uiState.update { state ->
-                state.copy(
-                    config = state.config.copy(
-                        workMinutes = savedSettings.personalWorkMinutes,
-                        shortBreakMinutes = savedSettings.personalBreakMinutes
-                    ),
-                    timeLeft = PomodoroMode.WORK.totalSeconds(
-                        PomodoroConfig(
-                            savedSettings.personalWorkMinutes,
-                            savedSettings.personalBreakMinutes
-                        )
-                    )
-                )
+        _uiState.update { state ->
+            val session = state.currentSession
+            val mode = when (session.currentLearningMode) {
+                CurrentLearningMode.WORK -> PomodoroMode.WORK
+                CurrentLearningMode.BREAK -> PomodoroMode.SHORT_BREAK
+                CurrentLearningMode.LONG_BREAK -> PomodoroMode.LONG_BREAK
+                CurrentLearningMode.NOT_YET_STARTED -> PomodoroMode.WORK
             }
+
+            val config = PomodoroConfig(
+                workMinutes = session.plannedWorkMinutes,
+                shortBreakMinutes = session.plannedBreakMinutes,
+                longBreakMinutes = session.plannedLongBreakMinutes
+            )
+
+            state.copy(
+                config = config,
+                currentMode = mode,
+                timeLeft = mode.totalSeconds(config),
+                pomodorosToday = session.completedWorkRounds,
+                isSessionStarted = session.status != LearningSessionStatus.IDLE,
+                isActive = session.status == LearningSessionStatus.RUNNING
+            )
+        }
+
+        // Nếu phiên đang chạy thì bắt đầu đếm ngược ngay lập tức
+        if (_uiState.value.isActive) {
+            startTimer()
         }
     }
 

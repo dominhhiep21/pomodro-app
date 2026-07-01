@@ -2,6 +2,7 @@ package thong.kotlin.pomodoro.features.session.presentation
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -12,6 +13,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -113,95 +117,132 @@ private fun SessionListUI(
     onCreateSession: () -> Unit,
     onSessionClick: (LearningSessionRecord) -> Unit
 ) {
-    AuraBackground {
-        Scaffold(
-            topBar = {
-                CenterAlignedTopAppBar(
-                    title = {
-                        Text(
-                            "DANH SÁCH PHIÊN LÀM VIỆC",
-                            color = Color.White,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Black
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowBack,
-                                "Back",
-                                tint = Color.White
+    BoxWithConstraints {
+        val isLandscape = maxWidth > maxHeight
+
+        AuraBackground {
+            Scaffold(
+                topBar = {
+                    CenterAlignedTopAppBar(
+                        title = {
+                            Text(
+                                "DANH SÁCH PHIÊN LÀM VIỆC",
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Black
                             )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                        scrolledContainerColor = Color.Unspecified,
-                        navigationIconContentColor = Color.Unspecified,
-                        titleContentColor = Color.Unspecified,
-                        actionIconContentColor = Color.Unspecified
-                    )
-                )
-            },
-            floatingActionButton = {
-                FloatingActionButton(
-                    onClick = onCreateSession,
-                    containerColor = AuraColors.WorkMode,
-                    contentColor = Color.White,
-                    shape = CircleShape
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Tạo phiên mới")
-                }
-            },
-            containerColor = Color.Transparent
-        ) { padding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 20.dp)
-            ) {
-                SummaryHeader(totalFocusSeconds = totalFocusSeconds)
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                when {
-                    isListLoading -> {
-                        Text(
-                            text = "Đang tải dữ liệu...",
-                            color = AuraColors.TextSecondary,
-                            fontSize = 14.sp,
-                            modifier = Modifier.padding(top = 16.dp)
-                        )
-                    }
-
-                    sessions.isEmpty() -> {
-                        Text(
-                            text = "Chưa có phiên làm việc nào",
-                            color = AuraColors.TextSecondary,
-                            fontSize = 14.sp,
-                            modifier = Modifier.padding(top = 16.dp)
-                        )
-                    }
-
-                    else -> {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                            contentPadding = PaddingValues(bottom = 24.dp)
-                        ) {
-                            items(
-                                items = sessions,
-                                key = { it.sessionId }
-                            ) { session ->
-                                SessionItem(
-                                    session = session,
-                                    onClick = { onSessionClick(session) }
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = onBack) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowBack,
+                                    "Back",
+                                    tint = Color.White
                                 )
                             }
-                        }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent,
+                            scrolledContainerColor = Color.Unspecified,
+                            navigationIconContentColor = Color.Unspecified,
+                            titleContentColor = Color.Unspecified,
+                            actionIconContentColor = Color.Unspecified
+                        )
+                    )
+                },
+                floatingActionButton = {
+                    FloatingActionButton(
+                        onClick = onCreateSession,
+                        containerColor = AuraColors.WorkMode,
+                        contentColor = Color.White,
+                        shape = CircleShape
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Tạo phiên mới")
+                    }
+                },
+                containerColor = Color.Transparent
+            ) { padding ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(horizontal = if (isLandscape) 40.dp else 20.dp)
+                ) {
+                    SummaryHeader(totalFocusSeconds = totalFocusSeconds)
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    SessionListContent(
+                        isListLoading = isListLoading,
+                        sessions = sessions,
+                        isLandscape = isLandscape,
+                        onSessionClick = onSessionClick
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SessionListContent(
+    isListLoading: Boolean,
+    sessions: List<LearningSessionRecord>,
+    isLandscape: Boolean,
+    onSessionClick: (LearningSessionRecord) -> Unit
+) {
+    when {
+        isListLoading -> {
+            Text(
+                text = "Đang tải dữ liệu...",
+                color = AuraColors.TextSecondary,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(top = 16.dp)
+            )
+        }
+
+        sessions.isEmpty() -> {
+            Text(
+                text = "Chưa có phiên làm việc nào",
+                color = AuraColors.TextSecondary,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(top = 16.dp)
+            )
+        }
+
+        else -> {
+            if (isLandscape) {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = 24.dp)
+                ) {
+                    items(
+                        items = sessions,
+                        key = { it.sessionId }
+                    ) { session ->
+                        SessionItem(
+                            session = session,
+                            onClick = { onSessionClick(session) }
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = 24.dp)
+                ) {
+                    items(
+                        items = sessions,
+                        key = { it.sessionId }
+                    ) { session ->
+                        SessionItem(
+                            session = session,
+                            onClick = { onSessionClick(session) }
+                        )
                     }
                 }
             }
@@ -262,7 +303,7 @@ private fun SessionItem(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = session.currentLearningMode.toDisplayText(),
+                    text = "${session.currentLearningMode.toDisplayText()} (${session.sessionMode.toDisplayText()})",
                     color = Color.White,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold

@@ -43,9 +43,7 @@ import androidx.compose.ui.window.Dialog
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import pomodrokotlin.shared.generated.resources.Res
 import pomodrokotlin.shared.generated.resources.landspace_startup_bg
 import thong.kotlin.pomodoro.core.config.AppConfig
@@ -74,9 +72,12 @@ class LearningStyleScreen : Screen {
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
         val learningSessionManager = remember { DependencyRegistry.learningSessionManager }
+        val userLocalSettings = remember { DependencyRegistry.userAppStateRepositoryV2 }
 
         val scope = rememberCoroutineScope()
         var isFinishing by remember { mutableStateOf(false) }
+        val workMinutes = userLocalSettings.getUserSettings().personalWorkMinutes
+        val breakMinutes = userLocalSettings.getUserSettings().personalBreakMinutes
 
         LearningStyleScreenUI(
             isLoading = isFinishing,
@@ -91,7 +92,8 @@ class LearningStyleScreen : Screen {
                 scope.launch {
                     val result = runCatching {
                         val newSession = addNewSessionToDbAndGet(
-                            learningGroupConfig = learningGroupConfig,
+                            workMinutes,
+                            breakMinutes,
                             learningStyle = learningStyle,
                             learningSessionManager = learningSessionManager
                         )
@@ -121,13 +123,12 @@ class LearningStyleScreen : Screen {
 }
 
 private suspend fun addNewSessionToDbAndGet(
-    learningGroupConfig: LearningGroupConfig?,
+    workMinutes : Int,
+    breakMinutes : Int,
     learningStyle: LearningStyle,
     learningSessionManager: LearningSessionManager
 ): LearningSessionRecord {
     val now = Clock.System.now().toEpochMilliseconds()
-    val workMin = learningGroupConfig?.workMinutes ?: AppConfig.DEFAULT_WORK_MINUTES
-    val breakMin = learningGroupConfig?.breakMinutes ?: AppConfig.DEFAULT_BREAK_MINUTES
     val newSession = LearningSessionRecord(
         sessionId = "manual_$now",
         userId = null,
@@ -136,9 +137,8 @@ private suspend fun addNewSessionToDbAndGet(
         status = LearningSessionStatus.IDLE,
         currentLearningMode = CurrentLearningMode.NOT_YET_STARTED,
         startedAtMillis = now,
-        lastPausedAtMillis = null,
-        plannedWorkMinutes = workMin,
-        plannedBreakMinutes = breakMin,
+        plannedWorkMinutes = workMinutes,
+        plannedBreakMinutes = breakMinutes,
         endedAtMillis = null,
         totalFocusSeconds = 0,
         syncStatus = SyncStatus.LOCAL_ONLY
@@ -169,9 +169,9 @@ private fun LearningStyleScreenUI(
 
     // Group Settings State
     var selectedStyle by rememberSaveable { mutableStateOf(LearningStyle.SOLO) }
-    var maxPeople by rememberSaveable { mutableStateOf("4") }
-    var workMinutes by rememberSaveable { mutableStateOf("25") }
-    var breakMinutes by rememberSaveable { mutableStateOf("5") }
+    var maxPeople by rememberSaveable { mutableStateOf(AppConfig.DEFAULT_MAX_GROUP_PEOPLE.toString()) }
+    var workMinutes by rememberSaveable { mutableStateOf(AppConfig.DEFAULT_WORK_MINUTES.toString()) }
+    var breakMinutes by rememberSaveable { mutableStateOf(AppConfig.DEFAULT_BREAK_MINUTES.toString()) }
 
     AuraBackground(
         blurRadius = 8f,

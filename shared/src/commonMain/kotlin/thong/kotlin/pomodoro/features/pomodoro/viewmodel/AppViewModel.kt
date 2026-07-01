@@ -32,9 +32,7 @@ import thong.kotlin.pomodoro.features.session.domain.LearningSessionEventType
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
 import thong.kotlin.pomodoro.features.settings.data.BackgroundRepository
-import kotlin.invoke
 import kotlin.random.Random
-import kotlin.ranges.contains
 import kotlin.time.Clock
 
 data class TotallyPomodoroUiState(
@@ -51,7 +49,15 @@ class AppViewModel(
     private val learningSessionManager: LearningSessionManager = DependencyRegistry.learningSessionManager,
     private val currentSession: LearningSessionRecord
 ) : ViewModel() {
-    val timerUiState = TimerUiState(currentSession = currentSession)
+
+    val timerUiState = TimerUiState(
+        currentSession = currentSession,
+        timeLeft = currentSession.plannedWorkMinutes * 60,
+        config = PomodoroConfig(
+            workMinutes = currentSession.plannedWorkMinutes,
+            shortBreakMinutes = currentSession.plannedBreakMinutes
+        )
+    )
     val workspaceUiState = WorkspaceUiState(currentSession = currentSession)
     val taskUiState = TasksUiState()
 
@@ -70,12 +76,12 @@ class AppViewModel(
     init {
         loadInitialTimerStateData()
         loadWorkspaceSettings()
+//        loadTasks()
     }
 
     private fun loadInitialTimerStateData() {
         _uiState.update { state ->
-            val session = state.currentSession
-            val mode = when (session.currentLearningMode) {
+            val mode = when (currentSession.currentLearningMode) {
                 CurrentLearningMode.WORK -> PomodoroMode.WORK
                 CurrentLearningMode.BREAK -> PomodoroMode.SHORT_BREAK
                 CurrentLearningMode.LONG_BREAK -> PomodoroMode.LONG_BREAK
@@ -83,21 +89,30 @@ class AppViewModel(
             }
 
             val config = PomodoroConfig(
-                workMinutes = session.plannedWorkMinutes,
-                shortBreakMinutes = session.plannedBreakMinutes,
-                longBreakMinutes = session.plannedLongBreakMinutes
+                workMinutes = currentSession.plannedWorkMinutes,
+                shortBreakMinutes = currentSession.plannedBreakMinutes,
+                longBreakMinutes = currentSession.plannedLongBreakMinutes
             )
 
-            val timerState = _uiState.value.timerUiState
+            val timerState = state.timerUiState
+            val workspaceState = state.workspaceUiState
 
             state.copy(
+                currentMode = mode,
                 timerUiState = timerState.copy(
                     config = config,
                     currentMode = mode,
                     timeLeft = mode.totalSeconds(config),
-                    pomodorosToday = session.completedWorkRounds,
-                    isSessionStarted = session.status != LearningSessionStatus.IDLE,
-                    isActive = session.status == LearningSessionStatus.RUNNING
+                    pomodorosToday = currentSession.completedWorkRounds,
+                    isSessionStarted = currentSession.status != LearningSessionStatus.IDLE,
+                    isActive = currentSession.status == LearningSessionStatus.RUNNING
+                ),
+                workspaceUiState = workspaceState.copy(
+                    currentMode = mode,
+                    learningStyle = currentSession.sessionMode,
+                    editingWorkMinutes = currentSession.plannedWorkMinutes.toString(),
+                    editingBreakMinutes = currentSession.plannedBreakMinutes.toString(),
+
                 )
             )
         }
@@ -116,25 +131,26 @@ class AppViewModel(
                     workspaceUiState = _uiState.value.workspaceUiState.copy(
                         availableTracks = MusicRepository.availableTracks,
                         availableAmbientSounds = AmbientSoundRepository.availableSounds,
-                        availableBackgrounds = BackgroundRepository.availableBackgrounds
+                        availableBackgrounds = BackgroundRepository.availableBackgrounds,
+                        selectedTrackId = currentSession.lastMusicId,
+                        selectedBackgroundId = currentSession.lastBackgroundId ?: BackgroundRepository.DEFAULT_BACKGROUND_ID,
+                        activeAmbientSoundIds = currentSession.lastAmbientSounds.toSet(),
                     )
                 )
             }
 
-            // Lắng nghe dữ liệu cấu hình đã lưu (Database/DataStore)
-            repository.getSettingsFlow().collect { settings ->
-                _uiState.update { state ->
-                    state.copy(
-                        workspaceUiState = _uiState.value.workspaceUiState.copy(
-                            selectedBackgroundId = settings.personalSelectedBackgroundId
-                                ?: BackgroundRepository.DEFAULT_BACKGROUND_ID,
-                            isNotificationEnabled = settings.isNotificationEnabled,
-                            selectedTrackId = settings.personalLastSelectedMusicId
-                                ?: MusicRepository.DEFAULT_TRACK_ID
-                        )
-                    )
-                }
-            }
+//            repository.getSettingsFlow().collect { settings ->
+//                _uiState.update { state ->
+//                    state.copy(
+//                        workspaceUiState = _uiState.value.workspaceUiState.copy(
+//                            selectedBackgroundId = state.workspaceUiState.selectedBackgroundId,
+//                            isNotificationEnabled = settings.isNotificationEnabled,
+//                            selectedTrackId =  state.workspaceUiState.selectedTrackId,
+//                            activeAmbientSoundIds = state.workspaceUiState.activeAmbientSoundIds,
+//                        )
+//                    )
+//                }
+//            }
         }
     }
 
@@ -146,6 +162,10 @@ class AppViewModel(
         timerJob?.cancel()
         _uiState.update {
             it.copy(
+                currentSession = it.currentSession.copy(
+                    plannedWorkMinutes = config.workMinutes,
+                    plannedBreakMinutes = config.shortBreakMinutes
+                ),
                 timerUiState = it.timerUiState.copy(
                     config = config,
                     isActive = false,
@@ -285,10 +305,10 @@ class AppViewModel(
         if (shouldStartTimer) {
             _uiState.update {
                 it.copy(
+                    currentSession = updatedSession,
                     timerUiState = it.timerUiState.copy(
                         isActive = true,
                         isSessionStarted = it.timerUiState.isSessionStarted || shouldInsertSessionStartedEvent,
-                        currentSession = updatedSession,
                         isJustEndedBreak = false
                     )
                 )
@@ -300,9 +320,9 @@ class AppViewModel(
 
             _uiState.update {
                 it.copy(
+                    currentSession = updatedSession,
                     timerUiState = it.timerUiState.copy(
-                        isActive = false,
-                        currentSession = updatedSession
+                        isActive = false
                     )
                 )
             }
@@ -613,20 +633,49 @@ class AppViewModel(
     fun toggleMusic() {
         if (soundManager == null) return
 
+        val currentState = _uiState.value
+        val currentWorkspace = currentState.workspaceUiState
+        val currentSession = currentState.currentSession
+
+        val newIsPlaying = !currentWorkspace.isMusicPlaying
+        val trackToPlay = currentWorkspace.selectedTrackId ?: MusicRepository.DEFAULT_TRACK_ID
+
+        if (newIsPlaying) {
+            soundManager.playBackgroundMusic(trackToPlay)
+        } else {
+            soundManager.pauseBackgroundMusic()
+        }
+
+        val updatedSession = if (newIsPlaying) {
+            currentSession.copy(lastMusicId = trackToPlay)
+        } else {
+            currentSession
+        }
+
         _uiState.update { state ->
-            val newIsPlaying = !state.workspaceUiState.isMusicPlaying
-            if (newIsPlaying) {
-                // Sử dụng default track nếu chưa có track nào được chọn
-                val trackToPlay =
-                    state.workspaceUiState.selectedTrackId ?: MusicRepository.DEFAULT_TRACK_ID
-                soundManager.playBackgroundMusic(trackToPlay)
-            } else {
-                soundManager.pauseBackgroundMusic()
-            }
             state.copy(
                 workspaceUiState = state.workspaceUiState.copy(
                     isMusicPlaying = newIsPlaying,
+                    selectedTrackId = trackToPlay,
                     musicPosition = soundManager.getCurrentPosition()
+                ),
+                currentSession = updatedSession
+            )
+        }
+
+        viewModelScope.launch {
+            updateSession(updatedSession)
+
+            insertEvent(
+                LearningSessionEvent(
+                    sessionId = updatedSession.sessionId,
+                    eventType = LearningSessionEventType.MUSIC_CHANGED,
+                    remainingSeconds = _uiState.value.timerUiState.timeLeft,
+                    metadata = mapOf(
+                        "source" to "workspace",
+                        "action" to if (newIsPlaying) "music_play" else "music_pause",
+                        "track_id" to trackToPlay
+                    )
                 )
             )
         }
@@ -647,37 +696,101 @@ class AppViewModel(
     }
 
     fun toggleAmbientSound(soundId: String) {
+        if (soundManager == null) return
+
+        val currentState = _uiState.value
+        val currentWorkspace = currentState.workspaceUiState
+        val currentSession = currentState.currentSession
+        val remainingSeconds = currentState.timerUiState.timeLeft
+
+        val isCurrentlyActive = currentWorkspace.activeAmbientSoundIds.contains(soundId)
+
+        val newActiveIds = if (isCurrentlyActive) {
+            currentWorkspace.activeAmbientSoundIds - soundId
+        } else {
+            currentWorkspace.activeAmbientSoundIds + soundId
+        }
+
+        if (isCurrentlyActive) {
+            soundManager.stopAmbientSound(soundId)
+        } else {
+            soundManager.playAmbientSound(soundId)
+        }
+
+        val updatedSession = currentSession.copy(
+            lastAmbientSounds = newActiveIds
+        )
+
         _uiState.update { state ->
-            val isCurrentlyActive = state.workspaceUiState.activeAmbientSoundIds.contains(soundId)
-            val newActiveIds = if (isCurrentlyActive) {
-                soundManager?.stopAmbientSound(soundId)
-                state.workspaceUiState.activeAmbientSoundIds - soundId
-            } else {
-                soundManager?.playAmbientSound(soundId)
-                state.workspaceUiState.activeAmbientSoundIds + soundId
-            }
             state.copy(
                 workspaceUiState = state.workspaceUiState.copy(
                     activeAmbientSoundIds = newActiveIds
+                ),
+                currentSession = updatedSession
+            )
+        }
+
+        viewModelScope.launch {
+            updateSession(updatedSession)
+
+            insertEvent(
+                LearningSessionEvent(
+                    sessionId = updatedSession.sessionId,
+                    eventType = LearningSessionEventType.AMBIENT_CHANGED,
+                    remainingSeconds = remainingSeconds,
+                    metadata = mapOf(
+                        "source" to "workspace",
+                        "action" to if (isCurrentlyActive) {
+                            "turn_off_ambient"
+                        } else {
+                            "turn_on_ambient"
+                        },
+                        "ambient_id" to soundId
+                    )
                 )
             )
         }
     }
 
     fun selectBackground(backgroundId: String) {
-        _uiState.update {
-            it.copy(
-                workspaceUiState = it.workspaceUiState.copy(
+        val currentState = _uiState.value
+        val currentSession = currentState.currentSession
+        val remainingSeconds = currentState.timerUiState.timeLeft
+
+        val updatedSession = currentSession.copy(
+            lastBackgroundId = backgroundId
+        )
+
+        _uiState.update { state ->
+            state.copy(
+                workspaceUiState = state.workspaceUiState.copy(
                     selectedBackgroundId = backgroundId
-                )
+                ),
+                currentSession = updatedSession
             )
         }
+
         viewModelScope.launch {
-            repository.let { repo ->
-                repo.saveUserSettings(
-                    repo.getUserSettings().copy(personalSelectedBackgroundId = backgroundId)
+            updateSession(updatedSession)
+
+            insertEvent(
+                LearningSessionEvent(
+                    sessionId = updatedSession.sessionId,
+                    eventType = LearningSessionEventType.BACKGROUND_CHANGED,
+                    remainingSeconds = remainingSeconds,
+                    metadata = mapOf(
+                        "source" to "workspace",
+                        "action" to "choose_background",
+                        "background_id" to backgroundId
+                    )
                 )
-            }
+            )
+
+            repository.saveUserSettings(
+                repository.getUserSettings().copy(
+                    personalSelectedBackgroundId = backgroundId
+                )
+            )
         }
     }
 
@@ -794,7 +907,7 @@ class AppViewModel(
         _uiState.update {
             it.copy(
                 workspaceUiState = it.workspaceUiState.copy(
-                    editingBreakMinutes = value,
+                    editingWorkMinutes = value,
                     settingsError = ""
                 )
             )
@@ -853,6 +966,7 @@ class AppViewModel(
         }
 
         val updatedSession = currentSession.copy(
+            status = LearningSessionStatus.PAUSED,
             plannedWorkMinutes = workMin,
             plannedBreakMinutes = breakMin,
         )
@@ -1108,7 +1222,7 @@ class AppViewModel(
     }
 
     fun toggleTask(taskId: String) {
-        var updatedTask: Task? = null
+        var updatedTask: Task?
 
         _uiState.update { state ->
             state.copy(

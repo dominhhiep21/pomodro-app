@@ -45,12 +45,11 @@ enum class LearningSessionEventType {
     BREAK_ROUND_ENDED,
     BREAK_ROUND_RESET,
     BREAK_ROUND_SKIPPED,
-    APP_EXITED,
-    APP_WENT_BACKGROUND,
-    USER_RETURNED_HOME,
     BACKGROUND_CHANGED,
-    SOUND_MUTED,
-    SOUND_UNMUTED
+    MUSIC_CHANGED,
+    AMBIENT_CHANGED,
+    USER_RETURNED_HOME,
+    APP_EXITED
 }
 
 fun LearningSessionStatus.toDisplayText(): String =
@@ -77,4 +76,10 @@ fun LearningSessionStatus.color() : Color =
         LearningSessionStatus.PAUSED -> AuraColors.SessionPausedMode
         LearningSessionStatus.IDLE -> AuraColors.SessionIdleMode
         LearningSessionStatus.DELETED -> AuraColors.SessionDeletedMode
+    }
+
+fun thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle.toDisplayText(): String =
+    when (this) {
+        thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle.SOLO -> "Cá nhân"
+        thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle.GROUP -> "Nhóm"
     }

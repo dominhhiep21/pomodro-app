@@ -1,11 +1,14 @@
 package thong.kotlin.pomodoro.features.session.domain
 
+import kotlinx.serialization.json.Json
 import thong.kotlin.pomodoro.core.config.AppConfig
 import thong.kotlin.pomodoro.core.utils.toEnumOrDefault
 import thong.kotlin.pomodoro.core.utils.toMillisFromDateTimeText
 import thong.kotlin.pomodoro.core.utils.toMillisFromDateTimeTextOrNull
 import thong.kotlin.pomodoro.database.Session_history_local
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
+import thong.kotlin.pomodoro.features.pomodoro.music.data.MusicRepository
+import thong.kotlin.pomodoro.features.settings.data.BackgroundRepository
 import kotlin.time.Clock
 
 data class LearningSessionRecord(
@@ -14,13 +17,16 @@ data class LearningSessionRecord(
     val anonymousUserId: String? = null,
     val sessionMode: LearningStyle = LearningStyle.SOLO,
     val status: LearningSessionStatus = LearningSessionStatus.IDLE,
-    val currentLearningMode : CurrentLearningMode = CurrentLearningMode.NOT_YET_STARTED,
+    val currentLearningMode: CurrentLearningMode = CurrentLearningMode.NOT_YET_STARTED,
     val startedAtMillis: Long = Clock.System.now().toEpochMilliseconds(),
     val endedAtMillis: Long? = null,
     val lastPausedAtMillis: Long? = null,
     val plannedWorkMinutes: Int = AppConfig.DEFAULT_WORK_MINUTES,
     val plannedBreakMinutes: Int = AppConfig.DEFAULT_BREAK_MINUTES,
     val plannedLongBreakMinutes: Int = AppConfig.DEFAULT_LONG_BREAK_MINUTES,
+    val lastBackgroundId: String? = BackgroundRepository.DEFAULT_BACKGROUND_ID,
+    val lastMusicId: String? = MusicRepository.DEFAULT_TRACK_ID,
+    val lastAmbientSounds: Set<String> = emptySet(),
     val totalFocusSeconds: Int = 0,
     val totalBreakSeconds: Int = 0,
     val totalPausedSeconds: Int = 0,
@@ -47,6 +53,16 @@ fun Session_history_local.toLearningSessionRecord(): LearningSessionRecord {
         plannedWorkMinutes = planned_work_minutes?.toInt() ?: 0,
         plannedBreakMinutes = planned_break_minutes?.toInt() ?: 0,
         plannedLongBreakMinutes = 0,
+
+        lastBackgroundId = last_background_id,
+        lastMusicId = last_music_id,
+        lastAmbientSounds = runCatching {
+            Json.decodeFromString<Set<String>>(
+                last_ambient_sound_json
+                    ?.takeIf { it.isNotBlank() }
+                    ?: "[]"
+            )
+        }.getOrDefault(emptySet()),
 
         totalFocusSeconds = total_focus_seconds?.toInt() ?: 0,
         totalBreakSeconds = total_break_seconds?.toInt() ?: 0,

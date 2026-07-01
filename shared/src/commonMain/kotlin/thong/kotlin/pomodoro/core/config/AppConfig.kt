@@ -7,6 +7,7 @@ object AppConfig {
     const val DEFAULT_LONG_BREAK_MINUTES = 15
     const val DEFAULT_AUTO_START_BREAK = false
     const val DEFAULT_AUTO_START_WORK = false
+    const val DEFAULT_MAX_GROUP_PEOPLE = 4
 
     const val DEFAULT_NOTIFICATION_CHANNEL_ID = "AuraPomodoro"
     const val DEFAULT_NOTIFICATION_CHANNEL_NAME = "Aura Pomodoro"

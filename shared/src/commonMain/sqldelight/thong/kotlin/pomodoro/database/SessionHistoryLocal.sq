@@ -12,6 +12,9 @@ CREATE TABLE IF NOT EXISTS session_history_local (
     planned_break_minutes INTEGER,
     completed_work_rounds INTEGER,
     completed_break_rounds INTEGER,
+    last_background_id TEXT,
+    last_music_id TEXT,
+    last_ambient_sound_json TEXT,
     total_focus_seconds INTEGER,
     total_break_seconds INTEGER,
     total_paused_seconds INTEGER,
@@ -50,6 +53,9 @@ INSERT INTO session_history_local (
     planned_break_minutes,
     completed_work_rounds,
     completed_break_rounds,
+    last_background_id,
+    last_music_id,
+    last_ambient_sound_json,
     total_focus_seconds,
     total_break_seconds,
     total_paused_seconds,
@@ -57,7 +63,7 @@ INSERT INTO session_history_local (
     updated_at,
     sync_status
 )
-VALUES (?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+VALUES (?, ?,?,?,?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updateSessionHistory:
 UPDATE session_history_local
@@ -73,6 +79,9 @@ SET
     planned_break_minutes = ?,
     completed_work_rounds = ?,
     completed_break_rounds = ?,
+    last_background_id = ?,
+    last_music_id = ?,
+    last_ambient_sound_json = ?,
     total_focus_seconds = ?,
     total_break_seconds = ?,
     total_paused_seconds = ?,
@@ -88,6 +97,7 @@ WHERE id = ?;
 selectAllSessionHistory:
 SELECT *
 FROM session_history_local
+WHERE status <> 'DELETED'
 ORDER BY started_at DESC;
 
 selectTotalFocusSeconds:

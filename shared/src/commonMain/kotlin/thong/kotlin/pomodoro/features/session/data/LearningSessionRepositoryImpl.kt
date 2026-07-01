@@ -1,5 +1,6 @@
 package thong.kotlin.pomodoro.features.session.data
 
+import kotlinx.serialization.json.Json
 import thong.kotlin.pomodoro.core.utils.toDateTimeText
 import thong.kotlin.pomodoro.core.utils.toDateTimeTextOrNull
 import thong.kotlin.pomodoro.database.AuraDatabase
@@ -72,6 +73,10 @@ class LearningSessionRepositoryImpl(
             completed_work_rounds = session.completedWorkRounds.toLong(),
             completed_break_rounds = session.completedBreakRounds.toLong(),
 
+            last_background_id = session.lastBackgroundId,
+            last_music_id = session.lastMusicId,
+            last_ambient_sound_json = Json.encodeToString(session.lastAmbientSounds),
+
             total_focus_seconds = session.totalFocusSeconds.toLong(),
             total_break_seconds = session.totalBreakSeconds.toLong(),
             total_paused_seconds = session.totalPausedSeconds.toLong(),
@@ -106,6 +111,9 @@ class LearningSessionRepositoryImpl(
                 planned_break_minutes = session.plannedBreakMinutes.toLong(),
                 completed_work_rounds = session.completedWorkRounds.toLong(),
                 completed_break_rounds = session.completedBreakRounds.toLong(),
+                last_background_id = session.lastBackgroundId,
+                last_music_id = session.lastMusicId,
+                last_ambient_sound_json = Json.encodeToString(session.lastAmbientSounds),
                 total_focus_seconds = session.totalFocusSeconds.toLong(),
                 total_break_seconds = session.totalBreakSeconds.toLong(),
                 total_paused_seconds = session.totalPausedSeconds.toLong(),

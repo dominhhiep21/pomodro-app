@@ -137,7 +137,6 @@ private suspend fun addNewSessionToDbAndGet(
         status = LearningSessionStatus.IDLE,
         currentLearningMode = CurrentLearningMode.NOT_YET_STARTED,
         startedAtMillis = now,
-        lastPausedAtMillis = null,
         plannedWorkMinutes = workMinutes,
         plannedBreakMinutes = breakMinutes,
         endedAtMillis = null,

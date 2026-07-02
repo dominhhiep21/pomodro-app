@@ -30,8 +30,8 @@ fun TimerSectionComponent(
     onSkipTimer: () -> Unit,
     compact: Boolean = false
 ) {
-    val timerBackgroundColor = remember(totallyPomodoroUiState.timerUiState.currentMode) {
-        when (totallyPomodoroUiState.timerUiState.currentMode) {
+    val timerBackgroundColor = remember(totallyPomodoroUiState.currentMode) {
+        when (totallyPomodoroUiState.currentMode) {
             PomodoroMode.WORK -> AuraColors.WorkMode.copy(alpha = 0.15f)
             PomodoroMode.SHORT_BREAK -> AuraColors.ShortBreakMode.copy(alpha = 0.05f)
             PomodoroMode.LONG_BREAK -> AuraColors.LongBreakMode.copy(alpha = 0.05f)

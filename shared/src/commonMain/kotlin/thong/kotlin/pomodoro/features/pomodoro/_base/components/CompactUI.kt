@@ -77,7 +77,7 @@ fun LandscapeCompactUI(
 
         CompactFloatingTimerComponent(
             timeLeft = totallyPomodoroUiState.timerUiState.timeLeft,
-            mode = totallyPomodoroUiState.timerUiState.currentMode,
+            mode = totallyPomodoroUiState.currentMode,
             isActive = totallyPomodoroUiState.timerUiState.isActive,
             onToggle = onToggleTimer,
             width = 200.dp,
@@ -168,7 +168,7 @@ fun PortraitCompactUI(
         CompactFloatingTimerComponent(
             showExitShortcut = true,
             timeLeft = totallyPomodoroUiState.timerUiState.timeLeft,
-            mode = totallyPomodoroUiState.timerUiState.currentMode,
+            mode = totallyPomodoroUiState.currentMode,
             isActive = totallyPomodoroUiState.timerUiState.isActive,
             onToggle = onToggleTimer,
             onToggleSettings = onToggleSettings,

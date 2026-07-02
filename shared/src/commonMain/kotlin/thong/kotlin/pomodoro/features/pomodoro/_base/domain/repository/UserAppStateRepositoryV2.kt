@@ -1,11 +1,7 @@
 package thong.kotlin.pomodoro.features.pomodoro._base.domain.repository
 
 import kotlinx.coroutines.flow.Flow
-import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.DailyStats
-import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.SessionRecord
-import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettings
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettingsV2
-import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.Task
 
 interface UserAppStateRepositoryV2 {
 

@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import thong.kotlin.pomodoro.core.config.AppConfig
 import thong.kotlin.pomodoro.core.media.SoundManager
-import thong.kotlin.pomodoro.core.utils.getCurrentDateTimeString
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.background.model.BackgroundConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
@@ -24,7 +23,7 @@ import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppSt
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.totalSeconds
 import thong.kotlin.pomodoro.features.pomodoro.ambient.data.AmbientSoundRepository
 import thong.kotlin.pomodoro.features.pomodoro.music.data.MusicRepository
-import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.Task
+import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.SessionTask
 import thong.kotlin.pomodoro.features.session.data.LearningSessionManager
 import thong.kotlin.pomodoro.features.session.domain.CurrentLearningMode
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionEvent
@@ -32,7 +31,6 @@ import thong.kotlin.pomodoro.features.session.domain.LearningSessionEventType
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
 import thong.kotlin.pomodoro.features.settings.data.BackgroundRepository
-import kotlin.random.Random
 import kotlin.time.Clock
 
 data class TotallyPomodoroUiState(
@@ -76,7 +74,7 @@ class AppViewModel(
     init {
         loadInitialTimerStateData()
         loadWorkspaceSettings()
-//        loadTasks()
+        loadTasks()
     }
 
     private fun loadInitialTimerStateData() {
@@ -155,7 +153,18 @@ class AppViewModel(
     }
 
     private fun loadTasks() {
-        TODO("Not yet implemented")
+        val sessionId = _uiState.value.currentSession.sessionId
+        viewModelScope.launch {
+            val tasks = learningSessionManager.getAllTasksBySessionId(sessionId)
+
+            _uiState.update { state ->
+                state.copy(
+                    tasksUiState = state.tasksUiState.copy(
+                        sessionTasks = tasks
+                    )
+                )
+            }
+        }
     }
 
     fun updateConfig(config: PomodoroConfig) {
@@ -1175,72 +1184,109 @@ class AppViewModel(
         }
     }
 
-    /**
-     * Thêm task mới. Có thể truyền sessionId nếu task này được tạo ra
-     * trong lúc bộ đếm Pomodoro đang chạy.
-     */
-    fun addTask(currentSessionId: String? = null) {
+    fun addTask() {
+        val currentState = _uiState.value
+        val currentSession = currentState.currentSession
         val text = _uiState.value.tasksUiState.newTaskText
-        if (text.isNotBlank()) {
-            // Tạo ID ngẫu nhiên (Trong thực tế KMP, bạn có thể dùng kotlinx-uuid hoặc Random)
-            val taskId = Random.nextLong().toString()
 
-            val newTask = Task(
-                id = taskId,
-                text = text,
-                isCompleted = false,
-                createdAt = getCurrentDateTimeString(), // Giả định bạn đã có hàm này
-                completedAt = null,
-                sessionId = currentSessionId
+        if (text.isNotBlank()) {
+            val newSessionTask = SessionTask(
+                sessionId = currentSession.sessionId,
+                title = text
             )
 
-            // Cập nhật UI ngay lập tức
             _uiState.update {
                 it.copy(
                     tasksUiState = it.tasksUiState.copy(
-                        tasks = it.tasksUiState.tasks + newTask,
+                        sessionTasks = it.tasksUiState.sessionTasks + newSessionTask,
                         newTaskText = ""
                     )
                 )
             }
 
-            // Lưu xuống Database
-//            viewModelScope.launch {
-//                repository?.saveTask(newTask)
-//            }
+            viewModelScope.launch {
+                insertTask(newSessionTask)
+                insertEvent(
+                    LearningSessionEvent(
+                        sessionId = currentSession.sessionId,
+                        eventType = LearningSessionEventType.ADD_TASK,
+                        metadata = mapOf(
+                            "source" to "workspace",
+                            "action" to "add_new_task",
+                            "task_id" to newSessionTask.taskId
+                        )
+                    )
+                )
+            }
         }
     }
 
     fun deleteTask(taskId: String) {
+        val currentState = _uiState.value
+        val currentSession = currentState.currentSession
+
         _uiState.update { state ->
             state.copy(
                 tasksUiState = state.tasksUiState.copy(
-                    tasks = state.tasksUiState.tasks.filter { it.id != taskId }
+                    sessionTasks = state.tasksUiState.sessionTasks.filter { it.taskId != taskId }
+                )
+            )
+        }
+
+        viewModelScope.launch {
+            deleteTask(taskId, currentSession.sessionId)
+            insertEvent(
+                LearningSessionEvent(
+                    sessionId = currentSession.sessionId,
+                    eventType = LearningSessionEventType.REMOVE_TASK,
+                    metadata = mapOf(
+                        "source" to "workspace",
+                        "action" to "remove_a_task",
+                        "task_id" to taskId
+                    )
                 )
             )
         }
     }
 
     fun toggleTask(taskId: String) {
-        var updatedTask: Task?
+        var updatedSessionTask: SessionTask? = null
+        val currentSession = _uiState.value.currentSession
 
         _uiState.update { state ->
             state.copy(
                 tasksUiState = state.tasksUiState.copy(
-                    tasks = state.tasksUiState.tasks.map { task ->
-                        if (task.id == taskId) {
+                    sessionTasks = state.tasksUiState.sessionTasks.map { task ->
+                        if (task.taskId == taskId) {
                             val newStatus = !task.isCompleted
-                            updatedTask = task.copy(
+                            updatedSessionTask = task.copy(
                                 isCompleted = newStatus,
-                                completedAt = if (newStatus) getCurrentDateTimeString() else null
+                                completedAtMillis = if (newStatus) Clock.System.now().toEpochMilliseconds() else null
                             )
-                            updatedTask
+                            updatedSessionTask
                         } else {
                             task
                         }
                     }
                 )
             )
+        }
+
+        viewModelScope.launch {
+            if (updatedSessionTask != null) {
+                updateTask(updatedSessionTask)
+                insertEvent(
+                    LearningSessionEvent(
+                        sessionId = currentSession.sessionId,
+                        eventType = LearningSessionEventType.COMPLETED_TASK,
+                        metadata = mapOf(
+                            "source" to "workspace",
+                            "action" to "completed_a_task",
+                            "task_id" to taskId
+                        )
+                    )
+                )
+            }
         }
     }
 
@@ -1256,6 +1302,11 @@ class AppViewModel(
 
     suspend fun insertEvent(event: LearningSessionEvent) = learningSessionManager.insertEvent(event)
 
-    suspend fun updateSession(session: LearningSessionRecord) =
-        learningSessionManager.updateSession(session)
+    suspend fun updateSession(session: LearningSessionRecord) = learningSessionManager.updateSession(session)
+
+    suspend fun insertTask(task: SessionTask) = learningSessionManager.insertTask(task, currentSession.sessionId)
+
+    suspend fun updateTask(task: SessionTask) = learningSessionManager.updateTask(task)
+
+    suspend fun deleteTask(taskId: String, sessionId: String) = learningSessionManager.deleteTaskById(taskId, sessionId)
 }

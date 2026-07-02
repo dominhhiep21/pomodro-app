@@ -1,6 +1,6 @@
 package thong.kotlin.pomodoro.features.pomodoro.task.components
 
-import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.Task
+import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.SessionTask
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -31,7 +31,7 @@ import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 
 @Composable
 fun TaskBottomBar(
-    tasks: List<Task>,
+    sessionTasks: List<SessionTask>,
     isExpanded: Boolean,
     onToggleExpand: () -> Unit,
     // TaskSection props
@@ -42,21 +42,21 @@ fun TaskBottomBar(
     onNewTaskTextChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var currentTaskIndex by remember { mutableStateOf(0) }
+    var currentTaskIndex by remember { mutableIntStateOf(0) }
 
     // Cycle tasks when collapsed
-    LaunchedEffect(tasks.size, isExpanded) {
-        if (!isExpanded && tasks.isNotEmpty()) {
+    LaunchedEffect(sessionTasks.size, isExpanded) {
+        if (!isExpanded && sessionTasks.isNotEmpty()) {
             while (true) {
                 delay(4000) // 4 seconds per task
-                currentTaskIndex = (currentTaskIndex + 1) % tasks.size
+                currentTaskIndex = (currentTaskIndex + 1) % sessionTasks.size
             }
         }
     }
 
     // Reset index if it goes out of bounds (e.g. task deleted)
-    LaunchedEffect(tasks.size) {
-        if (currentTaskIndex >= tasks.size) {
+    LaunchedEffect(sessionTasks.size) {
+        if (currentTaskIndex >= sessionTasks.size) {
             currentTaskIndex = 0
         }
     }
@@ -127,7 +127,7 @@ fun TaskBottomBar(
                         Spacer(modifier = Modifier.height(16.dp))
                         
                         TaskSection(
-                            tasks = tasks,
+                            sessionTasks = sessionTasks,
                             newTaskText = newTaskText,
                             onAddTask = onAddTask,
                             onDeleteTask = onDeleteTask,
@@ -157,7 +157,7 @@ fun TaskBottomBar(
                                     modifier = Modifier.size(24.dp)
                                 )
                                 
-                                val incompleteCount = tasks.count { !it.isCompleted }
+                                val incompleteCount = sessionTasks.count { !it.isCompleted }
                                 if (incompleteCount > 0) {
                                     Box(
                                         modifier = Modifier
@@ -180,7 +180,7 @@ fun TaskBottomBar(
                             Spacer(modifier = Modifier.width(16.dp))
 
                             AnimatedContent(
-                                targetState = if (tasks.isEmpty()) null else tasks[currentTaskIndex],
+                                targetState = if (sessionTasks.isEmpty()) null else sessionTasks[currentTaskIndex],
                                 transitionSpec = {
                                     (slideInVertically { it } + fadeIn()) togetherWith
                                             (slideOutVertically { -it } + fadeOut())
@@ -189,7 +189,7 @@ fun TaskBottomBar(
                             ) { task ->
                                 if (task != null) {
                                     Text(
-                                        text = task.text,
+                                        text = task.title,
                                         color = Color.White,
                                         fontSize = 15.sp,
                                         maxLines = 1,

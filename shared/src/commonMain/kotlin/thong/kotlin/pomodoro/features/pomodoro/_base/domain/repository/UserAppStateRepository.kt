@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettings
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.DailyStats
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.SessionRecord
-import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.Task
+import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.SessionTask
 
 interface UserAppStateRepository {
     // Settings
@@ -13,8 +13,8 @@ interface UserAppStateRepository {
     fun getSettingsFlow(): Flow<UserSettings>
 
     // Tasks
-    fun getAllTasks(): Flow<List<Task>>
-    suspend fun saveTask(task: Task)
+    fun getAllTasks(): Flow<List<SessionTask>>
+    suspend fun saveTask(sessionTask: SessionTask)
     suspend fun deleteTask(taskId: String)
     suspend fun updateTaskStatus(taskId: String, isCompleted: Boolean, completedAt: String?)
 

@@ -229,7 +229,7 @@ fun CompactSectionUiComponent(
     when (section) {
         CompactSection.TASKS -> {
             CompactTaskSectionComponent(
-                tasks = totallyPomodoroUiState.tasksUiState.tasks,
+                sessionTasks = totallyPomodoroUiState.tasksUiState.sessionTasks,
                 newTaskText = totallyPomodoroUiState.tasksUiState.newTaskText,
                 onAddTask = onAddTask,
                 onDeleteTask = onDeleteTask,

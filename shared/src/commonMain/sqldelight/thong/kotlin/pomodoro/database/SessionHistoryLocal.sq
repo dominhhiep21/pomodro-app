@@ -157,3 +157,72 @@ INSERT INTO learning_session_event_local (
 )
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
+CREATE TABLE IF NOT EXISTS session_task (
+
+    task_id TEXT NOT NULL PRIMARY KEY,
+    session_id TEXT NOT NULL,
+
+    title TEXT NOT NULL,
+    is_completed INTEGER NOT NULL DEFAULT 0,
+
+    focus_seconds INTEGER NOT NULL DEFAULT 0,
+
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    completed_at TEXT,
+
+    sync_status TEXT NOT NULL DEFAULT 'LOCAL_ONLY'
+);
+
+insertSessionTask:
+INSERT INTO session_task(
+    task_id,
+    session_id,
+    title,
+    is_completed,
+    focus_seconds,
+    created_at,
+    updated_at,
+    completed_at,
+    sync_status
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectTasksBySessionId:
+SELECT *
+FROM session_task
+WHERE session_id = ?
+ORDER BY created_at ASC;
+
+updateTask:
+UPDATE session_task
+SET session_id = ?,
+    title = ?,
+    is_completed = ?,
+    focus_seconds = ?,
+    updated_at = ?,
+    completed_at = ?,
+    sync_status = ?
+WHERE task_id = ?;
+
+addTaskFocusSeconds:
+UPDATE session_task
+SET focus_seconds = focus_seconds + ?,
+    updated_at = ?
+WHERE task_id = ?;
+
+deleteTask:
+DELETE FROM session_task
+WHERE task_id = ? AND session_id = ?;
+
+deleteTasksBySessionId:
+DELETE FROM session_task
+WHERE session_id = ?;
+
+selectTaskStatsBySessionId:
+SELECT
+    COUNT(*) AS total_tasks,
+    SUM(CASE WHEN is_completed = 1 THEN 1 ELSE 0 END) AS completed_tasks,
+    SUM(focus_seconds) AS total_task_focus_seconds
+FROM session_task
+WHERE session_id = ?;

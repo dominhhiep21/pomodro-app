@@ -1,6 +1,6 @@
 package thong.kotlin.pomodoro.features.pomodoro.task.components
 
-import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.Task
+import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.SessionTask
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
@@ -32,7 +32,7 @@ import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
  */
 @Composable
 fun TaskSideBar(
-    tasks: List<Task>,
+    sessionTasks: List<SessionTask>,
     isExpanded: Boolean,
     onToggleExpand: () -> Unit,
     newTaskText: String,
@@ -124,7 +124,7 @@ fun TaskSideBar(
                             Spacer(modifier = Modifier.height(16.dp))
                             
                             TaskSection(
-                                tasks = tasks,
+                                sessionTasks = sessionTasks,
                                 newTaskText = newTaskText,
                                 onAddTask = onAddTask,
                                 onDeleteTask = onDeleteTask,
@@ -153,7 +153,7 @@ fun TaskSideBar(
 
         // 2. The Floating Notification Badge (Overlay - Unclipped)
         if (!isExpanded) {
-            val incompleteCount = tasks.count { !it.isCompleted }
+            val incompleteCount = sessionTasks.count { !it.isCompleted }
             if (incompleteCount > 0) {
                 Box(
                     modifier = Modifier

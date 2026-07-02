@@ -119,7 +119,7 @@ fun LandscapePomodoroUI(
         }
 
         TaskSideBar(
-            tasks = totallyPomodoroUiState.tasksUiState.tasks,
+            sessionTasks = totallyPomodoroUiState.tasksUiState.sessionTasks,
             isExpanded = totallyPomodoroUiState.tasksUiState.isTasksExpanded,
             onToggleExpand = onToggleTasksExpanded,
             newTaskText = totallyPomodoroUiState.tasksUiState.newTaskText,
@@ -235,7 +235,7 @@ fun LandscapePomodoroGroupUI(
             ExpandableChatPanel()
 
             TaskSideBar(
-                tasks = totallyPomodoroUiState.tasksUiState.tasks,
+                sessionTasks = totallyPomodoroUiState.tasksUiState.sessionTasks,
                 isExpanded = totallyPomodoroUiState.tasksUiState.isTasksExpanded,
                 onToggleExpand = onToggleTasksExpanded,
                 newTaskText = totallyPomodoroUiState.tasksUiState.newTaskText,
@@ -324,7 +324,7 @@ fun PortraitPomodoroUI(
         }
 
         TaskBottomBar(
-            tasks = totallyPomodoroUiState.tasksUiState.tasks,
+            sessionTasks = totallyPomodoroUiState.tasksUiState.sessionTasks,
             isExpanded = totallyPomodoroUiState.tasksUiState.isTasksExpanded,
             onToggleExpand = onToggleTasksExpanded,
             newTaskText = totallyPomodoroUiState.tasksUiState.newTaskText,
@@ -424,7 +424,7 @@ fun PortraitPomodoroGroupUI(
         }
 
         TaskBottomBar(
-            tasks = totallyPomodoroUiState.tasksUiState.tasks,
+            sessionTasks = totallyPomodoroUiState.tasksUiState.sessionTasks,
             isExpanded = totallyPomodoroUiState.tasksUiState.isTasksExpanded,
             onToggleExpand = onToggleTasksExpanded,
             newTaskText = totallyPomodoroUiState.tasksUiState.newTaskText,

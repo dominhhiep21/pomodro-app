@@ -1,6 +1,6 @@
 package thong.kotlin.pomodoro.features.pomodoro.task.components
 
-import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.Task
+import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.SessionTask
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.horizontalScroll
@@ -34,7 +34,7 @@ import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 
 @Composable
 fun TaskItem(
-    task: Task,
+    sessionTask: SessionTask,
     onToggle: () -> Unit,
     onDelete: () -> Unit,
     compact: Boolean = false
@@ -56,7 +56,7 @@ fun TaskItem(
                 modifier = Modifier.weight(1f)
             ) {
                 AuraCheckbox(
-                    checked = task.isCompleted,
+                    checked = sessionTask.isCompleted,
                     onCheckedChange = { onToggle() },
                     activeColor = AuraColors.WorkMode,
                     size = if (compact) 20.dp else 24.dp
@@ -65,11 +65,11 @@ fun TaskItem(
                 Spacer(modifier = Modifier.width(if (compact) 8.dp else 12.dp))
 
                 val scrollState = rememberScrollState()
-                var containerWidth by remember { mutableStateOf(0) }
-                var textWidth by remember { mutableStateOf(0) }
+                var containerWidth by remember { mutableIntStateOf(0) }
+                var textWidth by remember { mutableIntStateOf(0) }
 
                 LaunchedEffect(textWidth, containerWidth) {
-                    if (textWidth > containerWidth && containerWidth > 0) {
+                    if (containerWidth in 1..<textWidth) {
                         while (true) {
                             delay(2000) // Pause at start
                             scrollState.animateScrollTo(
@@ -92,10 +92,10 @@ fun TaskItem(
                         .horizontalScroll(scrollState, enabled = false) // Disable manual scroll to let animation take over
                 ) {
                     Text(
-                        text = task.text,
-                        color = if (task.isCompleted) AuraColors.TextSecondary else Color.White,
+                        text = sessionTask.title,
+                        color = if (sessionTask.isCompleted) AuraColors.TextSecondary else Color.White,
                         fontSize = if (compact) 14.sp else 15.sp,
-                        textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
+                        textDecoration = if (sessionTask.isCompleted) TextDecoration.LineThrough else null,
                         maxLines = 1,
                         softWrap = false,
                         modifier = Modifier.onSizeChanged { textWidth = it.width }

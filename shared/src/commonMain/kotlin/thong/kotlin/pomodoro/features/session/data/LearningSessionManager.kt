@@ -3,9 +3,9 @@ package thong.kotlin.pomodoro.features.session.data
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.SessionTask
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionEvent
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
-import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
 import kotlin.time.Clock
 
 class LearningSessionManager(
@@ -51,6 +51,30 @@ class LearningSessionManager(
     suspend fun insertEvent(event: LearningSessionEvent) {
         withContext(ioDispatcher) {
             repository.insertEvent(event)
+        }
+    }
+
+    suspend fun getAllTasksBySessionId(sessionId: String): List<SessionTask> {
+        return withContext(ioDispatcher) {
+            repository.getAllTasksBySessionId(sessionId)
+        }
+    }
+
+    suspend fun insertTask(task: SessionTask, sessionId: String) {
+        withContext(ioDispatcher) {
+            repository.insertTask(task, sessionId)
+        }
+    }
+
+    suspend fun updateTask(task: SessionTask) {
+        withContext(ioDispatcher) {
+            repository.updateTask(task)
+        }
+    }
+
+    suspend fun deleteTaskById(taskId: String, sessionId: String) {
+        withContext(ioDispatcher) {
+            repository.deleteTask(taskId, sessionId)
         }
     }
 

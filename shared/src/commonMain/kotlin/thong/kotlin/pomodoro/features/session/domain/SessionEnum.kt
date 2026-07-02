@@ -2,6 +2,7 @@ package thong.kotlin.pomodoro.features.session.domain
 
 import androidx.compose.ui.graphics.Color
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
+import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 
 enum class LearningSessionStatus {
     IDLE,       // Chưa có session nào
@@ -48,6 +49,9 @@ enum class LearningSessionEventType {
     BACKGROUND_CHANGED,
     MUSIC_CHANGED,
     AMBIENT_CHANGED,
+    ADD_TASK,
+    REMOVE_TASK,
+    COMPLETED_TASK,
     USER_RETURNED_HOME,
     APP_EXITED
 }
@@ -78,8 +82,8 @@ fun LearningSessionStatus.color() : Color =
         LearningSessionStatus.DELETED -> AuraColors.SessionDeletedMode
     }
 
-fun thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle.toDisplayText(): String =
+fun LearningStyle.toDisplayText(): String =
     when (this) {
-        thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle.SOLO -> "Cá nhân"
-        thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle.GROUP -> "Nhóm"
+        LearningStyle.SOLO -> "Cá nhân"
+        LearningStyle.GROUP -> "Nhóm"
     }

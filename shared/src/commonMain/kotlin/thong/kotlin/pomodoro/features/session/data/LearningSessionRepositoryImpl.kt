@@ -6,6 +6,8 @@ import thong.kotlin.pomodoro.core.utils.toDateTimeTextOrNull
 import thong.kotlin.pomodoro.database.AuraDatabase
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.LearningSessionState
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.LocalSettingsDataSourceV2
+import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.SessionTask
+import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.toSessionTaskRecord
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionEvent
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.insertInto
@@ -16,6 +18,7 @@ class LearningSessionRepositoryImpl(
     private val localDataSource: LocalSettingsDataSourceV2,
     private val database: AuraDatabase? = null
 ) : LearningSessionRepository {
+
     override fun getCurrentSession(): LearningSessionState {
         TODO("Not yet implemented")
     }
@@ -131,6 +134,46 @@ class LearningSessionRepositoryImpl(
     override fun insertEvent(event: LearningSessionEvent) {
         val queries = database?.sessionHistoryLocalQueries ?: return
         event.insertInto(queries)
+    }
+
+    override fun getAllTasksBySessionId(sessionId: String): List<SessionTask> {
+        val queries = database?.sessionHistoryLocalQueries ?: return emptyList()
+        return queries.selectTasksBySessionId(sessionId).executeAsList()
+            .map { row -> row.toSessionTaskRecord() }
+    }
+
+    override fun insertTask(task: SessionTask, sessionId: String) {
+        val queries = database?.sessionHistoryLocalQueries ?: return
+        queries.insertSessionTask(
+            task_id = task.taskId,
+            session_id = sessionId,
+            title = task.title,
+            is_completed = if (task.isCompleted) 1 else 0,
+            focus_seconds = task.focusSeconds,
+            created_at = task.createdAtMillis.toDateTimeText(),
+            updated_at = task.updatedAtMillis.toDateTimeText(),
+            completed_at = task.completedAtMillis?.toDateTimeText(),
+            sync_status = task.syncStatus.name
+        )
+    }
+
+    override fun updateTask(task: SessionTask) {
+        val queries = database?.sessionHistoryLocalQueries ?: return
+        queries.updateTask(
+            task_id = task.taskId,
+            session_id = task.sessionId,
+            title = task.title,
+            is_completed = if (task.isCompleted) 1 else 0,
+            focus_seconds = task.focusSeconds,
+            updated_at = task.updatedAtMillis.toDateTimeText(),
+            completed_at = task.completedAtMillis?.toDateTimeText(),
+            sync_status = task.syncStatus.name
+        )
+    }
+
+    override fun deleteTask(taskId: String, sessionId: String) {
+        val queries = database?.sessionHistoryLocalQueries ?: return
+        queries.deleteTask(taskId, sessionId)
     }
 
     override fun clearAllSessionsData() {

@@ -51,7 +51,6 @@ class AppViewModel(
 ) : ViewModel() {
 
     val timerUiState = TimerUiState(
-        currentSession = currentSession,
         timeLeft = currentSession.plannedWorkMinutes * 60,
         config = PomodoroConfig(
             workMinutes = currentSession.plannedWorkMinutes,
@@ -101,7 +100,6 @@ class AppViewModel(
                 currentMode = mode,
                 timerUiState = timerState.copy(
                     config = config,
-                    currentMode = mode,
                     timeLeft = mode.totalSeconds(config),
                     pomodorosToday = currentSession.completedWorkRounds,
                     isSessionStarted = currentSession.status != LearningSessionStatus.IDLE,
@@ -385,11 +383,11 @@ class AppViewModel(
 
         _uiState.update {
             it.copy(
+                currentSession = updatedSession,
                 timerUiState = it.timerUiState.copy(
                     isActive = false,
                     timeLeft = totalSeconds,
-                    event = EventType.NOTHING,
-                    currentSession = updatedSession
+                    event = EventType.NOTHING
                 )
             )
         }
@@ -469,12 +467,12 @@ class AppViewModel(
 
         _uiState.update {
             it.copy(
+                currentMode = nextMode,
+                currentSession = updatedSession,
                 timerUiState = it.timerUiState.copy(
                     isActive = false,
-                    currentMode = nextMode,
                     timeLeft = nextMode.totalSeconds(it.timerUiState.config),
-                    event = EventType.NOTHING,
-                    currentSession = updatedSession
+                    event = EventType.NOTHING
                 )
             )
         }

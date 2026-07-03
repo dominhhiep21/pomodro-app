@@ -1,6 +1,5 @@
 package thong.kotlin.pomodoro.features.streak.presentation
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -30,10 +29,8 @@ class StreakScreen(
 
 @Composable
 internal fun StreakScreenContent(uiState: StreakUiState) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(AuraColors.Background)
+    StreakBackground(
+        modifier = Modifier.fillMaxSize()
     ) {
         Column(
             modifier = Modifier

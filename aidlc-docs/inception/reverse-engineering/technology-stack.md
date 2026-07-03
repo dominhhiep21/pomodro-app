@@ -11,18 +11,21 @@
 |-----------|---------|---------|
 | Kotlin Multiplatform | 2.3.21 | Cross-platform shared code |
 | Compose Multiplatform | 1.11.0 | Declarative UI framework |
-| Voyager | 2.2.21 | Multiplatform navigation |
+| Voyager | 2.2.21-1.10.3 | Multiplatform navigation |
 | Ktor Client | 3.0.1 | HTTP networking |
 | Kotlinx Serialization | 1.8.0 | JSON serialization |
-| Multiplatform Settings | 1.3.0 | Key-value local storage |
+| Kotlinx Datetime | 0.7.1 | Date/time utilities |
+| MultiplatformSettings | 1.3.0 | Key-value local storage |
 | AndroidX Lifecycle | 2.11.0-beta01 | ViewModel + Lifecycle |
+| Rive Android | 11.7.1 | Rive animation runtime (Android) |
+| SQLDelight | 2.3.2 | Type-safe SQL database |
 
 ## Infrastructure
 | Service | Purpose |
 |---------|---------|
 | Pomodoro Mini Server | Backend API (external) |
 | MultiplatformSettings | Local persistent storage |
-| SQLDelight (commented out) | Database (not active) |
+| SQLDelight (AuraDatabase) | Local relational DB for sessions/tasks/events |
 
 ## Build Tools
 | Tool | Version | Purpose |
@@ -42,6 +45,5 @@
 |----------|--------|--------|
 | Android | Compose + CIO | Active |
 | Desktop (JVM) | Compose + CIO + JLayer | Active |
-| iOS | Compose + Darwin | Active |
-| Web (Wasm) | Compose | Disabled |
-| Web (JS) | Compose | Disabled |
+| iOS | Compose + Darwin | Planned |
+| Web (Wasm/JS) | Compose | Disabled |

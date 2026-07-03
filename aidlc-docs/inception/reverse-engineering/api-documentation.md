@@ -8,37 +8,24 @@ Client kết nối tới Pomodoro Mini Server.
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| POST | /register | Đăng ký user mới |
-| GET | /tasks | Lấy danh sách tasks |
-| GET | /settings | Lấy user settings |
-| PUT | /settings | Cập nhật settings |
-| GET | /stats | Lấy daily statistics |
-| POST | /stats/increment | Tăng daily stats |
+| POST | /api/users/register | Đăng ký user mới |
+| POST | /api/users/login | Đăng nhập |
+| GET | /api/users/profile | Lấy profile user |
+| GET | /api/users/logout | Đăng xuất |
+| GET | /api/settings | Lấy user settings |
+| PUT | /api/settings | Cập nhật settings |
+| GET | /api/tasks | Lấy danh sách tasks |
+| POST | /api/pomodoros/log | Lưu pomodoro log |
 
 ### Data Models
 - **UserRegisterRequest**: Thông tin đăng ký
+- **UserLoginRequest**: Thông tin đăng nhập
+- **UserResponse**: Response từ register
+- **SettingsRequest**: Cập nhật settings
+- **PomodoroLogRequest**: Log phiên pomodoro
 - **ErrorResponse**: Lỗi từ server
 
 ## Internal APIs (Repositories)
-
-### UserAppStateRepository (V1)
-```kotlin
-interface UserAppStateRepository {
-    fun getUserSettings(): UserSettings
-    fun saveUserSettings(settings: UserSettings)
-    fun getSettingsFlow(): Flow<UserSettings>
-    fun getAllTasks(): List<PomodoroTask>
-    fun saveTask(task: PomodoroTask)
-    fun deleteTask(taskId: String)
-    fun updateTaskStatus(taskId: String, completed: Boolean)
-    fun getAllSessions(): List<PomodoroSession>
-    fun saveSession(session: PomodoroSession)
-    fun getTodayStats(): DailyStats
-    fun updateDailyStats(stats: DailyStats)
-    fun incrementDailyStats(...)
-    fun clearAllData()
-}
-```
 
 ### UserAppStateRepositoryV2
 ```kotlin
@@ -53,6 +40,38 @@ interface UserAppStateRepositoryV2 {
 }
 ```
 
+### StreakRepository
+```kotlin
+interface StreakRepository {
+    fun getHistoryFlow(): Flow<List<DailyRecord>>
+    suspend fun getHistory(): List<DailyRecord>
+    suspend fun recordDay(date: String, sessionsCompleted: Int)
+    suspend fun incrementToday()
+}
+```
+
+### LearningSessionRepository
+```kotlin
+interface LearningSessionRepository {
+    fun getCurrentSession(): LearningSessionState
+    fun saveCurrentSession(session: LearningSessionState)
+    fun clearCurrentSession()
+    fun saveCompletedSession(session: LearningSessionState)
+    fun getAllLearningSessionRecords(): List<LearningSessionRecord>
+    fun getSessionById(sessionId: String): LearningSessionRecord?
+    fun getTotalFocusSeconds(): Long
+    fun insertSession(session: LearningSessionRecord)
+    fun updateSession(session: LearningSessionRecord)
+    fun deleteSessionById(sessionId: String)
+    fun insertEvent(event: LearningSessionEvent)
+    fun getAllTasksBySessionId(sessionId: String): List<SessionTask>
+    fun insertTask(task: SessionTask, sessionId: String)
+    fun updateTask(task: SessionTask)
+    fun deleteTask(taskId: String, sessionId: String)
+    fun clearAllSessionsData()
+}
+```
+
 ### SoundManager (Platform Interface)
 ```kotlin
 interface SoundManager {
@@ -64,7 +83,21 @@ interface SoundManager {
 
 ### NotificationManager (Platform Interface)
 ```kotlin
-interface NotificationManager {
+expect class NotificationManager {
     fun showNotification(title: String, message: String)
+}
+```
+
+### PomodoroMiniClient
+```kotlin
+interface PomodoroMiniClient {
+    suspend fun register(userRegisterRequest: UserRegisterRequest): UserResponse
+    suspend fun login(userLoginRequest: UserLoginRequest)
+    suspend fun profile(token: String)
+    suspend fun logout(token: String)
+    suspend fun settings(token: String)
+    suspend fun updateSettings(token: String, request: SettingsRequest)
+    suspend fun tasks(token: String)
+    suspend fun saveLog(token: String, logRequest: PomodoroLogRequest)
 }
 ```

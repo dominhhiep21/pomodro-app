@@ -16,6 +16,9 @@ object AuraColors {
     val SessionPausedMode = Color(0xFFE00303)
     val SessionIdleMode = Color(0xFFFFA500)
     val SessionDeletedMode = Color(0xFF808080)
+    val IncreaseMode = Color(0xFF00FF00)
+    val DecreaseMode = Color(0xFFFF0000)
+    val BestStreakDay = Color(0xFFFFD800)
 
     // Màu nền cho các thanh công cụ (Bottom Bar)
     val BottomBarBackground = Color(0xFF18181B) // Nền đen Zinc (Opaque)

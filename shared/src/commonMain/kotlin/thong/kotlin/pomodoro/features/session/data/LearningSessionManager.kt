@@ -6,6 +6,7 @@ import kotlinx.coroutines.withContext
 import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.SessionTask
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionEvent
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
+import thong.kotlin.pomodoro.features.startup.domain.HomeUiDomain
 import kotlin.time.Clock
 
 class LearningSessionManager(
@@ -81,6 +82,12 @@ class LearningSessionManager(
     suspend fun clearAllSessionsData() {
         withContext(ioDispatcher) {
             repository.clearAllSessionsData()
+        }
+    }
+
+    suspend fun getHomeDashboardStats(): HomeUiDomain {
+        return withContext(ioDispatcher) {
+            repository.getHomeDashboardStats()
         }
     }
 

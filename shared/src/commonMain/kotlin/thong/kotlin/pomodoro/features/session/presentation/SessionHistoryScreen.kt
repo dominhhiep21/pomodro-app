@@ -82,6 +82,7 @@ import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.color
 import thong.kotlin.pomodoro.features.session.domain.toDisplayText
 import thong.kotlin.pomodoro.features.settings.data.BackgroundRepository
+import thong.kotlin.pomodoro.features.startup.presentation.HomeScreenV2
 
 class SessionHistoryScreen : Screen {
     @Composable
@@ -143,10 +144,10 @@ class SessionHistoryScreen : Screen {
             selectedFilter = selectedFilter,
             onFilterSelect = { selectedFilter = it },
             onBack = {
-                navigator.pop()
+                navigator.replace(HomeScreenV2())
             },
             onCreateSession = {
-                navigator.push(LearningStyleScreen())
+                navigator.push(LearningStyleScreen("session_history"))
             },
             onSessionClick = { session ->
                 sessionToContinue = session

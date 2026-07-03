@@ -72,7 +72,7 @@ class OnboardingScreen : Screen {
                         hasCompletedOnboarding = true
                     )
                 )
-                navigator.replace(LearningStyleScreen())
+                navigator.replace(LearningStyleScreen("home"))
             }
         )
     }

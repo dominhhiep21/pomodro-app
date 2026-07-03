@@ -20,3 +20,9 @@ enum class HistoryFilter(val label: String) {
     SHORT_BREAK("Short Break"),
     LONG_BREAK("Long Break")
 }
+
+enum class StatCardType {
+    TOTAL_FOCUS_TIME,
+    COMPLETED_POMODOROS,
+    BEST_STREAK
+}

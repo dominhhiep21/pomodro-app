@@ -69,10 +69,13 @@ internal fun StreakScreenContent(uiState: StreakUiState) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ===== Section 2: Streak Counter Cards =====
+            // ===== Section 2: Streak Counter Cards (centered) =====
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 StreakCounterCard(
                     label = "Current Streak",

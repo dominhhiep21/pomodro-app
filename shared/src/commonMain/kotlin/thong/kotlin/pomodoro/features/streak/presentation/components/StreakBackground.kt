@@ -12,18 +12,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import kotlin.random.Random
 
 /**
- * Streak-themed cinematic animated background.
+ * Streak-themed cinematic background with starry sky + fire ambient glow.
  *
- * Design: "Modern Dark Cinema Mobile" (ui-ux-pro-max)
- * - Deep gradient base (#0a0a0f → #020203) — NOT pure black
- * - 3 animated ambient glow blobs with HIGH visibility (opacity 0.12-0.22)
- * - Warm fire/streak palette (orange + rose + amber)
- * - Slow oscillation (7-13s) for premium atmospheric feel
+ * Layers (bottom to top):
+ * 1. Deep gradient base (dark midnight blue → deep black)
+ * 2. Twinkling stars (random positions, animated alpha)
+ * 3. Warm fire-glow blobs (orange + rose, slow oscillation)
  *
- * Performance: Uses Canvas + animateFloat (GPU-friendly, no recomposition).
- * Self-contained: Only used in streak feature.
+ * The starry sky creates the cosmic/magical feel matching app's dark theme,
+ * while fire blobs represent streak energy.
  */
 @Composable
 fun StreakBackground(
@@ -31,92 +31,123 @@ fun StreakBackground(
     content: @Composable BoxScope.() -> Unit
 ) {
     Box(modifier = modifier.fillMaxSize()) {
-        StreakAmbientCanvas(modifier = Modifier.fillMaxSize())
+        StreakStarryCanvas(modifier = Modifier.fillMaxSize())
         content()
     }
 }
 
+// Data class for a single star
+private data class Star(
+    val xRatio: Float,  // 0..1 position ratio
+    val yRatio: Float,
+    val size: Float,    // radius in px
+    val baseAlpha: Float,
+    val twinkleSpeed: Int  // ms for one twinkle cycle
+)
+
 @Composable
-private fun StreakAmbientCanvas(modifier: Modifier = Modifier) {
+private fun StreakStarryCanvas(modifier: Modifier = Modifier) {
     val infiniteTransition = rememberInfiniteTransition(label = "StreakBg")
 
-    // ---- Blob 1: Large warm orange glow (top-right) ----
-    val blob1X by infiniteTransition.animateFloat(
-        initialValue = 0.6f,
-        targetValue = 0.8f,
+    // Generate stars once (deterministic seed for consistent layout)
+    val stars = remember {
+        val rng = Random(42)
+        List(60) {
+            Star(
+                xRatio = rng.nextFloat(),
+                yRatio = rng.nextFloat(),
+                size = rng.nextFloat() * 1.5f + 0.5f,  // 0.5 - 2.0 px
+                baseAlpha = rng.nextFloat() * 0.4f + 0.3f,  // 0.3 - 0.7
+                twinkleSpeed = rng.nextInt(2000, 5000)
+            )
+        }
+    }
+
+    // Animate twinkle groups (3 groups to avoid 60 individual animations)
+    val twinkle1 by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 1.0f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 8000, easing = FastOutSlowInEasing),
+            animation = tween(durationMillis = 2500, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "B1X"
+        label = "Twinkle1"
+    )
+    val twinkle2 by infiniteTransition.animateFloat(
+        initialValue = 0.7f,
+        targetValue = 0.3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 3200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "Twinkle2"
+    )
+    val twinkle3 by infiniteTransition.animateFloat(
+        initialValue = 0.5f,
+        targetValue = 0.9f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 4000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "Twinkle3"
+    )
+
+    // ---- Fire glow blob animations ----
+    val blob1X by infiniteTransition.animateFloat(
+        initialValue = 0.6f, targetValue = 0.8f,
+        animationSpec = infiniteRepeatable(
+            tween(8000, easing = FastOutSlowInEasing), RepeatMode.Reverse
+        ), label = "B1X"
     )
     val blob1Y by infiniteTransition.animateFloat(
-        initialValue = 0.05f,
-        targetValue = 0.20f,
+        initialValue = 0.05f, targetValue = 0.18f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 10000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "B1Y"
+            tween(10000, easing = FastOutSlowInEasing), RepeatMode.Reverse
+        ), label = "B1Y"
     )
-
-    // ---- Blob 2: Rose/fire glow (center-left, matching streak accent) ----
     val blob2X by infiniteTransition.animateFloat(
-        initialValue = 0.10f,
-        targetValue = 0.30f,
+        initialValue = 0.10f, targetValue = 0.30f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 12000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "B2X"
+            tween(12000, easing = FastOutSlowInEasing), RepeatMode.Reverse
+        ), label = "B2X"
     )
     val blob2Y by infiniteTransition.animateFloat(
-        initialValue = 0.35f,
-        targetValue = 0.50f,
+        initialValue = 0.38f, targetValue = 0.52f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 9000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "B2Y"
+            tween(9000, easing = FastOutSlowInEasing), RepeatMode.Reverse
+        ), label = "B2Y"
     )
-
-    // ---- Blob 3: Deep amber glow (bottom area) ----
     val blob3X by infiniteTransition.animateFloat(
-        initialValue = 0.55f,
-        targetValue = 0.75f,
+        initialValue = 0.55f, targetValue = 0.75f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 11000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "B3X"
+            tween(11000, easing = FastOutSlowInEasing), RepeatMode.Reverse
+        ), label = "B3X"
     )
     val blob3Y by infiniteTransition.animateFloat(
-        initialValue = 0.70f,
-        targetValue = 0.85f,
+        initialValue = 0.72f, targetValue = 0.85f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 13000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "B3Y"
+            tween(13000, easing = FastOutSlowInEasing), RepeatMode.Reverse
+        ), label = "B3Y"
     )
 
-    // Pre-computed colors (avoid allocation in DrawScope)
+    // Pre-computed colors
     val bgColors = remember {
         listOf(
-            Color(0xFF0F0A14), // Dark warm purple-black (top) — NOT pure black
-            Color(0xFF050506), // Near-black (mid)
-            Color(0xFF0A0708)  // Very dark warm brown-black (bottom)
+            Color(0xFF0A0E1A), // Midnight blue-black (top) — starry sky base
+            Color(0xFF060810), // Deep dark blue (mid)
+            Color(0xFF050506)  // Near-black (bottom)
         )
     }
-    val blob1Color = remember { Color(0xFFF97316) }  // Orange 500 (fire)
-    val blob2Color = remember { Color(0xFFF43F5E) }  // Rose 500 (streak accent)
-    val blob3Color = remember { Color(0xFFEA580C) }  // Orange 600 (deep amber)
+    val starColor = remember { Color.White }
+    val blob1Color = remember { Color(0xFFF97316) }  // Orange 500
+    val blob2Color = remember { Color(0xFFF43F5E) }  // Rose 500
+    val blob3Color = remember { Color(0xFFEA580C) }  // Orange 600
 
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
 
-        // Base: 3-stop vertical gradient (dark warm purple → near-black → warm brown)
+        // Layer 1: Deep midnight gradient background
         drawRect(
             brush = Brush.verticalGradient(
                 colors = bgColors,
@@ -125,42 +156,54 @@ private fun StreakAmbientCanvas(modifier: Modifier = Modifier) {
             )
         )
 
-        // Blob 1: Large orange fire glow — VERY VISIBLE (0.18 peak)
+        // Layer 2: Twinkling stars
+        stars.forEachIndexed { index, star ->
+            val twinkleFactor = when (index % 3) {
+                0 -> twinkle1
+                1 -> twinkle2
+                else -> twinkle3
+            }
+            val alpha = star.baseAlpha * twinkleFactor
+
+            drawCircle(
+                color = starColor.copy(alpha = alpha),
+                radius = star.size,
+                center = Offset(w * star.xRatio, h * star.yRatio)
+            )
+        }
+
+        // Layer 3: Fire glow blobs (warm ambient light)
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    blob1Color.copy(alpha = 0.18f),
-                    blob1Color.copy(alpha = 0.08f),
+                    blob1Color.copy(alpha = 0.16f),
+                    blob1Color.copy(alpha = 0.06f),
                     Color.Transparent
                 ),
                 center = Offset(w * blob1X, h * blob1Y),
-                radius = w * 0.6f
+                radius = w * 0.55f
             )
         )
-
-        // Blob 2: Rose/streak fire — center-left area (0.15 peak)
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    blob2Color.copy(alpha = 0.15f),
-                    blob2Color.copy(alpha = 0.06f),
+                    blob2Color.copy(alpha = 0.13f),
+                    blob2Color.copy(alpha = 0.05f),
                     Color.Transparent
                 ),
                 center = Offset(w * blob2X, h * blob2Y),
-                radius = w * 0.5f
+                radius = w * 0.45f
             )
         )
-
-        // Blob 3: Deep amber — bottom area (0.12 peak)
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    blob3Color.copy(alpha = 0.12f),
-                    blob3Color.copy(alpha = 0.05f),
+                    blob3Color.copy(alpha = 0.10f),
+                    blob3Color.copy(alpha = 0.04f),
                     Color.Transparent
                 ),
                 center = Offset(w * blob3X, h * blob3Y),
-                radius = w * 0.45f
+                radius = w * 0.40f
             )
         )
     }

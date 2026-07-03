@@ -72,10 +72,13 @@ fun StreakCounterCard(
                 width = 1.5.dp,
                 color = accentColor.copy(alpha = borderAlpha),
                 shape = shape
-            )
+            ),
+        contentAlignment = Alignment.Center
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 20.dp, horizontal = 14.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 20.dp, horizontal = 14.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Icon

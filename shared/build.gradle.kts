@@ -54,6 +54,8 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.ktor.client.cio)
             implementation(libs.sqldelight.android.driver)
+            implementation(libs.rive.android)
+            implementation(libs.androidx.startup.runtime)
         }
         jvmMain.dependencies {
             implementation(libs.jlayer)

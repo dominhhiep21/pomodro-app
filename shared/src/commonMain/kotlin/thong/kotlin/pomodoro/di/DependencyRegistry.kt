@@ -13,6 +13,8 @@ import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppSt
 import thong.kotlin.pomodoro.features.session.data.LearningSessionManager
 import thong.kotlin.pomodoro.features.session.data.LearningSessionRepository
 import thong.kotlin.pomodoro.features.session.data.LearningSessionRepositoryImpl
+import thong.kotlin.pomodoro.features.streak.data.StreakRepositoryImpl
+import thong.kotlin.pomodoro.features.streak.domain.StreakRepository
 
 object DependencyRegistry {
 

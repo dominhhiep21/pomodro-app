@@ -1,14 +1,20 @@
 package thong.kotlin.pomodoro.core.notification
 
-import android.app.NotificationChannel
-import android.app.NotificationManager as SystemNotificationManager
-import android.content.Context
 import android.Manifest
+import android.app.NotificationChannel
+import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.os.Build
+import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import thong.kotlin.pomodoro.shared.R
+import android.app.NotificationManager as SystemNotificationManager
+import androidx.core.graphics.createBitmap
+
 
 class AndroidNotificationManager(private val context: Context) : NotificationManager {
     private val channelId = "pomodoro_timer_channel"
@@ -30,27 +36,25 @@ class AndroidNotificationManager(private val context: Context) : NotificationMan
         }
     }
 
+    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     override fun showNotification(title: String, message: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                // FALLBACK: In-app notification could be triggered here if desired
-                return
-            }
+            val granted = ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+            if (!granted) return
         }
 
         val builder = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(android.R.drawable.ic_dialog_info) // Replace with your app icon
+            .setSmallIcon(R.drawable.ic_raven_notification)
+            .setLargeIcon(getBitmapFromVectorDrawable(context, R.drawable.ic_raven_notification))
+            .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL)
             .setContentTitle(title)
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
 
         try {
-            with(NotificationManagerCompat.from(context)) {
-                notify(System.currentTimeMillis().toInt(), builder.build())
-            }
+            NotificationManagerCompat.from(context).notify(System.currentTimeMillis().toInt(), builder.build())
         } catch (e: SecurityException) {
-            // Permission not granted on Android 13+
             e.printStackTrace()
         }
     }
@@ -58,5 +62,21 @@ class AndroidNotificationManager(private val context: Context) : NotificationMan
     override fun requestPermission() {
         // Permission request logic is typically handled in the Activity
         // for Compose, we often use rememberLauncherForActivityResult
+    }
+
+    fun getBitmapFromVectorDrawable(context: Context, drawableId: Int): Bitmap? {
+        val drawable = ContextCompat.getDrawable(context, drawableId) ?: return null
+
+
+        // Tạo một Bitmap với kích thước của Vector Drawable
+        val bitmap = createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight)
+
+
+        // Dùng Canvas để vẽ drawable lên Bitmap
+        val canvas = Canvas(bitmap)
+        drawable.setBounds(0, 0, canvas.width, canvas.height)
+        drawable.draw(canvas)
+
+        return bitmap
     }
 }

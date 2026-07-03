@@ -5,10 +5,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -43,15 +45,36 @@ import thong.kotlin.pomodoro.features.session.presentation.SessionHistoryScreen
 class PomodoroScreenV2(
     private val learningStyle: LearningStyle = LearningStyle.SOLO,
     private val learningGroupConfig: LearningGroupConfig? = null,
-    private val currentSession : LearningSessionRecord,
-    private val soundManager: SoundManager? = DependencyRegistry.soundManager
+    private val currentSessionId: String
 ) : Screen {
 
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
+        val soundManager = DependencyRegistry.soundManager
+        val learningSessionManager = DependencyRegistry.learningSessionManager
 
-        val appViewModel: AppViewModel = viewModel { AppViewModel(currentSession = currentSession) }
+        val currentSession by produceState<LearningSessionRecord?>(
+            initialValue = null,
+            key1 = currentSessionId
+        ) {
+            value = learningSessionManager.getSessionById(currentSessionId)
+        }
+
+        if (currentSession == null) {
+            Text("Loading session...")
+            return
+        }
+
+        val appViewModel: AppViewModel = viewModel(
+            key = "AppViewModel_$currentSessionId"
+        ) {
+            AppViewModel(
+                currentSession = currentSession!!,
+                soundManager = soundManager
+            )
+        }
+
 
         val appState by appViewModel.uiState.collectAsState()
 
@@ -279,7 +302,7 @@ fun PomodoroScreenUIv2(
                         LandscapePomodoroGroupUI(
                             totallyPomodoroUiState = totalPomodoroUiState,
                             groupConfig = learningGroupConfig ?: LearningGroupConfig(),
-                            themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.timerUiState.currentMode),
+                            themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.currentMode),
                             onToggleTimer = appViewModel::toggleTimer,
                             onResetTimer = appViewModel::resetTimer,
                             onSkipTimer = appViewModel::skipTimer,
@@ -301,7 +324,7 @@ fun PomodoroScreenUIv2(
                     PomodoroUiState(isCompact = false, isLandscape = true, style = LearningStyle.SOLO) -> {
                         LandscapePomodoroUI(
                             totallyPomodoroUiState = totalPomodoroUiState,
-                            themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.timerUiState.currentMode),
+                            themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.currentMode),
                             onToggleTimer = appViewModel::toggleTimer,
                             onResetTimer = appViewModel::resetTimer,
                             onSkipTimer = appViewModel::skipTimer,
@@ -324,7 +347,7 @@ fun PomodoroScreenUIv2(
                         PortraitPomodoroGroupUI(
                             totallyPomodoroUiState = totalPomodoroUiState,
                             groupConfig = learningGroupConfig ?: LearningGroupConfig(),
-                            themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.timerUiState.currentMode),
+                            themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.currentMode),
                             onToggleTimer = appViewModel::toggleTimer,
                             onResetTimer = appViewModel::resetTimer,
                             onSkipTimer = appViewModel::skipTimer,
@@ -346,7 +369,7 @@ fun PomodoroScreenUIv2(
                     PomodoroUiState(isCompact = false, isLandscape = false, style = LearningStyle.SOLO) -> {
                         PortraitPomodoroUI(
                             totallyPomodoroUiState = totalPomodoroUiState,
-                            themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.timerUiState.currentMode),
+                            themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.currentMode),
                             onToggleTimer = appViewModel::toggleTimer,
                             onResetTimer = appViewModel::resetTimer,
                             onSkipTimer = appViewModel::skipTimer,

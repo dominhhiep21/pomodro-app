@@ -1,5 +1,6 @@
 package thong.kotlin.pomodoro.features.session.domain
 
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import thong.kotlin.pomodoro.core.config.AppConfig
 import thong.kotlin.pomodoro.core.utils.toEnumOrDefault
@@ -11,6 +12,7 @@ import thong.kotlin.pomodoro.features.pomodoro.music.data.MusicRepository
 import thong.kotlin.pomodoro.features.settings.data.BackgroundRepository
 import kotlin.time.Clock
 
+@Serializable
 data class LearningSessionRecord(
     val sessionId: String,
     val userId: String? = null,

@@ -1,10 +1,14 @@
 package thong.kotlin.pomodoro.core.media
 
 import android.content.Context
+import android.content.res.AssetManager
 import android.media.MediaPlayer
+import android.util.Log
 
-class AndroidSoundManager private constructor(context: Context) : SoundManager {
-    private val context = context.applicationContext
+class AndroidSoundManager private constructor(
+    private val assets: AssetManager
+) : SoundManager {
+
     private var mediaPlayer: MediaPlayer? = null
     private var currentTrackId: String? = null
     private val ambientPlayers = mutableMapOf<String, MediaPlayer>()
@@ -15,7 +19,9 @@ class AndroidSoundManager private constructor(context: Context) : SoundManager {
 
         fun getInstance(context: Context): AndroidSoundManager {
             return instance ?: synchronized(this) {
-                instance ?: AndroidSoundManager(context).also { instance = it }
+                instance ?: AndroidSoundManager(
+                    context.applicationContext.assets
+                ).also { instance = it }
             }
         }
     }
@@ -39,21 +45,35 @@ class AndroidSoundManager private constructor(context: Context) : SoundManager {
         }
 
         stopBackgroundMusic()
-        
+
         try {
-            val assetPath = "composeResources/pomodrokotlin.shared.generated.resources/files/audio/$trackId.mp3"
-            val assetDescriptor = context.assets.openFd(assetPath)
-            
-            mediaPlayer = MediaPlayer().apply {
-                setDataSource(assetDescriptor.fileDescriptor, assetDescriptor.startOffset, assetDescriptor.length)
-                assetDescriptor.close()
+            val assetPath =
+                "composeResources/pomodrokotlin.shared.generated.resources/files/audio/$trackId.mp3"
+
+            val player = MediaPlayer()
+
+            assets.openFd(assetPath).use { assetDescriptor ->
+                player.setDataSource(
+                    assetDescriptor.fileDescriptor,
+                    assetDescriptor.startOffset,
+                    assetDescriptor.length
+                )
+            }
+
+            player.apply {
                 prepare()
-                isLooping = true // Ensure looping is set
+                isLooping = true
                 start()
             }
+
+            mediaPlayer = player
             currentTrackId = trackId
+
         } catch (e: Exception) {
-            android.util.Log.e("AndroidSoundManager", "Error playing music: $trackId", e)
+            Log.e("AndroidSoundManager", "Error playing music: $trackId", e)
+            mediaPlayer?.release()
+            mediaPlayer = null
+            currentTrackId = null
         }
     }
 
@@ -77,17 +97,29 @@ class AndroidSoundManager private constructor(context: Context) : SoundManager {
 
     private fun playShortEffect(fileName: String) {
         try {
-            val assetPath = "composeResources/pomodrokotlin.shared.generated.resources/files/audio/$fileName.wav"
-            val assetDescriptor = context.assets.openFd(assetPath)
-            MediaPlayer().apply {
-                setDataSource(assetDescriptor.fileDescriptor, assetDescriptor.startOffset, assetDescriptor.length)
-                assetDescriptor.close()
+            val assetPath =
+                "composeResources/pomodrokotlin.shared.generated.resources/files/audio/$fileName.wav"
+
+            val player = MediaPlayer()
+
+            assets.openFd(assetPath).use { assetDescriptor ->
+                player.setDataSource(
+                    assetDescriptor.fileDescriptor,
+                    assetDescriptor.startOffset,
+                    assetDescriptor.length
+                )
+            }
+
+            player.apply {
                 prepare()
-                setOnCompletionListener { it.release() }
+                setOnCompletionListener {
+                    it.release()
+                }
                 start()
             }
+
         } catch (e: Exception) {
-            android.util.Log.e("AndroidSoundManager", "Error playing effect: $fileName", e)
+            Log.e("AndroidSoundManager", "Error playing effect: $fileName", e)
         }
     }
 
@@ -105,14 +137,18 @@ class AndroidSoundManager private constructor(context: Context) : SoundManager {
 
     override fun stopAllSounds() {
         stopBackgroundMusic()
+
         ambientPlayers.forEach { (_, player) ->
             try {
-                if (player.isPlaying) player.stop()
+                if (player.isPlaying) {
+                    player.stop()
+                }
                 player.release()
             } catch (e: Exception) {
-                // Ignore
+                Log.e("AndroidSoundManager", "Error stopping ambient player", e)
             }
         }
+
         ambientPlayers.clear()
     }
 
@@ -120,31 +156,44 @@ class AndroidSoundManager private constructor(context: Context) : SoundManager {
         if (ambientPlayers.containsKey(soundId)) return
 
         try {
-            val assetPath = "composeResources/pomodrokotlin.shared.generated.resources/files/audio/$soundId.mp3"
-            val assetDescriptor = context.assets.openFd(assetPath)
-            
-            val player = MediaPlayer().apply {
-                setDataSource(assetDescriptor.fileDescriptor, assetDescriptor.startOffset, assetDescriptor.length)
-                assetDescriptor.close()
+            val assetPath =
+                "composeResources/pomodrokotlin.shared.generated.resources/files/audio/$soundId.mp3"
+
+            val player = MediaPlayer()
+
+            assets.openFd(assetPath).use { assetDescriptor ->
+                player.setDataSource(
+                    assetDescriptor.fileDescriptor,
+                    assetDescriptor.startOffset,
+                    assetDescriptor.length
+                )
+            }
+
+            player.apply {
                 prepare()
                 setVolume(volume, volume)
                 isLooping = true
                 start()
             }
+
             ambientPlayers[soundId] = player
+
         } catch (e: Exception) {
-            android.util.Log.e("AndroidSoundManager", "Error playing ambient sound: $soundId", e)
+            Log.e("AndroidSoundManager", "Error playing ambient sound: $soundId", e)
         }
     }
 
     override fun stopAmbientSound(soundId: String) {
-        ambientPlayers[soundId]?.let {
+        ambientPlayers[soundId]?.let { player ->
             try {
-                if (it.isPlaying) it.stop()
-                it.release()
+                if (player.isPlaying) {
+                    player.stop()
+                }
+                player.release()
             } catch (e: Exception) {
-                // Ignore
+                Log.e("AndroidSoundManager", "Error stopping ambient sound: $soundId", e)
             }
+
             ambientPlayers.remove(soundId)
         }
     }
@@ -154,8 +203,17 @@ class AndroidSoundManager private constructor(context: Context) : SoundManager {
     }
 
     private fun stopBackgroundMusic() {
-        mediaPlayer?.stop()
-        mediaPlayer?.release()
+        mediaPlayer?.let { player ->
+            try {
+                if (player.isPlaying) {
+                    player.stop()
+                }
+                player.release()
+            } catch (e: Exception) {
+                Log.e("AndroidSoundManager", "Error stopping background music", e)
+            }
+        }
+
         mediaPlayer = null
         currentTrackId = null
     }

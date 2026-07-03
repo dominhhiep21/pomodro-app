@@ -55,14 +55,14 @@ fun TimerCircleComponent(
         contentAlignment = Alignment.Center,
         modifier = Modifier.size(sizes.outerSize)
     ) {
-        val totalSeconds = remember(totallyPomodoroUiState.timerUiState.currentMode, totallyPomodoroUiState.timerUiState.config) {
-            totallyPomodoroUiState.timerUiState.currentMode.totalSeconds(totallyPomodoroUiState.timerUiState.config)
+        val totalSeconds = remember(totallyPomodoroUiState.currentMode, totallyPomodoroUiState.timerUiState.config) {
+            totallyPomodoroUiState.currentMode.totalSeconds(totallyPomodoroUiState.timerUiState.config)
         }
         val progress = remember(totalSeconds, totallyPomodoroUiState.timerUiState.timeLeft) {
             (totalSeconds - totallyPomodoroUiState.timerUiState.timeLeft).toFloat() / totalSeconds
         }
-        val progressBrush = remember(totallyPomodoroUiState.timerUiState.currentMode) {
-            if (totallyPomodoroUiState.timerUiState.currentMode == PomodoroMode.WORK) {
+        val progressBrush = remember(totallyPomodoroUiState.currentMode) {
+            if (totallyPomodoroUiState.currentMode == PomodoroMode.WORK) {
                 AuraGradients.WorkFlow
             } else {
                 AuraGradients.BreakFlow
@@ -91,7 +91,7 @@ fun TimerCircleComponent(
                     fontWeight = FontWeight.Black
                 )
                 Text(
-                    text = totallyPomodoroUiState.timerUiState.currentMode.label.uppercase(),
+                    text = totallyPomodoroUiState.currentMode.label.uppercase(),
                     color = themeColor,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,

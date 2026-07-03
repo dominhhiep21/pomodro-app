@@ -109,7 +109,7 @@ class LearningStyleScreen : Screen {
                                 PomodoroScreenV2(
                                     learningStyle = learningStyle,
                                     learningGroupConfig = learningGroupConfig,
-                                    currentSession = newSession
+                                    currentSessionId = newSession.sessionId
                                 )
                             )
                         }

@@ -4,7 +4,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Air
 import androidx.compose.material.icons.filled.Fireplace
-import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Thunderstorm
 import androidx.compose.material.icons.filled.WaterDrop
 import thong.kotlin.pomodoro.features.pomodoro.ambient.domain.AmbientSound
@@ -17,4 +16,10 @@ object AmbientSoundRepository {
         AmbientSound("effect_library", "Thư viện", Icons.AutoMirrored.Filled.MenuBook),
         AmbientSound("effect_white_noise", "Tiếng ồn trắng", Icons.Default.Air)
     )
+
+    fun getNameById(id: String?): String {
+        return availableSounds.find { it.id == id }?.name ?: "Không có âm thanh"
+    }
+
+    fun getNameById(ids: List<String>): List<String> = ids.map { getNameById(it) }
 }

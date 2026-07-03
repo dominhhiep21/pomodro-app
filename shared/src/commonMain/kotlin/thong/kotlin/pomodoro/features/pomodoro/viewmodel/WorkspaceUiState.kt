@@ -38,7 +38,7 @@ data class WorkspaceUiState(
     val isCompactMode: Boolean = false,
     val isCompactMenuExpanded: Boolean = false,
     val activeCompactSection: CompactSection? = null,
-    val isNotificationEnabled: Boolean = false,
+    val isNotificationEnabled: Boolean = true,
 
     // Settings State
     val isSettingsVisible: Boolean = false,

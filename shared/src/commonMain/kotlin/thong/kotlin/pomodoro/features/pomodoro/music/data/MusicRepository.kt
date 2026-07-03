@@ -21,4 +21,8 @@ object MusicRepository {
     )
 
     const val DEFAULT_TRACK_ID: String = "aura_audio"
+
+    fun getNameById(id: String?): String {
+        return availableTracks.find { it.id == id }?.name ?: "Không có nhạc"
+    }
 }

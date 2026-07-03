@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import thong.kotlin.pomodoro.core.config.AppConfig
 import thong.kotlin.pomodoro.core.media.SoundManager
+import thong.kotlin.pomodoro.core.notification.NotificationManager
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.background.model.BackgroundConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
@@ -43,13 +44,13 @@ data class TotallyPomodoroUiState(
 
 class AppViewModel(
     private val soundManager: SoundManager? = DependencyRegistry.soundManager,
+    private val notificationManager: NotificationManager? = DependencyRegistry.notificationManager,
     private val repository: UserAppStateRepositoryV2 = DependencyRegistry.userAppStateRepositoryV2,
     private val learningSessionManager: LearningSessionManager = DependencyRegistry.learningSessionManager,
     private val currentSession: LearningSessionRecord
 ) : ViewModel() {
 
     val timerUiState = TimerUiState(
-        currentSession = currentSession,
         timeLeft = currentSession.plannedWorkMinutes * 60,
         config = PomodoroConfig(
             workMinutes = currentSession.plannedWorkMinutes,
@@ -99,7 +100,6 @@ class AppViewModel(
                 currentMode = mode,
                 timerUiState = timerState.copy(
                     config = config,
-                    currentMode = mode,
                     timeLeft = mode.totalSeconds(config),
                     pomodorosToday = currentSession.completedWorkRounds,
                     isSessionStarted = currentSession.status != LearningSessionStatus.IDLE,
@@ -383,11 +383,11 @@ class AppViewModel(
 
         _uiState.update {
             it.copy(
+                currentSession = updatedSession,
                 timerUiState = it.timerUiState.copy(
                     isActive = false,
                     timeLeft = totalSeconds,
-                    event = EventType.NOTHING,
-                    currentSession = updatedSession
+                    event = EventType.NOTHING
                 )
             )
         }
@@ -467,12 +467,12 @@ class AppViewModel(
 
         _uiState.update {
             it.copy(
+                currentMode = nextMode,
+                currentSession = updatedSession,
                 timerUiState = it.timerUiState.copy(
                     isActive = false,
-                    currentMode = nextMode,
                     timeLeft = nextMode.totalSeconds(it.timerUiState.config),
-                    event = EventType.NOTHING,
-                    currentSession = updatedSession
+                    event = EventType.NOTHING
                 )
             )
         }
@@ -571,8 +571,12 @@ class AppViewModel(
             )
         }
 
+        showTimerCompletedNotification()
+
         _uiState.update {
             it.copy(
+                currentMode = result.newMode,
+                currentSession = updatedSession,
                 timerUiState = it.timerUiState.copy(
                     isActive = false,
                     pomodorosToday = if (isWorkMode) {
@@ -581,11 +585,9 @@ class AppViewModel(
                         it.timerUiState.pomodorosToday
                     },
                     isJustEndedBreak = !isWorkMode,
-                    currentMode = result.newMode,
                     timeLeft = result.nextTime,
                     event = result.eventType,
-                    pendingNotification = result.notification,
-                    currentSession = updatedSession
+                    pendingNotification = result.notification
                 )
             )
         }
@@ -986,8 +988,7 @@ class AppViewModel(
                     isSettingsVisible = false,
                     settingsError = "",
                     editingWorkMinutes = workMin.toString(),
-                    editingBreakMinutes = breakMin.toString(),
-                    currentSession = updatedSession
+                    editingBreakMinutes = breakMin.toString()
                 )
             )
         }
@@ -1024,8 +1025,7 @@ class AppViewModel(
                     it.copy(
                         workspaceUiState = it.workspaceUiState.copy(
                             settingsError = "Không thể lưu cài đặt. Vui lòng thử lại: ${e.message}",
-                            isSettingsVisible = true,
-                            currentSession = currentSession
+                            isSettingsVisible = true
                         )
                     )
                 }
@@ -1086,7 +1086,6 @@ class AppViewModel(
                 _uiState.update {
                     it.copy(
                         workspaceUiState = it.workspaceUiState.copy(
-                            currentSession = session,
                             settingsError = "Không thể kết thúc phiên học. Vui lòng thử lại: ${e.message}"
                         )
                     )
@@ -1131,7 +1130,6 @@ class AppViewModel(
                 _uiState.update {
                     it.copy(
                         workspaceUiState = it.workspaceUiState.copy(
-                            currentSession = session,
                             settingsError = "Không thể tạm dừng phiên học. Vui lòng thử lại: ${e.message}"
                         )
                     )
@@ -1300,11 +1298,40 @@ class AppViewModel(
         }
     }
 
+    private fun showTimerCompletedNotification() {
+        val state = _uiState.value
+
+        if (!state.workspaceUiState.isNotificationEnabled) return
+
+        when (state.currentMode) {
+            PomodoroMode.WORK -> {
+                notificationManager?.showNotification(
+                    title = "Work round completed",
+                    message = "Bạn đã hoàn thành một phiên học. Đến giờ nghỉ!"
+                )
+            }
+
+            PomodoroMode.SHORT_BREAK -> {
+                notificationManager?.showNotification(
+                    title = "Break ended",
+                    message = "Hết giờ nghỉ. Quay lại tập trung nào!"
+                )
+            }
+
+            PomodoroMode.LONG_BREAK -> {
+                notificationManager?.showNotification(
+                    title = "Long break ended",
+                    message = "Hết giờ nghỉ dài. Sẵn sàng học tiếp!"
+                )
+            }
+        }
+    }
+
     suspend fun insertEvent(event: LearningSessionEvent) = learningSessionManager.insertEvent(event)
 
     suspend fun updateSession(session: LearningSessionRecord) = learningSessionManager.updateSession(session)
 
-    suspend fun insertTask(task: SessionTask) = learningSessionManager.insertTask(task, currentSession.sessionId)
+    suspend fun insertTask(task: SessionTask) = learningSessionManager.insertTask(task, _uiState.value.currentSession.sessionId)
 
     suspend fun updateTask(task: SessionTask) = learningSessionManager.updateTask(task)
 

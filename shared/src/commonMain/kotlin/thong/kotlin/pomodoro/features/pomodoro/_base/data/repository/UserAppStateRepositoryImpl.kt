@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettings
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.DailyStats
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.SessionRecord
-import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.Task
+import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.SessionTask
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepository
 import thong.kotlin.pomodoro.features.pomodoro._base.data.local.LocalSettingsDataSource
 import thong.kotlin.pomodoro.core.utils.getCurrentDateString
@@ -26,29 +26,29 @@ class UserAppStateRepositoryImpl(
 
     override fun getSettingsFlow(): Flow<UserSettings> = localSettings.getSettingsFlow()
 
-    override fun getAllTasks(): Flow<List<Task>> = _tasksFlow
+    override fun getAllTasks(): Flow<List<SessionTask>> = _tasksFlow
 
-    override suspend fun saveTask(task: Task) {
+    override suspend fun saveTask(sessionTask: SessionTask) {
         val currentTasks = localSettings.getTasks().toMutableList()
-        val index = currentTasks.indexOfFirst { it.id == task.id }
+        val index = currentTasks.indexOfFirst { it.taskId == sessionTask.taskId }
         if (index != -1) {
-            currentTasks[index] = task
+            currentTasks[index] = sessionTask
         } else {
-            currentTasks.add(0, task)
+            currentTasks.add(0, sessionTask)
         }
         localSettings.saveTasks(currentTasks)
         _tasksFlow.value = currentTasks
     }
 
     override suspend fun deleteTask(taskId: String) {
-        val currentTasks = localSettings.getTasks().filter { it.id != taskId }
+        val currentTasks = localSettings.getTasks().filter { it.taskId != taskId }
         localSettings.saveTasks(currentTasks)
         _tasksFlow.value = currentTasks
     }
 
     override suspend fun updateTaskStatus(taskId: String, isCompleted: Boolean, completedAt: String?) {
         val currentTasks = localSettings.getTasks().map {
-            if (it.id == taskId) it.copy(isCompleted = isCompleted, completedAt = completedAt) else it
+            if (it.taskId == taskId) it.copy(isCompleted = isCompleted) else it
         }
         localSettings.saveTasks(currentTasks)
         _tasksFlow.value = currentTasks

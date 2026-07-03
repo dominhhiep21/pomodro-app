@@ -41,10 +41,7 @@ class UserAppStateRepositoryImplV2(
         }
     }
 
-    override fun updateAutoStartSettings(
-        autoStartBreak: Boolean,
-        autoStartWork: Boolean
-    ) {
+    override fun updateAutoStartSettings(autoStartBreak: Boolean, autoStartWork: Boolean) {
         updateUserSettings { currentSettings ->
             currentSettings.copy(
                 autoStartBreak = autoStartBreak,

@@ -17,15 +17,22 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -36,49 +43,135 @@ import androidx.compose.ui.window.Dialog
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import kotlinx.coroutines.launch
 import pomodrokotlin.shared.generated.resources.Res
 import pomodrokotlin.shared.generated.resources.landspace_startup_bg
+import thong.kotlin.pomodoro.core.config.AppConfig
 import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
 import thong.kotlin.pomodoro.core.designsystem.components.AuraButton
 import thong.kotlin.pomodoro.core.designsystem.components.AuraInputField
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
-import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
-import thong.kotlin.pomodoro.features.main.MainTabScreen
+import thong.kotlin.pomodoro.features.pomodoro._base.PomodoroScreenV2
+import thong.kotlin.pomodoro.features.session.data.LearningSessionManager
+import thong.kotlin.pomodoro.features.session.domain.CurrentLearningMode
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionEvent
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionEventType
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
+import thong.kotlin.pomodoro.features.session.domain.SyncStatus
+import thong.kotlin.pomodoro.features.session.presentation.SessionHistoryScreen
+import kotlin.time.Clock
 
-class LearningStyleScreen(private val soundManager: SoundManager?) : Screen {
+class LearningStyleScreen : Screen {
 
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
-        val repository = remember { DependencyRegistry.userAppStateRepositoryV2 }
+        val learningSessionManager = remember { DependencyRegistry.learningSessionManager }
+        val userLocalSettings = remember { DependencyRegistry.userAppStateRepositoryV2 }
 
-        LearningStyleScreenUI(onFinish = {
-            learningStyle, learningGroupConfig ->
-            navigator.push(
-                MainTabScreen(
-                    soundManager, repository, learningStyle, learningGroupConfig
-                )
-            )
-        })
+        val scope = rememberCoroutineScope()
+        var isFinishing by remember { mutableStateOf(false) }
+        val workMinutes = userLocalSettings.getUserSettings().personalWorkMinutes
+        val breakMinutes = userLocalSettings.getUserSettings().personalBreakMinutes
+
+        LearningStyleScreenUI(
+            isLoading = isFinishing,
+            onBack = {
+                if (!isFinishing) {
+                    navigator.replace(SessionHistoryScreen())
+                }
+            },
+            onFinish = { learningStyle, learningGroupConfig ->
+                if (isFinishing) return@LearningStyleScreenUI
+                isFinishing = true
+                scope.launch {
+                    val result = runCatching {
+                        val newSession = addNewSessionToDbAndGet(
+                            workMinutes,
+                            breakMinutes,
+                            learningStyle = learningStyle,
+                            learningSessionManager = learningSessionManager
+                        )
+                        addNewEventToDb(
+                            sessionId = newSession.sessionId,
+                            learningSessionManager = learningSessionManager
+                        )
+                        newSession
+                    }
+                    result
+                        .onSuccess { newSession ->
+                            navigator.push(
+                                PomodoroScreenV2(
+                                    learningStyle = learningStyle,
+                                    learningGroupConfig = learningGroupConfig,
+                                    currentSessionId = newSession.sessionId
+                                )
+                            )
+                        }
+                        .onFailure { _ ->
+                            isFinishing = false
+                        }
+                }
+            }
+        )
     }
+}
+
+private suspend fun addNewSessionToDbAndGet(
+    workMinutes : Int,
+    breakMinutes : Int,
+    learningStyle: LearningStyle,
+    learningSessionManager: LearningSessionManager
+): LearningSessionRecord {
+    val now = Clock.System.now().toEpochMilliseconds()
+    val newSession = LearningSessionRecord(
+        sessionId = "manual_$now",
+        userId = null,
+        anonymousUserId = null,
+        sessionMode = learningStyle,
+        status = LearningSessionStatus.IDLE,
+        currentLearningMode = CurrentLearningMode.NOT_YET_STARTED,
+        startedAtMillis = now,
+        plannedWorkMinutes = workMinutes,
+        plannedBreakMinutes = breakMinutes,
+        endedAtMillis = null,
+        totalFocusSeconds = 0,
+        syncStatus = SyncStatus.LOCAL_ONLY
+    )
+    learningSessionManager.insertSession(newSession)
+    return newSession
+}
+
+private suspend fun addNewEventToDb(
+    sessionId: String,
+    learningSessionManager: LearningSessionManager
+) {
+    val newEvent = LearningSessionEvent(
+        sessionId = sessionId,
+        eventType = LearningSessionEventType.SESSION_CREATED
+    )
+    learningSessionManager.insertEvent(newEvent)
 }
 
 @Composable
 private fun LearningStyleScreenUI(
+    isLoading: Boolean,
+    onBack: () -> Unit,
     onFinish: (LearningStyle, LearningGroupConfig?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var selectedStyle by remember { mutableStateOf(LearningStyle.SOLO) }
     var showGroupSettingsPopup by remember { mutableStateOf(false) }
 
     // Group Settings State
-    var maxPeople by remember { mutableStateOf("4") }
-    var workMinutes by remember { mutableStateOf("25") }
-    var breakMinutes by remember { mutableStateOf("5") }
+    var selectedStyle by rememberSaveable { mutableStateOf(LearningStyle.SOLO) }
+    var maxPeople by rememberSaveable { mutableStateOf(AppConfig.DEFAULT_MAX_GROUP_PEOPLE.toString()) }
+    var workMinutes by rememberSaveable { mutableStateOf(AppConfig.DEFAULT_WORK_MINUTES.toString()) }
+    var breakMinutes by rememberSaveable { mutableStateOf(AppConfig.DEFAULT_BREAK_MINUTES.toString()) }
 
     AuraBackground(
         blurRadius = 8f,
@@ -87,6 +180,34 @@ private fun LearningStyleScreenUI(
     ) {
         BoxWithConstraints(modifier = modifier.fillMaxSize()) {
             val isLandscape = maxWidth > maxHeight
+
+            // Back Button
+            Box(
+                modifier = Modifier
+                    .padding(
+                        top = if (isLandscape) 12.dp else 24.dp,
+                        start = if (isLandscape) 12.dp else 24.dp
+                    )
+                    .align(Alignment.TopStart)
+            ) {
+                GlassBox(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .clickable { onBack() },
+                    shape = CircleShape,
+                    backgroundColor = Color.White.copy(alpha = 0.1f)
+                ) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Quay lại",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+            }
 
             Column(
                 modifier = Modifier
@@ -182,12 +303,16 @@ private fun LearningStyleScreenUI(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "Tiếp tục",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
+                    if (isLoading) {
+                        CircularProgressIndicator()
+                    } else {
+                        Text(
+                            text = "Tiếp tục",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
                 }
             }
 
@@ -207,14 +332,27 @@ private fun LearningStyleScreenUI(
                         if (it.length <= 2) breakMinutes = it.filter { char -> char.isDigit() }
                     },
                     onDismiss = { showGroupSettingsPopup = false },
-                    onConfirm = {
+                    onConfirm = confirm@{
+                        val maxPeopleValue = maxPeople.toIntOrNull()
+                        val workMinutesValue = workMinutes.toIntOrNull()
+                        val breakMinutesValue = breakMinutes.toIntOrNull()
+
+                        if (
+                            maxPeopleValue == null || maxPeopleValue <= 0 ||
+                            workMinutesValue == null || workMinutesValue <= 0 ||
+                            breakMinutesValue == null || breakMinutesValue <= 0
+                        ) {
+                            return@confirm
+                        }
+
                         showGroupSettingsPopup = false
+
                         onFinish(
                             LearningStyle.GROUP,
                             LearningGroupConfig(
-                                maxPeople.toInt(),
-                                workMinutes.toInt(),
-                                breakMinutes.toInt()
+                                maxPeopleValue,
+                                workMinutesValue,
+                                breakMinutesValue
                             )
                         )
                     }

@@ -20,4 +20,8 @@ object BackgroundRepository {
     )
 
     const val DEFAULT_BACKGROUND_ID = "classic"
+
+    fun getNameById(id: String?): String {
+        return availableBackgrounds.find { it.id == id }?.name ?: "Mặc định"
+    }
 }

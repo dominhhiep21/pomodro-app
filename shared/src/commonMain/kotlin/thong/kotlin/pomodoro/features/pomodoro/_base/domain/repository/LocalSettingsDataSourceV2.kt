@@ -12,12 +12,9 @@ class LocalSettingsDataSourceV2(
         private const val KEY_PERSONAL_WORK_MINUTES = "personal_work_minutes"
         private const val KEY_PERSONAL_BREAK_MINUTES = "personal_break_minutes"
         private const val KEY_PERSONAL_LONG_BREAK_MINUTES = "personal_long_break_minutes"
-
         private const val KEY_AUTO_START_BREAK = "auto_start_break"
         private const val KEY_AUTO_START_WORK = "auto_start_work"
-
         private const val KEY_PERSONAL_SELECTED_BACKGROUND_ID = "personal_selected_background_id"
-
         private const val KEY_HAS_COMPLETED_ONBOARDING = "has_completed_onboarding"
     }
 

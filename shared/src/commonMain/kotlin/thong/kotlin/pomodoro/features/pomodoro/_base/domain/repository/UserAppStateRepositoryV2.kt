@@ -11,24 +11,38 @@ interface UserAppStateRepositoryV2 {
 
     fun saveUserSettings(settings: UserSettingsV2)
 
-    fun updateUserSettings(
-        transform: (UserSettingsV2) -> UserSettingsV2
-    )
+    fun updateUserSettings(transform: (UserSettingsV2) -> UserSettingsV2)
 
     fun markOnboardingCompleted()
 
-    fun updatePersonalPomodoroTime(
-        workMinutes: Int,
-        breakMinutes: Int,
-        longBreakMinutes: Int
-    )
+    fun updatePersonalPomodoroTime(workMinutes: Int, breakMinutes: Int, longBreakMinutes: Int)
 
-    fun updateAutoStartSettings(
-        autoStartBreak: Boolean,
-        autoStartWork: Boolean
-    )
+    fun updateAutoStartSettings(autoStartBreak: Boolean, autoStartWork: Boolean)
 
     fun updateSelectedBackground(backgroundId: String?)
 
     fun resetUserSettings()
+//
+//    // Tasks
+//    fun getAllTasks(): Flow<List<Task>>
+//    suspend fun saveTask(task: Task)
+//    suspend fun deleteTask(taskId: String)
+//    suspend fun updateTaskStatus(taskId: String, isCompleted: Boolean, completedAt: String?)
+//
+//    // Sessions
+//    suspend fun saveSession(session: SessionRecord)
+//    fun getAllSessions(): Flow<List<SessionRecord>>
+//
+//    // Statistics
+//    fun getTodayStats(): Flow<DailyStats?>
+//    suspend fun updateDailyStats(stats: DailyStats)
+//    suspend fun incrementDailyStats(
+//        sessionsCompleted: Int = 0,
+//        focusMinutes: Int = 0,
+//        breakMinutes: Int = 0,
+//        tasksCompleted: Int = 0
+//    )
+//
+//    // Data Management
+//    suspend fun clearAllData()
 }

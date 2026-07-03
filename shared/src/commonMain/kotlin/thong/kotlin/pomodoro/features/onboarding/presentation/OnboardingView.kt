@@ -25,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -45,15 +46,12 @@ import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
 import thong.kotlin.pomodoro.core.designsystem.components.AuraButton
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
-import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.learning.mode.components.LearningStyleScreen
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettingsV2
 import thong.kotlin.pomodoro.features.settings.data.BackgroundRepository
 
-class OnboardingScreen(
-    private val soundManager: SoundManager?
-) : Screen {
+class OnboardingScreen : Screen {
 
     @Composable
     override fun Content() {
@@ -74,7 +72,7 @@ class OnboardingScreen(
                         hasCompletedOnboarding = true
                     )
                 )
-                navigator.replace(LearningStyleScreen(soundManager))
+                navigator.replace(LearningStyleScreen())
             }
         )
     }
@@ -117,8 +115,25 @@ private fun OnboardingScreenUI(
         )
     }
 
-    var currentStep by rememberSaveable { mutableStateOf(0) }
+    var currentStep by rememberSaveable { mutableIntStateOf(0) }
+    var isFinishing by rememberSaveable { mutableStateOf(false) }
     val currentData = steps[currentStep]
+
+    val onNext: () -> Unit = {
+        if (currentStep < steps.size - 1) {
+            currentStep += 1
+        } else if (!isFinishing) {
+            isFinishing = true
+            onFinish()
+        }
+    }
+
+    val onSkip: () -> Unit = {
+        if (!isFinishing) {
+            isFinishing = true
+            onFinish()
+        }
+    }
 
     AuraBackground(
         blurRadius = 8f,
@@ -133,16 +148,16 @@ private fun OnboardingScreenUI(
                     currentStep = currentStep,
                     steps = steps,
                     currentData = currentData,
-                    onNext = { if (currentStep < steps.size - 1) currentStep++ else onFinish() },
-                    onSkip = onFinish
+                    onNext = onNext,
+                    onSkip = onSkip
                 )
             } else {
                 PortraitOnboardingContent(
                     currentStep = currentStep,
                     steps = steps,
                     currentData = currentData,
-                    onNext = { if (currentStep < steps.size - 1) currentStep++ else onFinish() },
-                    onSkip = onFinish
+                    onNext = onNext,
+                    onSkip = onSkip
                 )
             }
         }

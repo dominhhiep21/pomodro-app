@@ -13,3 +13,10 @@ enum class EventType {
 enum class CompactSection {
     TASKS, MUSIC, BACKGROUND, AMBIENT, SETTINGS
 }
+
+enum class HistoryFilter(val label: String) {
+    ALL("Tất cả"),
+    FOCUS("Focus"),
+    SHORT_BREAK("Short Break"),
+    LONG_BREAK("Long Break")
+}

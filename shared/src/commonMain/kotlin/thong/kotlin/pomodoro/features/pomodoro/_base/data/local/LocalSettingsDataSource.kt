@@ -5,7 +5,7 @@ import com.russhwolf.settings.set
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettings
-import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.Task
+import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.SessionTask
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.DailyStats
 import kotlinx.serialization.json.Json
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
@@ -72,11 +72,11 @@ class LocalSettingsDataSource(private val settings: Settings) {
         settings[KEY_HAS_COMPLETED_ONBOARDING] = userSettings.hasCompletedOnboarding
     }
 
-    fun saveTasks(tasks: List<Task>) {
-        settings[KEY_TASKS] = json.encodeToString(tasks)
+    fun saveTasks(sessionTasks: List<SessionTask>) {
+        settings[KEY_TASKS] = json.encodeToString(sessionTasks)
     }
 
-    fun getTasks(): List<Task> {
+    fun getTasks(): List<SessionTask> {
         val jsonString = settings.getStringOrNull(KEY_TASKS) ?: return emptyList()
         return try {
             json.decodeFromString(jsonString)

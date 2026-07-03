@@ -16,24 +16,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.features.pomodoro._base.components.BreakEndBanner
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TimerUiState
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceUiState
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
 import thong.kotlin.pomodoro.features.pomodoro.timer.domain.TimerSizes
+import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TotallyPomodoroUiState
 
 @Composable
 fun TimerSectionComponent(
-    timerUiState: TimerUiState,
-    workspaceUiState: WorkspaceUiState,
+    modifier: Modifier = Modifier,
+    totallyPomodoroUiState: TotallyPomodoroUiState,
     themeColor: Color,
     onToggleTimer: () -> Unit,
     onResetTimer: () -> Unit,
     onSkipTimer: () -> Unit,
-    compact: Boolean = false,
-    modifier: Modifier = Modifier
+    compact: Boolean = false
 ) {
-    val timerBackgroundColor = remember(timerUiState.currentMode) {
-        when (timerUiState.currentMode) {
+    val timerBackgroundColor = remember(totallyPomodoroUiState.currentMode) {
+        when (totallyPomodoroUiState.currentMode) {
             PomodoroMode.WORK -> AuraColors.WorkMode.copy(alpha = 0.15f)
             PomodoroMode.SHORT_BREAK -> AuraColors.ShortBreakMode.copy(alpha = 0.05f)
             PomodoroMode.LONG_BREAK -> AuraColors.LongBreakMode.copy(alpha = 0.05f)
@@ -48,8 +46,7 @@ fun TimerSectionComponent(
     ) {
         if (compact) {
             CompactTimerControls(
-                workspaceUiState = workspaceUiState,
-                timerUiState = timerUiState,
+                totallyPomodoroUiState = totallyPomodoroUiState,
                 themeColor = themeColor,
                 timerBackgroundColor = timerBackgroundColor,
                 timerSizes = timerSizes,
@@ -61,8 +58,7 @@ fun TimerSectionComponent(
             Spacer(modifier = Modifier.height(16.dp))
 
             TimerCircleComponent(
-                workspaceUiState = workspaceUiState,
-                timerUiState = timerUiState,
+                totallyPomodoroUiState = totallyPomodoroUiState,
                 themeColor = themeColor,
                 timerBackgroundColor = timerBackgroundColor,
                 sizes = timerSizes
@@ -70,13 +66,13 @@ fun TimerSectionComponent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            if (workspaceUiState.isJustEndedBreak) {
+            if (totallyPomodoroUiState.timerUiState.isJustEndedBreak) {
                 BreakEndBanner()
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
             TimerControlButtonsHorizontal(
-                isActive = timerUiState.isActive,
+                isActive = totallyPomodoroUiState.timerUiState.isActive,
                 themeColor = themeColor,
                 onToggleTimer = onToggleTimer,
                 onResetTimer = onResetTimer,
@@ -88,8 +84,7 @@ fun TimerSectionComponent(
 
 @Composable
 private fun CompactTimerControls(
-    workspaceUiState: WorkspaceUiState,
-    timerUiState: TimerUiState,
+    totallyPomodoroUiState: TotallyPomodoroUiState,
     themeColor: Color,
     timerBackgroundColor: Color,
     timerSizes: TimerSizes,
@@ -103,8 +98,7 @@ private fun CompactTimerControls(
         verticalAlignment = Alignment.CenterVertically
     ) {
         TimerCircleComponent(
-            workspaceUiState = workspaceUiState,
-            timerUiState = timerUiState,
+            totallyPomodoroUiState = totallyPomodoroUiState,
             themeColor = themeColor,
             timerBackgroundColor = timerBackgroundColor,
             sizes = timerSizes
@@ -113,7 +107,7 @@ private fun CompactTimerControls(
         Spacer(modifier = Modifier.width(16.dp))
 
         TimerControlButtonsVertical(
-            isActive = timerUiState.isActive,
+            isActive = totallyPomodoroUiState.timerUiState.isActive,
             themeColor = themeColor,
             onToggleTimer = onToggleTimer,
             onResetTimer = onResetTimer,

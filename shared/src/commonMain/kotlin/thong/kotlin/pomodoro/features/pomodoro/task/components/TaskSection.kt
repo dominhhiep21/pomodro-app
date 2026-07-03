@@ -1,6 +1,6 @@
 package thong.kotlin.pomodoro.features.pomodoro.task.components
 
-import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.Task
+import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.SessionTask
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,15 +23,15 @@ import thong.kotlin.pomodoro.features.pomodoro._base.components.BreakEndBannerSm
 
 @Composable
 fun TaskSection(
-    tasks: List<Task>,
+    modifier: Modifier = Modifier,
+    sessionTasks: List<SessionTask>,
     newTaskText: String,
     onAddTask: () -> Unit,
     onDeleteTask: (String) -> Unit,
     onToggleTask: (String) -> Unit,
     onNewTaskTextChange: (String) -> Unit,
     showBreakEndBanner: Boolean = false,
-    useLazyColumn: Boolean = true,
-    modifier: Modifier = Modifier
+    useLazyColumn: Boolean = true
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -65,12 +65,12 @@ fun TaskSection(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(tasks, key = { it.id }) { task ->
-                    val onToggle = remember(task.id, onToggleTask) { { onToggleTask(task.id) } }
-                    val onDelete = remember(task.id, onDeleteTask) { { onDeleteTask(task.id) } }
+                items(sessionTasks, key = { it.taskId }) { task ->
+                    val onToggle = remember(task.taskId, onToggleTask) { { onToggleTask(task.taskId) } }
+                    val onDelete = remember(task.taskId, onDeleteTask) { { onDeleteTask(task.taskId) } }
                     
                     TaskItem(
-                        task = task,
+                        sessionTask = task,
                         onToggle = onToggle,
                         onDelete = onDelete
                     )
@@ -81,12 +81,12 @@ fun TaskSection(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                tasks.forEach { task ->
-                    val onToggle = remember(task.id, onToggleTask) { { onToggleTask(task.id) } }
-                    val onDelete = remember(task.id, onDeleteTask) { { onDeleteTask(task.id) } }
+                sessionTasks.forEach { task ->
+                    val onDelete = remember(task.taskId, onDeleteTask) { { onDeleteTask(task.taskId) } }
+                    val onToggle = remember(task.taskId, onToggleTask) { { onToggleTask(task.taskId) } }
 
                     TaskItem(
-                        task = task,
+                        sessionTask = task,
                         onToggle = onToggle,
                         onDelete = onDelete
                     )

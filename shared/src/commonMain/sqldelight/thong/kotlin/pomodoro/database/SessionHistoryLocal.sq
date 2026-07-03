@@ -1,0 +1,228 @@
+CREATE TABLE IF NOT EXISTS session_history_local (
+    id TEXT NOT NULL PRIMARY KEY,
+    user_id TEXT,
+    anonymous_user_id TEXT,
+    session_mode TEXT,
+    status TEXT NOT NULL,
+    current_learning_mode TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    ended_at TEXT,
+    last_paused_at TEXT,
+    planned_work_minutes INTEGER,
+    planned_break_minutes INTEGER,
+    completed_work_rounds INTEGER,
+    completed_break_rounds INTEGER,
+    last_background_id TEXT,
+    last_music_id TEXT,
+    last_ambient_sound_json TEXT,
+    total_focus_seconds INTEGER,
+    total_break_seconds INTEGER,
+    total_paused_seconds INTEGER,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    sync_status TEXT
+);
+
+CREATE INDEX IF NOT EXISTS session_history_local_user_started_at_idx
+ON session_history_local(user_id, started_at DESC);
+
+CREATE INDEX IF NOT EXISTS session_history_local_anonymous_user_started_at_idx
+ON session_history_local(anonymous_user_id, started_at DESC);
+
+CREATE INDEX IF NOT EXISTS session_history_local_sync_status_idx
+ON session_history_local(sync_status);
+
+CREATE INDEX IF NOT EXISTS session_history_local_status_idx
+ON session_history_local(status);
+
+CREATE INDEX IF NOT EXISTS session_history_local_updated_at_idx
+ON session_history_local(updated_at DESC);
+
+insertSessionHistory:
+INSERT INTO session_history_local (
+    id,
+    user_id,
+    anonymous_user_id,
+    session_mode,
+    current_learning_mode,
+    status,
+    started_at,
+    ended_at,
+    last_paused_at,
+    planned_work_minutes,
+    planned_break_minutes,
+    completed_work_rounds,
+    completed_break_rounds,
+    last_background_id,
+    last_music_id,
+    last_ambient_sound_json,
+    total_focus_seconds,
+    total_break_seconds,
+    total_paused_seconds,
+    created_at,
+    updated_at,
+    sync_status
+)
+VALUES (?, ?,?,?,?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateSessionHistory:
+UPDATE session_history_local
+SET
+    user_id = ?,
+    anonymous_user_id = ?,
+    session_mode = ?,
+    current_learning_mode = ?,
+    status = ?,
+    ended_at = ?,
+    last_paused_at = ?,
+    planned_work_minutes = ?,
+    planned_break_minutes = ?,
+    completed_work_rounds = ?,
+    completed_break_rounds = ?,
+    last_background_id = ?,
+    last_music_id = ?,
+    last_ambient_sound_json = ?,
+    total_focus_seconds = ?,
+    total_break_seconds = ?,
+    total_paused_seconds = ?,
+    updated_at = ?,
+    sync_status = ?
+WHERE id = ?;
+
+selectSessionHistoryById:
+SELECT *
+FROM session_history_local
+WHERE id = ?;
+
+selectAllSessionHistory:
+SELECT *
+FROM session_history_local
+WHERE status <> 'DELETED'
+ORDER BY started_at DESC;
+
+selectTotalFocusSeconds:
+SELECT COALESCE(SUM(total_focus_seconds), 0)
+FROM session_history_local
+WHERE status = 'COMPLETED';
+
+deleteAllLearningSessionEvents:
+DELETE FROM learning_session_event_local;
+
+deleteAllSessionHistory:
+DELETE FROM session_history_local;
+
+deleteSessionHistoryById:
+UPDATE session_history_local
+SET status = 'DELETED'
+WHERE id = ?;
+
+CREATE TABLE IF NOT EXISTS learning_session_event_local (
+    event_id TEXT NOT NULL PRIMARY KEY,
+    session_id TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    occurred_at_millis TEXT NOT NULL,
+    background_id TEXT,
+    music_id TEXT,
+    ambient_sound_ids_json TEXT,
+    remaining_seconds INTEGER,
+    current_round INTEGER,
+    metadata_json TEXT NOT NULL,
+    sync_status TEXT NOT NULL,
+
+    FOREIGN KEY(session_id) REFERENCES session_history_local(id)
+);
+
+CREATE INDEX IF NOT EXISTS learning_session_event_session_time_idx
+ON learning_session_event_local(session_id, occurred_at_millis ASC);
+
+CREATE INDEX IF NOT EXISTS learning_session_event_sync_status_idx
+ON learning_session_event_local(sync_status);
+
+CREATE INDEX IF NOT EXISTS learning_session_event_type_idx
+ON learning_session_event_local(event_type);
+
+insertLearningSessionEvent:
+INSERT INTO learning_session_event_local (
+    event_id,
+    session_id,
+    event_type,
+    occurred_at_millis,
+    background_id,
+    music_id,
+    ambient_sound_ids_json,
+    remaining_seconds,
+    current_round,
+    metadata_json,
+    sync_status
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+CREATE TABLE IF NOT EXISTS session_task (
+
+    task_id TEXT NOT NULL PRIMARY KEY,
+    session_id TEXT NOT NULL,
+
+    title TEXT NOT NULL,
+    is_completed INTEGER NOT NULL DEFAULT 0,
+
+    focus_seconds INTEGER NOT NULL DEFAULT 0,
+
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    completed_at TEXT,
+
+    sync_status TEXT NOT NULL DEFAULT 'LOCAL_ONLY'
+);
+
+insertSessionTask:
+INSERT INTO session_task(
+    task_id,
+    session_id,
+    title,
+    is_completed,
+    focus_seconds,
+    created_at,
+    updated_at,
+    completed_at,
+    sync_status
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectTasksBySessionId:
+SELECT *
+FROM session_task
+WHERE session_id = ?
+ORDER BY created_at ASC;
+
+updateTask:
+UPDATE session_task
+SET session_id = ?,
+    title = ?,
+    is_completed = ?,
+    focus_seconds = ?,
+    updated_at = ?,
+    completed_at = ?,
+    sync_status = ?
+WHERE task_id = ?;
+
+addTaskFocusSeconds:
+UPDATE session_task
+SET focus_seconds = focus_seconds + ?,
+    updated_at = ?
+WHERE task_id = ?;
+
+deleteTask:
+DELETE FROM session_task
+WHERE task_id = ? AND session_id = ?;
+
+deleteTasksBySessionId:
+DELETE FROM session_task
+WHERE session_id = ?;
+
+selectTaskStatsBySessionId:
+SELECT
+    COUNT(*) AS total_tasks,
+    SUM(CASE WHEN is_completed = 1 THEN 1 ELSE 0 END) AS completed_tasks,
+    SUM(focus_seconds) AS total_task_focus_seconds
+FROM session_task
+WHERE session_id = ?;

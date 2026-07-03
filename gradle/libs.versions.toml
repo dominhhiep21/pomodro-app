@@ -23,6 +23,8 @@ navigationCompose = "2.9.2"
 voyagerVersion = "2.2.21-1.10.3"
 ktor = "3.0.1"
 kotlinxDatetime = "0.7.1"
+riveAndroid = "11.7.1"
+androidxStartup = "1.1.1"
 
 [libraries]
 jlayer = { module = "javazoom:jlayer", version.ref = "jlayer" }

@@ -13,21 +13,17 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
-import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
-import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
-import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryV2
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TasksViewModel
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TimerViewModel
-import thong.kotlin.pomodoro.features.pomodoro.viewmodel.WorkspaceViewModel
+import thong.kotlin.pomodoro.features.pomodoro._base.PomodoroScreenUIv2
+import thong.kotlin.pomodoro.features.pomodoro.viewmodel.AppViewModel
+import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.streak.presentation.StreakScreenContent
 import thong.kotlin.pomodoro.features.streak.presentation.StreakViewModel
 
 class MainTabScreen(
-    private val soundManager: SoundManager? = null,
-    private val repository: UserAppStateRepositoryV2,
+    private val currentSession: LearningSessionRecord,
     private val learningStyle: LearningStyle = LearningStyle.SOLO,
     private val learningGroupConfig: LearningGroupConfig? = null
 ) : Screen {
@@ -35,13 +31,18 @@ class MainTabScreen(
     @Composable
     override fun Content() {
         var selectedTab by remember { mutableStateOf(0) }
+        val navigator = LocalNavigator.currentOrThrow
+        val soundManager = DependencyRegistry.soundManager
 
-        // Hoist ViewModels so timer progress can drive pet state
-        val timerVM = viewModel { TimerViewModel(soundManager, repository) }
-        val tasksVM = viewModel { TasksViewModel(repository) }
-        val workspaceVM = viewModel { WorkspaceViewModel(soundManager, repository) }
+        val appViewModel: AppViewModel = viewModel(
+            key = "AppViewModel_${currentSession.sessionId}"
+        ) {
+            AppViewModel(
+                currentSession = currentSession,
+                soundManager = soundManager
+            )
+        }
         val streakVM = viewModel { StreakViewModel(DependencyRegistry.streakRepository) }
-
 
         Scaffold(
             containerColor = AuraColors.Background,
@@ -74,12 +75,14 @@ class MainTabScreen(
                 }
             }
         ) { padding ->
-            val navigator = LocalNavigator.currentOrThrow
             Box(modifier = Modifier.fillMaxSize().padding(padding)) {
                 when (selectedTab) {
-                    0 -> thong.kotlin.pomodoro.features.pomodoro._base.PomodoroScreenUIv2(
-                        soundManager, timerVM, tasksVM, workspaceVM,
-                        learningStyle, learningGroupConfig, navigator
+                    0 -> PomodoroScreenUIv2(
+                        appViewModel = appViewModel,
+                        learningStyle = learningStyle,
+                        learningGroupConfig = learningGroupConfig,
+                        soundManager = soundManager,
+                        navigator = navigator
                     )
                     1 -> {
                         val uiState by streakVM.uiState.collectAsState()

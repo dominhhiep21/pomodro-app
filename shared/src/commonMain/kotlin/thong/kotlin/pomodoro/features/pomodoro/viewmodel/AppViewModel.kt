@@ -613,6 +613,10 @@ class AppViewModel(
                     )
                 )
             )
+            // Increment streak when work session completes
+            if (isWorkMode) {
+                DependencyRegistry.streakRepository.incrementToday()
+            }
         }
     }
 

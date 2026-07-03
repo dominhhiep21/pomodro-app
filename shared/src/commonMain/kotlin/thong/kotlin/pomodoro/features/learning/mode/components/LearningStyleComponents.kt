@@ -55,7 +55,7 @@ import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
-import thong.kotlin.pomodoro.features.pomodoro._base.PomodoroScreenV2
+import thong.kotlin.pomodoro.features.main.MainTabScreen
 import thong.kotlin.pomodoro.features.session.data.LearningSessionManager
 import thong.kotlin.pomodoro.features.session.domain.CurrentLearningMode
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionEvent
@@ -106,10 +106,10 @@ class LearningStyleScreen : Screen {
                     result
                         .onSuccess { newSession ->
                             navigator.push(
-                                PomodoroScreenV2(
+                                MainTabScreen(
+                                    currentSession = newSession,
                                     learningStyle = learningStyle,
-                                    learningGroupConfig = learningGroupConfig,
-                                    currentSessionId = newSession.sessionId
+                                    learningGroupConfig = learningGroupConfig
                                 )
                             )
                         }

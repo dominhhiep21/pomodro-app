@@ -65,11 +65,13 @@ import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.core.utils.secondsToHourMinuteText
+import thong.kotlin.pomodoro.core.utils.toDateTimeText
 import thong.kotlin.pomodoro.features.learning.mode.components.LearningStyleScreen
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.StatCardType
 import thong.kotlin.pomodoro.features.session.presentation.SessionHistoryScreen
 import thong.kotlin.pomodoro.features.startup.viewmodel.HomeUiViewModel
 import thong.kotlin.pomodoro.features.startup.viewmodel.buildTrendUiState
+import kotlin.time.Clock
 
 class HomeScreenV2 : Screen {
     @Composable
@@ -123,7 +125,7 @@ private fun HomeScreenV2UI(
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    RecentActivitySection()
+                    RecentActivitySection(isLandscape)
 
                     Spacer(modifier = Modifier.height(24.dp))
                 }
@@ -209,7 +211,7 @@ private fun TodayStatsSection(
                 )
             }
             Text(
-                "20/05/2024 \u2304", // Date selector placeholder
+                Clock.System.now().toEpochMilliseconds().toDateTimeText(),
                 color = Color.White.copy(alpha = 0.5f),
                 fontSize = 13.sp
             )
@@ -225,20 +227,22 @@ private fun TodayStatsSection(
             StatCard(
                 cardModifier,
                 secondsToHourMinuteText(homeUiState.homeUiStats.todayFocusSeconds.toLong()),
-                if (isLandscape) "Tổng thời gian tập trung" else "Tổng focus",
+                if (isLandscape) "Tổng thời gian tập trung" else "Tập trung",
                 Icons.Default.Schedule,
                 AuraColors.ShortBreakMode,
                 homeUiState.homeUiStats.focusSecondsDiff.toString(),
-                type = StatCardType.TOTAL_FOCUS_TIME
+                type = StatCardType.TOTAL_FOCUS_TIME,
+                isLandscape = isLandscape
             )
             StatCard(
                 cardModifier,
                 homeUiState.homeUiStats.todayCompletedPomodoros.toString(),
-                if (isLandscape) "Pomodoro hoàn thành" else "Pomodoros",
+                if (isLandscape) "Pomodoro hoàn thành" else "Pomodoro",
                 Icons.Default.RadioButtonChecked,
                 AuraColors.WorkMode,
                 homeUiState.homeUiStats.completedPomodorosDiff.toString(),
-                type = StatCardType.COMPLETED_POMODOROS
+                type = StatCardType.COMPLETED_POMODOROS,
+                isLandscape = isLandscape
             )
             StatCard(
                 cardModifier,
@@ -247,7 +251,8 @@ private fun TodayStatsSection(
                 Icons.Default.LocalFireDepartment,
                 Color(0xFFFFA500),
                 homeUiState.homeUiStats.currentStreakDays.toString(),
-                type = StatCardType.BEST_STREAK
+                type = StatCardType.BEST_STREAK,
+                isLandscape = isLandscape
             )
         }
     }
@@ -261,7 +266,8 @@ private fun StatCard(
     icon: ImageVector,
     color: Color,
     trend: String? = null,
-    type: StatCardType
+    type: StatCardType,
+    isLandscape: Boolean
 ) {
     GlassBox(
         modifier = modifier.height(130.dp),
@@ -291,7 +297,7 @@ private fun StatCard(
             }
 
             trend
-                ?.let { buildTrendUiState(it, type) }
+                ?.let { buildTrendUiState(it, type, isCompact = !isLandscape) }
                 ?.let { trendUiState ->
                     Text(
                         text = trendUiState.text,
@@ -517,7 +523,7 @@ private fun ExploreCard(
 }
 
 @Composable
-private fun RecentActivitySection() {
+private fun RecentActivitySection(isLandscape: Boolean) {
     Column {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -566,14 +572,16 @@ private fun RecentActivitySection() {
                     Column(modifier = Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                "Focus Session",
+                                if (isLandscape) "Focus Session" else "Focus",
                                 color = Color.White,
                                 fontSize = 15.sp,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                "Hoàn thành",
+                                if (isLandscape) "Hoàn thành" else "Xong",
                                 color = AuraColors.ShortBreakMode,
                                 fontSize = 10.sp,
                                 modifier = Modifier
@@ -585,9 +593,11 @@ private fun RecentActivitySection() {
                             )
                         }
                         Text(
-                            "20/05/2024 • 09:30 - 10:05",
+                            if (isLandscape) "20/05/2024 • 09:30 - 10:05" else "Hôm nay • 09:30",
                             color = Color.White.copy(alpha = 0.4f),
-                            fontSize = 12.sp
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
 
@@ -642,7 +652,7 @@ private fun WeeklyProgressChart() {
             .height(120.dp)
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val barWidth = 40.dp.toPx()
+            val barWidth = 32.dp.toPx()
             val spacing = (size.width - (barWidth * 7)) / 6
             val targetHeight = size.height * 0.7f
 

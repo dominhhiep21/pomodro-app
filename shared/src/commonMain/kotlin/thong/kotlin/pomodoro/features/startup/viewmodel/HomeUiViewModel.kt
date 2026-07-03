@@ -28,7 +28,8 @@ data class TrendUiState(
 
 fun buildTrendUiState(
     trend: String,
-    type: StatCardType
+    type: StatCardType,
+    isCompact: Boolean = false
 ): TrendUiState? {
     val trendValue = trend.toIntOrNull() ?: return null
 
@@ -39,9 +40,9 @@ fun buildTrendUiState(
 
             TrendUiState(
                 text = if (isDecrease) {
-                    "↓ -${absValue.formatSeconds()} so với hôm qua"
+                    "↓ -${absValue.formatSeconds()}${if (isCompact) "" else " so với hôm qua"}"
                 } else {
-                    "↑ +${absValue.formatSeconds()} so với hôm qua"
+                    "↑ +${absValue.formatSeconds()}${if (isCompact) "" else " so với hôm qua"}"
                 },
                 color = if (isDecrease) {
                     AuraColors.DecreaseMode
@@ -57,9 +58,9 @@ fun buildTrendUiState(
 
             TrendUiState(
                 text = if (isDecrease) {
-                    "↓ -$absValue so với hôm qua"
+                    "↓ -$absValue${if (isCompact) "" else " so với hôm qua"}"
                 } else {
-                    "↑ +$absValue so với hôm qua"
+                    "↑ +$absValue${if (isCompact) "" else " so với hôm qua"}"
                 },
                 color = if (isDecrease) {
                     AuraColors.DecreaseMode
@@ -71,7 +72,7 @@ fun buildTrendUiState(
 
         StatCardType.BEST_STREAK -> {
             TrendUiState(
-                text = "⭐ Kỷ lục: $trendValue ngày",
+                text = if (isCompact) "★ Kỷ lục: $trendValue" else "⭐ Kỷ lục: $trendValue ngày",
                 color = AuraColors.BestStreakDay
             )
         }

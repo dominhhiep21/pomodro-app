@@ -14,14 +14,16 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 /**
- * Streak-themed animated background inspired by "Modern Dark (Cinema Mobile)" style.
+ * Streak-themed cinematic animated background.
  *
- * Combines:
- * - Deep dark gradient base (dark indigo → near-black)
- * - Animated ambient fire-glow blobs with slow oscillation (matches streak fire theme)
- * - Subtle warm accent glow for immersive cinematic feel
+ * Design: "Modern Dark Cinema Mobile" (ui-ux-pro-max)
+ * - Deep gradient base (#0a0a0f → #020203) — NOT pure black
+ * - 3 animated ambient glow blobs with HIGH visibility (opacity 0.12-0.22)
+ * - Warm fire/streak palette (orange + rose + amber)
+ * - Slow oscillation (7-13s) for premium atmospheric feel
  *
- * Self-contained within the streak feature — does NOT affect any other screens.
+ * Performance: Uses Canvas + animateFloat (GPU-friendly, no recomposition).
+ * Self-contained: Only used in streak feature.
  */
 @Composable
 fun StreakBackground(
@@ -36,132 +38,129 @@ fun StreakBackground(
 
 @Composable
 private fun StreakAmbientCanvas(modifier: Modifier = Modifier) {
-    val infiniteTransition = rememberInfiniteTransition(label = "StreakBgTransition")
+    val infiniteTransition = rememberInfiniteTransition(label = "StreakBg")
 
-    // Slow oscillation for blob 1 (warm fire — top-right area)
-    val blob1OffsetX by infiniteTransition.animateFloat(
-        initialValue = 0.65f,
-        targetValue = 0.75f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 7000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "Blob1X"
-    )
-    val blob1OffsetY by infiniteTransition.animateFloat(
-        initialValue = 0.10f,
-        targetValue = 0.18f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 9000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "Blob1Y"
-    )
-
-    // Slow oscillation for blob 2 (deeper orange/amber — bottom-left area)
-    val blob2OffsetX by infiniteTransition.animateFloat(
-        initialValue = 0.15f,
-        targetValue = 0.28f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 11000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "Blob2X"
-    )
-    val blob2OffsetY by infiniteTransition.animateFloat(
-        initialValue = 0.72f,
-        targetValue = 0.80f,
+    // ---- Blob 1: Large warm orange glow (top-right) ----
+    val blob1X by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 0.8f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 8000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "Blob2Y"
+        label = "B1X"
     )
-
-    // Subtle pulse for blob 3 (rose/streak accent — center-left)
-    val blob3OffsetX by infiniteTransition.animateFloat(
-        initialValue = 0.25f,
-        targetValue = 0.35f,
+    val blob1Y by infiniteTransition.animateFloat(
+        initialValue = 0.05f,
+        targetValue = 0.20f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 10000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "Blob3X"
+        label = "B1Y"
     )
-    val blob3OffsetY by infiniteTransition.animateFloat(
-        initialValue = 0.30f,
-        targetValue = 0.40f,
+
+    // ---- Blob 2: Rose/fire glow (center-left, matching streak accent) ----
+    val blob2X by infiniteTransition.animateFloat(
+        initialValue = 0.10f,
+        targetValue = 0.30f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 12000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "B2X"
+    )
+    val blob2Y by infiniteTransition.animateFloat(
+        initialValue = 0.35f,
+        targetValue = 0.50f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 9000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "B2Y"
+    )
+
+    // ---- Blob 3: Deep amber glow (bottom area) ----
+    val blob3X by infiniteTransition.animateFloat(
+        initialValue = 0.55f,
+        targetValue = 0.75f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 11000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "B3X"
+    )
+    val blob3Y by infiniteTransition.animateFloat(
+        initialValue = 0.70f,
+        targetValue = 0.85f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 13000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "Blob3Y"
+        label = "B3Y"
     )
 
-    // Pre-calculated colors — avoid allocation in draw scope
-    val bgGradientColors = remember {
+    // Pre-computed colors (avoid allocation in DrawScope)
+    val bgColors = remember {
         listOf(
-            Color(0xFF0C0A12), // Very dark warm purple-black (top)
-            Color(0xFF09090B)  // Deep black matching AuraColors.Background (bottom)
+            Color(0xFF0F0A14), // Dark warm purple-black (top) — NOT pure black
+            Color(0xFF050506), // Near-black (mid)
+            Color(0xFF0A0708)  // Very dark warm brown-black (bottom)
         )
     }
-
-    // Fire blob 1: warm orange glow
-    val blob1Color = remember { Color(0xFFF97316) } // Orange 500
-    // Fire blob 2: deep amber
-    val blob2Color = remember { Color(0xFFEA580C) } // Orange 600
-    // Streak accent blob 3: rose (matching WorkMode / streak fire)
-    val blob3Color = remember { Color(0xFFF43F5E) } // Rose 500
+    val blob1Color = remember { Color(0xFFF97316) }  // Orange 500 (fire)
+    val blob2Color = remember { Color(0xFFF43F5E) }  // Rose 500 (streak accent)
+    val blob3Color = remember { Color(0xFFEA580C) }  // Orange 600 (deep amber)
 
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
 
-        // Base gradient: dark warm purple-black → pure black
+        // Base: 3-stop vertical gradient (dark warm purple → near-black → warm brown)
         drawRect(
             brush = Brush.verticalGradient(
-                colors = bgGradientColors,
+                colors = bgColors,
                 startY = 0f,
                 endY = h
             )
         )
 
-        // Blob 1: Warm fire glow (top-right, large radius)
+        // Blob 1: Large orange fire glow — VERY VISIBLE (0.18 peak)
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    blob1Color.copy(alpha = 0.09f),
-                    blob1Color.copy(alpha = 0.04f),
+                    blob1Color.copy(alpha = 0.18f),
+                    blob1Color.copy(alpha = 0.08f),
                     Color.Transparent
                 ),
-                center = Offset(w * blob1OffsetX, h * blob1OffsetY),
-                radius = w * 0.55f
+                center = Offset(w * blob1X, h * blob1Y),
+                radius = w * 0.6f
             )
         )
 
-        // Blob 2: Deep amber glow (bottom-left, medium radius)
+        // Blob 2: Rose/streak fire — center-left area (0.15 peak)
         drawCircle(
             brush = Brush.radialGradient(
                 colors = listOf(
-                    blob2Color.copy(alpha = 0.07f),
-                    blob2Color.copy(alpha = 0.03f),
+                    blob2Color.copy(alpha = 0.15f),
+                    blob2Color.copy(alpha = 0.06f),
                     Color.Transparent
                 ),
-                center = Offset(w * blob2OffsetX, h * blob2OffsetY),
+                center = Offset(w * blob2X, h * blob2Y),
+                radius = w * 0.5f
+            )
+        )
+
+        // Blob 3: Deep amber — bottom area (0.12 peak)
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = listOf(
+                    blob3Color.copy(alpha = 0.12f),
+                    blob3Color.copy(alpha = 0.05f),
+                    Color.Transparent
+                ),
+                center = Offset(w * blob3X, h * blob3Y),
                 radius = w * 0.45f
-            )
-        )
-
-        // Blob 3: Rose streak accent (center-left, subtle)
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(
-                    blob3Color.copy(alpha = 0.06f),
-                    blob3Color.copy(alpha = 0.02f),
-                    Color.Transparent
-                ),
-                center = Offset(w * blob3OffsetX, h * blob3OffsetY),
-                radius = w * 0.40f
             )
         )
     }

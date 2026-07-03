@@ -1,10 +1,14 @@
 package thong.kotlin.pomodoro.features.streak.presentation
 
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,32 +33,46 @@ class StreakScreen(
 
 @Composable
 internal fun StreakScreenContent(uiState: StreakUiState) {
+    // Entry animation for the whole screen
+    var screenVisible by remember { mutableStateOf(false) }
+    val screenAlpha by animateFloatAsState(
+        targetValue = if (screenVisible) 1f else 0f,
+        animationSpec = tween(durationMillis = 600, easing = FastOutSlowInEasing),
+        label = "ScreenAlpha"
+    )
+    LaunchedEffect(Unit) { screenVisible = true }
+
     StreakBackground(
         modifier = Modifier.fillMaxSize()
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .alpha(screenAlpha)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // ===== Section 1: Pet Animation (hero area) =====
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.42f),
+                    .aspectRatio(1f)   // Square container for pet
+                    .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 RivePetView(
                     onTap = {},
-                    modifier = Modifier.fillMaxSize(0.85f)
+                    modifier = Modifier.fillMaxSize(0.88f)
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
+            // ===== Section 2: Streak Counter Cards =====
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 StreakCounterCard(
                     label = "Current Streak",
@@ -72,20 +90,26 @@ internal fun StreakScreenContent(uiState: StreakUiState) {
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
+            // ===== Section 3: Activity Heat Map =====
             Text(
                 text = "Activity",
-                fontSize = 13.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = AuraColors.TextSecondary,
-                modifier = Modifier.align(Alignment.Start).padding(bottom = 8.dp)
+                color = AuraColors.TextPrimary,
+                letterSpacing = 0.3.sp,
+                modifier = Modifier
+                    .align(Alignment.Start)
+                    .padding(bottom = 10.dp)
             )
             CalendarHeatMap(
                 history = uiState.heatMapData,
                 accentColor = AuraColors.WorkMode,
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

@@ -116,7 +116,8 @@ class LearningStyleScreen(
                                 PomodoroScreenV2(
                                     learningStyle = learningStyle,
                                     learningGroupConfig = learningGroupConfig,
-                                    currentSessionId = newSession.sessionId
+                                    currentSessionId = newSession.sessionId,
+                                    isNewSession = true
                                 )
                             )
                         }

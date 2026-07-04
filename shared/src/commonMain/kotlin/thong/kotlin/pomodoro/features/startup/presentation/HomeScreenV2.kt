@@ -41,6 +41,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -69,6 +70,7 @@ import thong.kotlin.pomodoro.core.utils.toDateTimeText
 import thong.kotlin.pomodoro.features.learning.mode.components.LearningStyleScreen
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.StatCardType
 import thong.kotlin.pomodoro.features.session.presentation.SessionHistoryScreen
+import thong.kotlin.pomodoro.features.settings.presentation.SettingsScreenV2
 import thong.kotlin.pomodoro.features.startup.viewmodel.HomeUiViewModel
 import thong.kotlin.pomodoro.features.startup.viewmodel.buildTrendUiState
 import kotlin.time.Clock
@@ -81,7 +83,7 @@ class HomeScreenV2 : Screen {
         HomeScreenV2UI(
             onStartNew = { navigator.push(LearningStyleScreen("home")) },
             onViewHistory = { navigator.push(SessionHistoryScreen()) },
-            onViewSettings = { /* Navigate to Settings when ready */ }
+            onViewSettings = { navigator.push(SettingsScreenV2()) }
         )
     }
 }
@@ -99,7 +101,7 @@ private fun HomeScreenV2UI(
         AuraBackground {
             Scaffold(
                 containerColor = Color.Transparent,
-                bottomBar = { if (!isLandscape) HomeBottomBar() }
+                bottomBar = { if (!isLandscape) HomeBottomBar(onViewSettings, onViewHistory) }
             ) { padding ->
                 Column(
                     modifier = Modifier
@@ -108,7 +110,7 @@ private fun HomeScreenV2UI(
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = horizontalPadding, vertical = 24.dp)
                 ) {
-                    HomeHeader(onViewSettings)
+                    HomeHeader(isLandscape, onViewSettings)
 
                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -135,7 +137,10 @@ private fun HomeScreenV2UI(
 }
 
 @Composable
-private fun HomeHeader(onViewSettings: () -> Unit) {
+private fun HomeHeader(
+    isLandscape: Boolean,
+    onViewSettings: () -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -155,28 +160,34 @@ private fun HomeHeader(onViewSettings: () -> Unit) {
             )
         }
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            // Avatar Placeholder
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.1f))
-                    .border(1.dp, Color.White.copy(alpha = 0.2f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Person, contentDescription = null, tint = Color.White)
-            }
+        if (isLandscape) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Avatar Placeholder
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.1f))
+                        .border(1.dp, Color.White.copy(alpha = 0.2f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Person, contentDescription = null, tint = Color.White)
+                }
 
-            Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
-            IconButton(
-                onClick = onViewSettings,
-                modifier = Modifier
-                    .size(44.dp)
-                    .background(Color.White.copy(alpha = 0.05f), CircleShape)
-            ) {
-                Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White)
+                IconButton(
+                    onClick = onViewSettings,
+                    modifier = Modifier
+                        .size(44.dp)
+                        .background(Color.White.copy(alpha = 0.05f), CircleShape)
+                ) {
+                    Icon(
+                        Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        tint = Color.White
+                    )
+                }
             }
         }
     }
@@ -186,7 +197,11 @@ private fun HomeHeader(onViewSettings: () -> Unit) {
 private fun TodayStatsSection(
     isLandscape: Boolean
 ) {
-    val homeUiViewModel = viewModel(key = "HomeUiViewModel") { HomeUiViewModel() }
+    val homeUiViewModel = viewModel { HomeUiViewModel() }
+    LaunchedEffect(Unit) {
+        homeUiViewModel.loadDataStatsSection()
+    }
+
     val homeUiState by homeUiViewModel.uiState.collectAsState()
 
     Column {
@@ -292,8 +307,20 @@ private fun StatCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(value, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                Text(label, color = Color.White.copy(alpha = 0.4f), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    value,
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
+                )
+                Text(
+                    label,
+                    color = Color.White.copy(alpha = 0.4f),
+                    fontSize = 11.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
 
             trend
@@ -698,7 +725,10 @@ private fun WeeklyProgressChart() {
 }
 
 @Composable
-private fun HomeBottomBar() {
+private fun HomeBottomBar(
+    onSettingsView: () -> Unit,
+    onViewHistory: () -> Unit,
+) {
     GlassBox(
         modifier = Modifier.fillMaxWidth().height(80.dp),
         shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
@@ -709,20 +739,25 @@ private fun HomeBottomBar() {
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            BottomNavItem("Trang chủ", Icons.Default.Home, true)
-            BottomNavItem("Timer", Icons.Default.Schedule, false)
-            BottomNavItem("Lịch sử", Icons.Default.History, false)
-            BottomNavItem("Thống kê", Icons.Default.BarChart, false)
-            BottomNavItem("Cá nhân", Icons.Default.Person, false)
+            BottomNavItem("Trang chủ", Icons.Default.Home, true) {}
+            BottomNavItem("Lịch sử", Icons.Default.History, false, onViewHistory)
+            BottomNavItem("Thống kê", Icons.Default.BarChart, false) {}
+            BottomNavItem("Cài đặt", Icons.Default.Settings, false, onSettingsView)
+            BottomNavItem("Cá nhân", Icons.Default.Person, false) {}
         }
     }
 }
 
 @Composable
-private fun BottomNavItem(label: String, icon: ImageVector, isSelected: Boolean) {
+private fun BottomNavItem(
+    label: String,
+    icon: ImageVector,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable {}
+        modifier = Modifier.clickable { onClick() }
     ) {
         Icon(
             icon,

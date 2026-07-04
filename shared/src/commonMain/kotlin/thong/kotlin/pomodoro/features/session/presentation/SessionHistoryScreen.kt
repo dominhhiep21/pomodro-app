@@ -81,7 +81,7 @@ import thong.kotlin.pomodoro.features.session.domain.CurrentLearningMode
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.color
 import thong.kotlin.pomodoro.features.session.domain.toDisplayText
-import thong.kotlin.pomodoro.features.settings.data.BackgroundRepository
+import thong.kotlin.pomodoro.features.background.data.BackgroundRepository
 import thong.kotlin.pomodoro.features.startup.presentation.HomeScreenV2
 
 class SessionHistoryScreen : Screen {
@@ -129,7 +129,8 @@ class SessionHistoryScreen : Screen {
                     navigator.push(
                         PomodoroScreenV2(
                             learningStyle = session.sessionMode,
-                            currentSessionId = session.sessionId
+                            currentSessionId = session.sessionId,
+                            isNewSession = false
                         )
                     )
                 },

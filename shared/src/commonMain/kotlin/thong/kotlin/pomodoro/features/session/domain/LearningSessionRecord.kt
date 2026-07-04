@@ -9,7 +9,7 @@ import thong.kotlin.pomodoro.core.utils.toMillisFromDateTimeTextOrNull
 import thong.kotlin.pomodoro.database.Session_history_local
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro.music.data.MusicRepository
-import thong.kotlin.pomodoro.features.settings.data.BackgroundRepository
+import thong.kotlin.pomodoro.features.background.data.BackgroundRepository
 import kotlin.time.Clock
 
 @Serializable

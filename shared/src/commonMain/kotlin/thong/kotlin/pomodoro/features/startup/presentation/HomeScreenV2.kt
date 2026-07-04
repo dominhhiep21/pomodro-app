@@ -99,7 +99,7 @@ private fun HomeScreenV2UI(
         AuraBackground {
             Scaffold(
                 containerColor = Color.Transparent,
-                bottomBar = { if (!isLandscape) HomeBottomBar() }
+                bottomBar = { if (!isLandscape) HomeBottomBar(onViewHistory) }
             ) { padding ->
                 Column(
                     modifier = Modifier
@@ -108,7 +108,7 @@ private fun HomeScreenV2UI(
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = horizontalPadding, vertical = 24.dp)
                 ) {
-                    HomeHeader(onViewSettings)
+                    HomeHeader(isLandscape, onViewSettings)
 
                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -135,7 +135,10 @@ private fun HomeScreenV2UI(
 }
 
 @Composable
-private fun HomeHeader(onViewSettings: () -> Unit) {
+private fun HomeHeader(
+    isLandscape: Boolean,
+    onViewSettings: () -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -155,28 +158,30 @@ private fun HomeHeader(onViewSettings: () -> Unit) {
             )
         }
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            // Avatar Placeholder
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.1f))
-                    .border(1.dp, Color.White.copy(alpha = 0.2f), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Person, contentDescription = null, tint = Color.White)
-            }
+        if (isLandscape) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Avatar Placeholder
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.1f))
+                        .border(1.dp, Color.White.copy(alpha = 0.2f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Person, contentDescription = null, tint = Color.White)
+                }
 
-            Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
-            IconButton(
-                onClick = onViewSettings,
-                modifier = Modifier
-                    .size(44.dp)
-                    .background(Color.White.copy(alpha = 0.05f), CircleShape)
-            ) {
-                Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White)
+                IconButton(
+                    onClick = onViewSettings,
+                    modifier = Modifier
+                        .size(44.dp)
+                        .background(Color.White.copy(alpha = 0.05f), CircleShape)
+                ) {
+                    Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Color.White)
+                }
             }
         }
     }
@@ -698,7 +703,9 @@ private fun WeeklyProgressChart() {
 }
 
 @Composable
-private fun HomeBottomBar() {
+private fun HomeBottomBar(
+    onViewHistory: () -> Unit,
+) {
     GlassBox(
         modifier = Modifier.fillMaxWidth().height(80.dp),
         shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
@@ -709,20 +716,25 @@ private fun HomeBottomBar() {
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            BottomNavItem("Trang chủ", Icons.Default.Home, true)
-            BottomNavItem("Timer", Icons.Default.Schedule, false)
-            BottomNavItem("Lịch sử", Icons.Default.History, false)
-            BottomNavItem("Thống kê", Icons.Default.BarChart, false)
-            BottomNavItem("Cá nhân", Icons.Default.Person, false)
+            BottomNavItem("Trang chủ", Icons.Default.Home, true) {}
+            BottomNavItem("Timer", Icons.Default.Schedule, false) {}
+            BottomNavItem("Lịch sử", Icons.Default.History, false, onViewHistory)
+            BottomNavItem("Thống kê", Icons.Default.BarChart, false) {}
+            BottomNavItem("Cá nhân", Icons.Default.Person, false) {}
         }
     }
 }
 
 @Composable
-private fun BottomNavItem(label: String, icon: ImageVector, isSelected: Boolean) {
+private fun BottomNavItem(
+    label: String,
+    icon: ImageVector,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable {}
+        modifier = Modifier.clickable { onClick() }
     ) {
         Icon(
             icon,

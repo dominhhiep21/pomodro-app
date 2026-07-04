@@ -9,8 +9,8 @@ import thong.kotlin.pomodoro.features.pomodoro.ambient.domain.AmbientSound
 import thong.kotlin.pomodoro.features.pomodoro.music.data.MusicRepository
 import thong.kotlin.pomodoro.features.pomodoro.music.domain.MusicTrack
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
-import thong.kotlin.pomodoro.features.settings.data.BackgroundRepository
-import thong.kotlin.pomodoro.features.settings.domain.AppBackground
+import thong.kotlin.pomodoro.features.background.data.BackgroundRepository
+import thong.kotlin.pomodoro.features.background.model.AppBackground
 
 data class WorkspaceUiState(
     val currentMode: PomodoroMode = PomodoroMode.WORK,

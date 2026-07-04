@@ -1,6 +1,7 @@
 package thong.kotlin.pomodoro.features.background.model
 
 import androidx.compose.ui.graphics.Color
+import org.jetbrains.compose.resources.DrawableResource
 
 /**
  * Defines the type of background to be rendered.
@@ -30,4 +31,11 @@ data class BackgroundConfig(
     val secondaryColor: Color = Color(0xFF03DAC6),
     val speed: Float = 1.0f,
     val intensity: Float = 0.5f
+)
+
+data class AppBackground(
+    val id: String,
+    val name: String,
+    val resource: DrawableResource,
+    val landscapeResource: DrawableResource? = null
 )

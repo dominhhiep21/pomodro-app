@@ -24,7 +24,7 @@ import org.jetbrains.compose.resources.painterResource
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.components.AuraHorizontalScrollbar
 import thong.kotlin.pomodoro.core.utils.horizontalScrollWithMouseWheel
-import thong.kotlin.pomodoro.features.settings.domain.AppBackground
+import thong.kotlin.pomodoro.features.background.model.AppBackground
 
 @Composable
 fun BackgroundSection(

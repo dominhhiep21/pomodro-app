@@ -31,7 +31,7 @@ import thong.kotlin.pomodoro.features.session.domain.LearningSessionEvent
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionEventType
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
-import thong.kotlin.pomodoro.features.settings.data.BackgroundRepository
+import thong.kotlin.pomodoro.features.background.data.BackgroundRepository
 import kotlin.time.Clock
 
 data class TotallyPomodoroUiState(

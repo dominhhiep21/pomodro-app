@@ -46,8 +46,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
+import thong.kotlin.pomodoro.features.background.presentation.components.CompactBackgroundSection
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.CompactSection
-import thong.kotlin.pomodoro.features.pomodoro.ambient.presentation.components.AmbientSoundSection
+import thong.kotlin.pomodoro.features.pomodoro.ambient.presentation.components.CompactAmbientSoundSection
 import thong.kotlin.pomodoro.features.pomodoro.music.presentation.CompactMusicSectionComponent
 import thong.kotlin.pomodoro.features.pomodoro.task.components.CompactTaskSectionComponent
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.TotallyPomodoroUiState
@@ -182,7 +183,7 @@ fun CompactSectionOverlayComponent(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.3f))
+                .background(Color.Transparent)
                 .clickable { onClose() },
             contentAlignment = Alignment.Center
         ) {
@@ -252,7 +253,7 @@ fun CompactSectionUiComponent(
         }
 
         CompactSection.BACKGROUND -> {
-            BackgroundSection(
+            CompactBackgroundSection(
                 availableBackgrounds = totallyPomodoroUiState.workspaceUiState.availableBackgrounds,
                 selectedBackgroundId = totallyPomodoroUiState.workspaceUiState.selectedBackgroundId,
                 onSelectBackground = onSelectBackground,
@@ -261,7 +262,7 @@ fun CompactSectionUiComponent(
         }
 
         CompactSection.AMBIENT -> {
-            AmbientSoundSection(
+            CompactAmbientSoundSection(
                 availableSounds = totallyPomodoroUiState.workspaceUiState.availableAmbientSounds,
                 activeSoundIds = totallyPomodoroUiState.workspaceUiState.activeAmbientSoundIds,
                 onToggleSound = onToggleAmbientSound,

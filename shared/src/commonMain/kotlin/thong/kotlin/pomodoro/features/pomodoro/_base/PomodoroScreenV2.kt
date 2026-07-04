@@ -444,10 +444,7 @@ fun PomodoroScreenUIv2(
                 ExitConfirmationModal(
                     onDismiss = appViewModel::toggleExitModal,
                     onEndSession = {
-                        appViewModel.endSession {
-                            soundManager?.stopAllSounds()
-                            navigator.replace(SessionHistoryScreen())
-                        }
+                        appViewModel.endSession()
                     },
                     onPauseSession = {
                         appViewModel.pauseSession {

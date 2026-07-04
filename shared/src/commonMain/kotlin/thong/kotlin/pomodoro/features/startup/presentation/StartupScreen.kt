@@ -20,11 +20,13 @@ import pomodrokotlin.shared.generated.resources.Res
 import pomodrokotlin.shared.generated.resources.landspace_startup_bg
 import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
 import thong.kotlin.pomodoro.di.DependencyRegistry
+import thong.kotlin.pomodoro.features.focus.tree.data.FocusTreeRepository
 import thong.kotlin.pomodoro.features.onboarding.presentation.OnboardingScreen
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryV2
 
 class StartupLoadingScreen(
-    private val repositoryV2: UserAppStateRepositoryV2 = DependencyRegistry.userAppStateRepositoryV2
+    private val repositoryV2: UserAppStateRepositoryV2 = DependencyRegistry.userAppStateRepositoryV2,
+    private val focusTreeRepository: FocusTreeRepository = DependencyRegistry.focusTreeRepository
 ) : Screen {
 
     @Composable
@@ -41,6 +43,7 @@ class StartupLoadingScreen(
             val nextScreen = if (userSettings?.hasCompletedOnboarding == true) {
                 HomeScreenV2()
             } else {
+                focusTreeRepository.initFocusTreeIfNeeded()
                 OnboardingScreen()
             }
 

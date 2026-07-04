@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Nature
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.RadioButtonChecked
@@ -67,6 +68,8 @@ import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.core.utils.secondsToHourMinuteText
 import thong.kotlin.pomodoro.core.utils.toDateTimeText
+import thong.kotlin.pomodoro.features.focus.tree.presentation.FocusTreeScreen
+import thong.kotlin.pomodoro.features.focus.tree.presentation.FocusTreeSection
 import thong.kotlin.pomodoro.features.learning.mode.components.LearningStyleScreen
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.StatCardType
 import thong.kotlin.pomodoro.features.session.presentation.SessionHistoryScreen
@@ -83,7 +86,8 @@ class HomeScreenV2 : Screen {
         HomeScreenV2UI(
             onStartNew = { navigator.push(LearningStyleScreen("home")) },
             onViewHistory = { navigator.push(SessionHistoryScreen()) },
-            onViewSettings = { navigator.push(SettingsScreenV2()) }
+            onViewSettings = { navigator.push(SettingsScreenV2()) },
+            onViewFocusTree = { navigator.push(FocusTreeScreen()) }
         )
     }
 }
@@ -92,7 +96,8 @@ class HomeScreenV2 : Screen {
 private fun HomeScreenV2UI(
     onStartNew: () -> Unit,
     onViewHistory: () -> Unit,
-    onViewSettings: () -> Unit
+    onViewSettings: () -> Unit,
+    onViewFocusTree: () -> Unit
 ) {
     BoxWithConstraints {
         val isLandscape = maxWidth > maxHeight
@@ -101,7 +106,15 @@ private fun HomeScreenV2UI(
         AuraBackground {
             Scaffold(
                 containerColor = Color.Transparent,
-                bottomBar = { if (!isLandscape) HomeBottomBar(onViewSettings, onViewHistory) }
+                bottomBar = {
+                    if (!isLandscape) {
+                        HomeBottomBar(
+                            onSettingsView = onViewSettings,
+                            onViewHistory = onViewHistory,
+                            onViewFocusTree = onViewFocusTree
+                        )
+                    }
+                }
             ) { padding ->
                 Column(
                     modifier = Modifier
@@ -728,6 +741,7 @@ private fun WeeklyProgressChart() {
 private fun HomeBottomBar(
     onSettingsView: () -> Unit,
     onViewHistory: () -> Unit,
+    onViewFocusTree: () -> Unit,
 ) {
     GlassBox(
         modifier = Modifier.fillMaxWidth().height(80.dp),
@@ -741,6 +755,7 @@ private fun HomeBottomBar(
         ) {
             BottomNavItem("Trang chủ", Icons.Default.Home, true) {}
             BottomNavItem("Lịch sử", Icons.Default.History, false, onViewHistory)
+            BottomNavItem("Focus Tree", Icons.Default.Nature, false, onViewFocusTree)
             BottomNavItem("Thống kê", Icons.Default.BarChart, false) {}
             BottomNavItem("Cài đặt", Icons.Default.Settings, false, onSettingsView)
             BottomNavItem("Cá nhân", Icons.Default.Person, false) {}

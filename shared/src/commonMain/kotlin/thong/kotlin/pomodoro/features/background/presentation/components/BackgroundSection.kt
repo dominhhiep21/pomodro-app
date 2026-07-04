@@ -1,4 +1,4 @@
-package thong.kotlin.pomodoro.features.pomodoro._base.components
+package thong.kotlin.pomodoro.features.background.presentation.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

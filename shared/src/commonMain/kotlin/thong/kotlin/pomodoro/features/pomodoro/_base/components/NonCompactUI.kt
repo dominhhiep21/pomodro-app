@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import thong.kotlin.pomodoro.features.background.presentation.components.BackgroundSection
 import thong.kotlin.pomodoro.features.learning.mode.components.ExpandableChatPanel
 import thong.kotlin.pomodoro.features.learning.mode.components.ExpandableMembersPanel
 import thong.kotlin.pomodoro.features.learning.mode.components.RoomIdBadge

@@ -6,10 +6,14 @@ CREATE TABLE IF NOT EXISTS session_history_local (
     status TEXT NOT NULL,
     current_learning_mode TEXT NOT NULL,
     started_at TEXT NOT NULL,
+    started_at_millis INTEGER,
     ended_at TEXT,
+    ended_at_millis INTEGER,
     last_paused_at TEXT,
+    last_paused_at_millis INTEGER,
     planned_work_minutes INTEGER,
     planned_break_minutes INTEGER,
+    planned_long_break_minutes INTEGER,
     completed_work_rounds INTEGER,
     completed_break_rounds INTEGER,
     last_background_id TEXT,
@@ -19,7 +23,9 @@ CREATE TABLE IF NOT EXISTS session_history_local (
     total_break_seconds INTEGER,
     total_paused_seconds INTEGER,
     created_at TEXT NOT NULL,
+    created_at_millis INTEGER,
     updated_at TEXT NOT NULL,
+    updated_at_millis INTEGER,
     sync_status TEXT
 );
 
@@ -47,10 +53,14 @@ INSERT INTO session_history_local (
     current_learning_mode,
     status,
     started_at,
+    started_at_millis,
     ended_at,
+    ended_at_millis,
     last_paused_at,
+    last_paused_at_millis,
     planned_work_minutes,
     planned_break_minutes,
+    planned_long_break_minutes,
     completed_work_rounds,
     completed_break_rounds,
     last_background_id,
@@ -60,10 +70,12 @@ INSERT INTO session_history_local (
     total_break_seconds,
     total_paused_seconds,
     created_at,
+    created_at_millis,
     updated_at,
+    updated_at_millis,
     sync_status
 )
-VALUES (?, ?,?,?,?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updateSessionHistory:
 UPDATE session_history_local
@@ -73,10 +85,15 @@ SET
     session_mode = ?,
     current_learning_mode = ?,
     status = ?,
+    started_at = ?,
+    started_at_millis = ?,
     ended_at = ?,
+    ended_at_millis = ?,
     last_paused_at = ?,
+    last_paused_at_millis = ?,
     planned_work_minutes = ?,
     planned_break_minutes = ?,
+    planned_long_break_minutes = ?,
     completed_work_rounds = ?,
     completed_break_rounds = ?,
     last_background_id = ?,
@@ -85,7 +102,10 @@ SET
     total_focus_seconds = ?,
     total_break_seconds = ?,
     total_paused_seconds = ?,
+    created_at = ?,
+    created_at_millis = ?,
     updated_at = ?,
+    updated_at_millis = ?,
     sync_status = ?
 WHERE id = ?;
 
@@ -105,9 +125,6 @@ SELECT COALESCE(SUM(total_focus_seconds), 0)
 FROM session_history_local
 WHERE status = 'COMPLETED';
 
-deleteAllLearningSessionEvents:
-DELETE FROM learning_session_event_local;
-
 deleteAllSessionHistory:
 DELETE FROM session_history_local;
 
@@ -115,6 +132,147 @@ deleteSessionHistoryById:
 UPDATE session_history_local
 SET status = 'DELETED'
 WHERE id = ?;
+
+getFocusSecondsBetween:
+SELECT COALESCE(SUM(total_focus_seconds), 0)
+FROM session_history_local
+WHERE started_at_millis IS NOT NULL
+AND started_at_millis >= ?
+AND started_at_millis < ?;
+
+getCompletedWorkRoundsBetween:
+SELECT COALESCE(SUM(completed_work_rounds), 0)
+FROM session_history_local
+WHERE started_at_millis IS NOT NULL
+AND started_at_millis >= ?
+AND started_at_millis < ?;
+
+getFocusDays:
+SELECT
+    date(started_at_millis / 1000, 'unixepoch', 'localtime') AS day_key
+FROM session_history_local
+WHERE started_at_millis IS NOT NULL
+GROUP BY date(started_at_millis / 1000, 'unixepoch', 'localtime')
+HAVING COALESCE(SUM(total_focus_seconds), 0) > 0
+ORDER BY day_key DESC;
+
+getDailyStatsBetween:
+SELECT
+    date(started_at_millis / 1000, 'unixepoch', 'localtime') AS day_key,
+    COALESCE(SUM(total_focus_seconds), 0) AS focus_seconds,
+    COALESCE(SUM(completed_work_rounds), 0) AS completed_pomodoros
+FROM session_history_local
+WHERE started_at_millis IS NOT NULL
+AND started_at_millis >= ?
+AND started_at_millis < ?
+GROUP BY date(started_at_millis / 1000, 'unixepoch', 'localtime')
+ORDER BY day_key DESC;
+
+getHomeDashboardStats:
+WITH params AS (
+    SELECT
+        CAST(? AS INTEGER) AS yesterday_start_millis,
+        CAST(? AS INTEGER) AS today_start_millis,
+        CAST(? AS INTEGER) AS tomorrow_start_millis
+),
+filtered_sessions AS (
+    SELECT
+        started_at_millis,
+        COALESCE(total_focus_seconds, 0) AS total_focus_seconds,
+        COALESCE(completed_work_rounds, 0) AS completed_work_rounds
+    FROM session_history_local
+    WHERE started_at_millis IS NOT NULL
+),
+daily_stats AS (
+    SELECT
+        date(started_at_millis / 1000, 'unixepoch', 'localtime') AS day_key,
+        SUM(total_focus_seconds) AS focus_seconds,
+        SUM(completed_work_rounds) AS completed_pomodoros
+    FROM filtered_sessions
+    GROUP BY day_key
+),
+today_stats AS (
+    SELECT
+        COALESCE(SUM(fs.total_focus_seconds), 0) AS focus_seconds,
+        COALESCE(SUM(fs.completed_work_rounds), 0) AS completed_pomodoros
+    FROM filtered_sessions fs, params p
+    WHERE
+        fs.started_at_millis >= p.today_start_millis
+        AND fs.started_at_millis < p.tomorrow_start_millis
+),
+yesterday_stats AS (
+    SELECT
+        COALESCE(SUM(fs.total_focus_seconds), 0) AS focus_seconds,
+        COALESCE(SUM(fs.completed_work_rounds), 0) AS completed_pomodoros
+    FROM filtered_sessions fs, params p
+    WHERE
+        fs.started_at_millis >= p.yesterday_start_millis
+        AND fs.started_at_millis < p.today_start_millis
+),
+date_keys AS (
+    SELECT
+        date(p.today_start_millis / 1000, 'unixepoch', 'localtime') AS today_key
+    FROM params p
+),
+focus_days AS (
+    SELECT day_key
+    FROM daily_stats
+    WHERE focus_seconds > 0
+),
+current_streak_ranked AS (
+    SELECT
+        fd.day_key,
+        (
+            SELECT COUNT(*)
+            FROM focus_days fd2
+            WHERE fd2.day_key >= fd.day_key
+        ) AS rn,
+        CAST(
+            julianday(dk.today_key) - julianday(fd.day_key)
+            AS INTEGER
+        ) AS diff_from_today
+    FROM focus_days fd, date_keys dk
+    WHERE fd.day_key <= dk.today_key
+),
+current_streak AS (
+    SELECT COUNT(*) AS streak_days
+    FROM current_streak_ranked
+    WHERE diff_from_today = rn - 1
+),
+best_streak_grouped AS (
+    SELECT
+        fd.day_key,
+        date(
+            fd.day_key,
+            '-' || (
+                SELECT COUNT(*)
+                FROM focus_days fd2
+                WHERE fd2.day_key <= fd.day_key
+            ) || ' days'
+        ) AS streak_group
+    FROM focus_days fd
+),
+best_streak_lengths AS (
+    SELECT COUNT(*) AS streak_length
+    FROM best_streak_grouped
+    GROUP BY streak_group
+),
+best_streak AS (
+    SELECT COALESCE(MAX(streak_length), 0) AS best_streak_days
+    FROM best_streak_lengths
+)
+SELECT
+    today_stats.focus_seconds AS today_focus_seconds,
+    yesterday_stats.focus_seconds AS yesterday_focus_seconds,
+    today_stats.focus_seconds - yesterday_stats.focus_seconds AS focus_seconds_diff,
+
+    today_stats.completed_pomodoros AS today_completed_pomodoros,
+    yesterday_stats.completed_pomodoros AS yesterday_completed_pomodoros,
+    today_stats.completed_pomodoros - yesterday_stats.completed_pomodoros AS completed_pomodoros_diff,
+
+    COALESCE(current_streak.streak_days, 0) AS current_streak_days,
+    COALESCE(best_streak.best_streak_days, 0) AS best_streak_days
+FROM today_stats, yesterday_stats, current_streak, best_streak;
 
 CREATE TABLE IF NOT EXISTS learning_session_event_local (
     event_id TEXT NOT NULL PRIMARY KEY,
@@ -226,3 +384,6 @@ SELECT
     SUM(focus_seconds) AS total_task_focus_seconds
 FROM session_task
 WHERE session_id = ?;
+
+deleteAllLearningSessionEvents:
+DELETE FROM learning_session_event_local;

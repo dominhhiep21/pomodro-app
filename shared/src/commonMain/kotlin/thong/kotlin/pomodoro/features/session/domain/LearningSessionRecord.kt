@@ -48,13 +48,13 @@ fun Session_history_local.toLearningSessionRecord(): LearningSessionRecord {
         status = status.toEnumOrDefault(LearningSessionStatus.IDLE),
         currentLearningMode = current_learning_mode.toEnumOrDefault(CurrentLearningMode.NOT_YET_STARTED),
 
-        startedAtMillis = started_at.toMillisFromDateTimeText(),
-        endedAtMillis = ended_at.toMillisFromDateTimeTextOrNull(),
-        lastPausedAtMillis = last_paused_at.toMillisFromDateTimeTextOrNull(),
+        startedAtMillis = started_at_millis ?: started_at.toMillisFromDateTimeText(),
+        endedAtMillis = ended_at_millis ?: ended_at.toMillisFromDateTimeTextOrNull(),
+        lastPausedAtMillis = last_paused_at_millis ?: last_paused_at.toMillisFromDateTimeTextOrNull(),
 
         plannedWorkMinutes = planned_work_minutes?.toInt() ?: 0,
         plannedBreakMinutes = planned_break_minutes?.toInt() ?: 0,
-        plannedLongBreakMinutes = 0,
+        plannedLongBreakMinutes = planned_long_break_minutes?.toInt() ?: 0,
 
         lastBackgroundId = last_background_id,
         lastMusicId = last_music_id,
@@ -73,8 +73,8 @@ fun Session_history_local.toLearningSessionRecord(): LearningSessionRecord {
         completedWorkRounds = completed_work_rounds?.toInt() ?: 0,
         completedBreakRounds = completed_break_rounds?.toInt() ?: 0,
 
-        createdAtMillis = created_at.toMillisFromDateTimeText(),
-        updatedAtMillis = updated_at.toMillisFromDateTimeText(),
+        createdAtMillis = created_at_millis ?: created_at.toMillisFromDateTimeText(),
+        updatedAtMillis = updated_at_millis ?: updated_at.toMillisFromDateTimeText(),
 
         syncStatus = sync_status.toEnumOrDefault(SyncStatus.LOCAL_ONLY)
     )

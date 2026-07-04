@@ -305,7 +305,7 @@ class AppViewModel(
             else -> return
         }
 
-        val updatedSession = session.copy(
+        var updatedSession = session.copy(
             status = nextStatus,
             currentLearningMode = nextLearningMode,
             completedWorkRounds = state.timerUiState.pomodorosToday
@@ -338,8 +338,10 @@ class AppViewModel(
         }
 
         viewModelScope.launch {
-            updateSession(updatedSession)
             if (shouldInsertSessionStartedEvent) {
+                updatedSession = updatedSession.copy(
+                    startedAtMillis = Clock.System.now().toEpochMilliseconds()
+                )
                 insertEvent(
                     LearningSessionEvent(
                         sessionId = session.sessionId,
@@ -352,6 +354,7 @@ class AppViewModel(
                     )
                 )
             }
+            updateSession(updatedSession)
 
             insertEvent(
                 LearningSessionEvent(

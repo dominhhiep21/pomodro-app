@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,13 +19,9 @@ import kotlinx.coroutines.delay
 import pomodrokotlin.shared.generated.resources.Res
 import pomodrokotlin.shared.generated.resources.landspace_startup_bg
 import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
-import thong.kotlin.pomodoro.core.media.SoundManager
-import thong.kotlin.pomodoro.core.notification.NotificationManager
-import thong.kotlin.pomodoro.database.AuraDatabase
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.onboarding.presentation.OnboardingScreen
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryV2
-import thong.kotlin.pomodoro.features.session.presentation.SessionHistoryScreen
 
 class StartupLoadingScreen(
     private val repositoryV2: UserAppStateRepositoryV2 = DependencyRegistry.userAppStateRepositoryV2
@@ -44,7 +39,7 @@ class StartupLoadingScreen(
             }.getOrNull()
 
             val nextScreen = if (userSettings?.hasCompletedOnboarding == true) {
-                SessionHistoryScreen()
+                HomeScreenV2()
             } else {
                 OnboardingScreen()
             }

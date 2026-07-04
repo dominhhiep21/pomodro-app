@@ -31,6 +31,30 @@ fun Int.formatToMmSs(): String {
     return "$minString:$secString"
 }
 
+fun Int.formatSeconds(): String {
+    return when {
+        this < 60 -> {
+            "$this giây"
+        }
+
+        this < 3600 -> {
+            val minutes = this / 60
+            "$minutes phút"
+        }
+
+        else -> {
+            val hours = this / 3600
+            val remainingMinutes = (this % 3600) / 60
+
+            if (remainingMinutes == 0) {
+                "$hours giờ"
+            } else {
+                "$hours giờ $remainingMinutes phút"
+            }
+        }
+    }
+}
+
 fun Long.toIsoString(): String {
     return Instant.fromEpochMilliseconds(this).toString()
 }

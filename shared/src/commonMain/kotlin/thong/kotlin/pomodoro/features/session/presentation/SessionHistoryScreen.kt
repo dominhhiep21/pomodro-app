@@ -230,6 +230,8 @@ private fun SessionContinuationModal(
                     DetailRow("Bắt đầu lúc", session.startedAtMillis.toDateTimeText())
                     DetailRow("Tổng thời gian", secondsToMinutesText(session.totalFocusSeconds))
                     DetailRow("Số vòng hoàn thành", "${session.completedWorkRounds}")
+                    DetailRow("Số lần tạm dừng", "${session.pausedCount}")
+                    DetailRow("Số lần bỏ qua", "${session.skipCount}")
                     DetailRow("Background", BackgroundRepository.getNameById(session.lastBackgroundId.toString()))
                     DetailRow("Music", MusicRepository.getNameById(session.lastMusicId.toString()))
                     DetailRow("Ambient Sound", AmbientSoundRepository.getNameById(session.lastAmbientSounds.toList()).toString())

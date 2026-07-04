@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS session_history_local (
     total_focus_seconds INTEGER,
     total_break_seconds INTEGER,
     total_paused_seconds INTEGER,
+    paused_count INTEGER,
+    skip_count INTEGER,
+    focus_score INTEGER,
     created_at TEXT NOT NULL,
     created_at_millis INTEGER,
     updated_at TEXT NOT NULL,
@@ -69,13 +72,16 @@ INSERT INTO session_history_local (
     total_focus_seconds,
     total_break_seconds,
     total_paused_seconds,
+    paused_count,
+    skip_count,
+    focus_score,
     created_at,
     created_at_millis,
     updated_at,
     updated_at_millis,
     sync_status
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 updateSessionHistory:
 UPDATE session_history_local
@@ -102,6 +108,9 @@ SET
     total_focus_seconds = ?,
     total_break_seconds = ?,
     total_paused_seconds = ?,
+    paused_count = ?,
+    skip_count = ?,
+    focus_score = ?,
     created_at = ?,
     created_at_millis = ?,
     updated_at = ?,

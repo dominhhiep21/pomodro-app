@@ -14,6 +14,7 @@ import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.core.notification.NotificationManager
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.background.model.BackgroundConfig
+import thong.kotlin.pomodoro.features.focus.score.domain.FocusScoreCalculator
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.CompactSection
@@ -315,7 +316,10 @@ class AppViewModel(
         var updatedSession = session.copy(
             status = nextStatus,
             currentLearningMode = nextLearningMode,
-            completedWorkRounds = state.timerUiState.pomodorosToday
+            completedWorkRounds = state.timerUiState.pomodorosToday,
+            pausedCount = if (eventType == LearningSessionEventType.WORK_ROUND_PAUSED || eventType == LearningSessionEventType.BREAK_ROUND_PAUSED) {
+                session.pausedCount + 1
+            } else session.pausedCount
         )
 
         if (shouldStartTimer) {
@@ -461,7 +465,8 @@ class AppViewModel(
                 currentSession.copy(
                     status = LearningSessionStatus.PAUSED,
                     currentLearningMode = nextLearningMode,
-                    totalFocusSeconds = currentSession.totalFocusSeconds + elapsedSeconds
+                    totalFocusSeconds = currentSession.totalFocusSeconds + elapsedSeconds,
+                    skipCount = currentSession.skipCount + 1
                 )
             }
 
@@ -470,7 +475,8 @@ class AppViewModel(
                 currentSession.copy(
                     status = LearningSessionStatus.PAUSED,
                     currentLearningMode = nextLearningMode,
-                    totalBreakSeconds = currentSession.totalBreakSeconds + elapsedSeconds
+                    totalBreakSeconds = currentSession.totalBreakSeconds + elapsedSeconds,
+                    skipCount = currentSession.skipCount + 1
                 )
             }
         }
@@ -630,7 +636,11 @@ class AppViewModel(
 
             delay(2000)
 
-            toggleTimer()
+            if (userSettings.autoStartWork && currentMode == PomodoroMode.SHORT_BREAK) {
+                toggleTimer()
+            } else if (userSettings.autoStartBreak && currentMode == PomodoroMode.WORK) {
+                toggleTimer()
+            }
         }
     }
 
@@ -1105,12 +1115,30 @@ class AppViewModel(
     fun endSession(onComplete: () -> Unit) {
         val session = _uiState.value.currentSession
         val now = Clock.System.now().toEpochMilliseconds()
+
+        // Calculate Focus Score
+        val scoreResult = FocusScoreCalculator.calculate(
+            session = session,
+            pausedCount = session.pausedCount,
+            skippedCount = session.skipCount,
+        )
+
         val updatedSession = session.copy(
             status = LearningSessionStatus.COMPLETED,
+            focusScore = scoreResult.score,
             endedAtMillis = now,
             updatedAtMillis = now
         )
-        _uiState.update { it.copy(currentSession = updatedSession) }
+
+        _uiState.update {
+            it.copy(
+                currentSession = updatedSession,
+                workspaceUiState = it.workspaceUiState.copy(
+                    focusScoreResult = scoreResult
+                )
+            )
+        }
+
         viewModelScope.launch {
             try {
                 updateSession(updatedSession)
@@ -1121,6 +1149,7 @@ class AppViewModel(
                         metadata = mapOf(
                             "source" to "session_ui",
                             "action" to "session_completed_by_user",
+                            "score" to scoreResult.score.toString()
                         )
                     )
                 )
@@ -1128,7 +1157,6 @@ class AppViewModel(
                 repository.saveUserSettings(
                     userSettings.copy(currentSessionId = null)
                 )
-                onComplete()
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
@@ -1139,6 +1167,17 @@ class AppViewModel(
                 }
             }
         }
+    }
+
+    fun dismissFocusScore(onComplete: () -> Unit) {
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    focusScoreResult = null
+                )
+            )
+        }
+        onComplete()
     }
 
     fun pauseSession(onComplete: () -> Unit) {

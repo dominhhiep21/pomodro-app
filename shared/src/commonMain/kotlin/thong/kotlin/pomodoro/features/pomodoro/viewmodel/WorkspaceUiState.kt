@@ -11,6 +11,7 @@ import thong.kotlin.pomodoro.features.pomodoro.music.domain.MusicTrack
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.background.data.BackgroundRepository
 import thong.kotlin.pomodoro.features.background.model.AppBackground
+import thong.kotlin.pomodoro.features.focus.score.domain.FocusScoreResult
 
 data class WorkspaceUiState(
     val currentMode: PomodoroMode = PomodoroMode.WORK,
@@ -47,5 +48,8 @@ data class WorkspaceUiState(
     val settingsError: String = "",
 
     // Exit Modal
-    val isExitModalVisible: Boolean = false
+    val isExitModalVisible: Boolean = false,
+    
+    // Focus Score
+    val focusScoreResult: FocusScoreResult? = null
 )

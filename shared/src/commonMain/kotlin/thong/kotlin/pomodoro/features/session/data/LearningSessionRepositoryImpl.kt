@@ -95,6 +95,9 @@ class LearningSessionRepositoryImpl(
             total_focus_seconds = session.totalFocusSeconds.toLong(),
             total_break_seconds = session.totalBreakSeconds.toLong(),
             total_paused_seconds = session.totalPausedSeconds.toLong(),
+            paused_count = session.pausedCount.toLong(),
+            skip_count = session.skipCount.toLong(),
+            focus_score = session.focusScore.toLong(),
 
             created_at = session.createdAtMillis.toDateTimeText(),
             created_at_millis = session.createdAtMillis,
@@ -142,6 +145,9 @@ class LearningSessionRepositoryImpl(
                 total_focus_seconds = session.totalFocusSeconds.toLong(),
                 total_break_seconds = session.totalBreakSeconds.toLong(),
                 total_paused_seconds = session.totalPausedSeconds.toLong(),
+                paused_count = session.pausedCount.toLong(),
+                skip_count = session.skipCount.toLong(),
+                focus_score = session.focusScore.toLong(),
 
                 created_at = session.createdAtMillis.toDateTimeText(),
                 created_at_millis = session.createdAtMillis,

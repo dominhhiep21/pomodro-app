@@ -18,6 +18,7 @@ class LocalSettingsDataSourceV2(
         private const val KEY_AUTO_START_BREAK = "auto_start_break"
         private const val KEY_AUTO_START_WORK = "auto_start_work"
         private const val KEY_PERSONAL_SELECTED_BACKGROUND_ID = "personal_selected_background_id"
+        private const val KEY_PERSONAL_SELECTED_MUSIC_ID = "personal_selected_music_id"
         private const val KEY_HAS_COMPLETED_ONBOARDING = "has_completed_onboarding"
         private const val KEY_IS_NOTIFICATION_ENABLED = "is_notification_enabled"
         private const val KEY_DAILY_TARGET_MINUTES = "daily_target_minutes"
@@ -52,6 +53,9 @@ class LocalSettingsDataSourceV2(
             ),
             personalSelectedBackgroundId = settings.getStringOrNull(
                 key = KEY_PERSONAL_SELECTED_BACKGROUND_ID
+            ),
+            personalLastSelectedMusicId = settings.getStringOrNull(
+                key = KEY_PERSONAL_SELECTED_MUSIC_ID
             ),
             hasCompletedOnboarding = settings.getBoolean(
                 key = KEY_HAS_COMPLETED_ONBOARDING,
@@ -122,6 +126,15 @@ class LocalSettingsDataSourceV2(
             settings.putString(
                 key = KEY_PERSONAL_SELECTED_BACKGROUND_ID,
                 value = userSettings.personalSelectedBackgroundId
+            )
+        }
+
+        if (userSettings.personalLastSelectedMusicId == null) {
+            settings.remove(KEY_PERSONAL_SELECTED_MUSIC_ID)
+        } else {
+            settings.putString(
+                key = KEY_PERSONAL_SELECTED_MUSIC_ID,
+                value = userSettings.personalLastSelectedMusicId
             )
         }
 

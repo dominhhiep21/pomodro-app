@@ -95,7 +95,7 @@ class HomeUiViewModel(
         loadDataRecentActivitySection()
     }
 
-    private fun loadDataStatsSection() {
+    fun loadDataStatsSection() {
         viewModelScope.launch {
             val homeUiStats = learningSessionManager.getHomeDashboardStats()
             _uiState.update { state ->

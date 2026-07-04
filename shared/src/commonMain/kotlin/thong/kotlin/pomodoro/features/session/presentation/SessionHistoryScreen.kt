@@ -129,7 +129,8 @@ class SessionHistoryScreen : Screen {
                     navigator.push(
                         PomodoroScreenV2(
                             learningStyle = session.sessionMode,
-                            currentSessionId = session.sessionId
+                            currentSessionId = session.sessionId,
+                            isNewSession = false
                         )
                     )
                 },

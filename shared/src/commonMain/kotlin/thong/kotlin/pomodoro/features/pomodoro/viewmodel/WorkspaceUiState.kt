@@ -20,7 +20,7 @@ data class WorkspaceUiState(
     val isChatExpanded: Boolean = false,
 
     // Background
-    val selectedBackgroundId: String = BackgroundRepository.DEFAULT_BACKGROUND_ID,
+    val selectedBackgroundId: String? = BackgroundRepository.DEFAULT_BACKGROUND_ID,
     val availableBackgrounds: List<AppBackground> = BackgroundRepository.availableBackgrounds,
     val backgroundConfig: BackgroundConfig? = null,
 

@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -35,6 +34,7 @@ import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoro
 import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoroUI
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.PomodoroUiState
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettingsV2
 import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.ExitConfirmationModal
 import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.PomodoroSettingsModal
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.AppViewModel
@@ -45,7 +45,8 @@ import thong.kotlin.pomodoro.features.session.presentation.SessionHistoryScreen
 class PomodoroScreenV2(
     private val learningStyle: LearningStyle = LearningStyle.SOLO,
     private val learningGroupConfig: LearningGroupConfig? = null,
-    private val currentSessionId: String
+    private val currentSessionId: String,
+    private val isNewSession: Boolean
 ) : Screen {
 
     @Composable
@@ -53,6 +54,7 @@ class PomodoroScreenV2(
         val navigator = LocalNavigator.currentOrThrow
         val soundManager = DependencyRegistry.soundManager
         val learningSessionManager = DependencyRegistry.learningSessionManager
+        val userSettings: UserSettingsV2 = DependencyRegistry.userAppStateRepositoryV2.getUserSettings()
 
         val currentSession by produceState<LearningSessionRecord?>(
             initialValue = null,
@@ -61,16 +63,30 @@ class PomodoroScreenV2(
             value = learningSessionManager.getSessionById(currentSessionId)
         }
 
-        if (currentSession == null) {
-            Text("Loading session...")
-            return
+        val session = currentSession ?: return
+
+        val newCurrentSession: LearningSessionRecord = if (isNewSession) {
+            session.copy(
+                plannedWorkMinutes = userSettings.personalWorkMinutes,
+                plannedBreakMinutes = userSettings.personalBreakMinutes,
+                plannedLongBreakMinutes = userSettings.personalLongBreakMinutes,
+                lastBackgroundId = userSettings.personalSelectedBackgroundId,
+                lastMusicId = userSettings.personalLastSelectedMusicId
+            )
+        } else {
+            session.copy()
+        }
+
+        LaunchedEffect(Unit) {
+            learningSessionManager.updateSession(newCurrentSession)
         }
 
         val appViewModel: AppViewModel = viewModel(
             key = "AppViewModel_$currentSessionId"
         ) {
             AppViewModel(
-                currentSession = currentSession!!,
+                currentSession = newCurrentSession,
+                isNewSession = isNewSession,
                 soundManager = soundManager
             )
         }

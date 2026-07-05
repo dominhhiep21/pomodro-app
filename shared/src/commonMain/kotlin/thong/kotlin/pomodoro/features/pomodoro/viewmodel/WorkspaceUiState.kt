@@ -5,6 +5,7 @@ import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.CompactSection
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
+import thong.kotlin.pomodoro.features.pomodoro.ambient.data.AmbientSoundRepository
 import thong.kotlin.pomodoro.features.pomodoro.ambient.domain.AmbientSound
 import thong.kotlin.pomodoro.features.pomodoro.music.data.MusicRepository
 import thong.kotlin.pomodoro.features.pomodoro.music.domain.MusicTrack
@@ -12,6 +13,9 @@ import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.background.data.BackgroundRepository
 import thong.kotlin.pomodoro.features.background.model.AppBackground
 import thong.kotlin.pomodoro.features.focus.score.domain.FocusScoreResult
+import thong.kotlin.pomodoro.features.focus.tree.domain.FocusTreeGrowthResult
+import thong.kotlin.pomodoro.features.focus.tree.domain.FocusTreeRecord
+import thong.kotlin.pomodoro.features.focus.tree.presentation.animation.FocusTreeAnimationEvent
 
 data class WorkspaceUiState(
     val currentMode: PomodoroMode = PomodoroMode.WORK,
@@ -28,12 +32,12 @@ data class WorkspaceUiState(
     // Music
     val isMusicPlaying: Boolean = false,
     val selectedTrackId: String? = MusicRepository.DEFAULT_TRACK_ID,
-    val availableTracks: List<MusicTrack> = emptyList(), // Sử dụng MusicTrack
+    val availableTracks: List<MusicTrack> = MusicRepository.availableTracks,
     val musicPosition: Long = 0L,
 
     // Ambient Sounds
     val activeAmbientSoundIds: Set<String> = emptySet(),
-    val availableAmbientSounds: List<AmbientSound> = emptyList(), // Sử dụng AmbientSound
+    val availableAmbientSounds: List<AmbientSound> = AmbientSoundRepository.availableSounds,
 
     // UI Modes & Toggles
     val isCompactMode: Boolean = false,
@@ -51,5 +55,11 @@ data class WorkspaceUiState(
     val isExitModalVisible: Boolean = false,
     
     // Focus Score
-    val focusScoreResult: FocusScoreResult? = null
+    val focusScoreResult: FocusScoreResult? = null,
+    
+    // Focus Tree Reward
+    val focusTreeReward: Int? = null,
+    val focusTree: FocusTreeRecord? = FocusTreeRecord(),
+    val focusTreeAnimationEvent: FocusTreeAnimationEvent? = null,
+    val focusTreeGrowthResult: FocusTreeGrowthResult? = null
 )

@@ -5,9 +5,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import thong.kotlin.pomodoro.core.config.AppConfig.DEFAULT_FOCUS_TREE_ID
 import thong.kotlin.pomodoro.database.AuraDatabase
+import thong.kotlin.pomodoro.features.focus.tree.domain.FocusTreeGrowthResult
 import thong.kotlin.pomodoro.features.focus.tree.domain.FocusTreeRecord
 import thong.kotlin.pomodoro.features.focus.tree.domain.TreeGrowthStage
-import thong.kotlin.pomodoro.features.focus.tree.domain.growAfterWorkCompleted
+import thong.kotlin.pomodoro.features.focus.tree.domain.growAfterWorkCompletedWithResult
 import thong.kotlin.pomodoro.features.focus.tree.domain.toDomain
 import kotlin.time.Clock
 
@@ -53,31 +54,33 @@ class FocusTreeRepository(
     suspend fun growTreeAfterWorkCompleted(
         focusScore: Int,
         focusSeconds: Int
-    ): FocusTreeRecord {
+    ): FocusTreeGrowthResult {
         return withContext(ioDispatcher) {
             initFocusTreeIfNeeded()
 
             val currentTree = queries?.getFocusTree(DEFAULT_FOCUS_TREE_ID)
                 ?.executeAsOne()
-                ?.toDomain() ?: FocusTreeRecord()
+                ?.toDomain()
 
-            val updatedTree = currentTree.growAfterWorkCompleted(
+            val result = currentTree?.growAfterWorkCompletedWithResult(
                 focusScore = focusScore,
                 focusSeconds = focusSeconds
             )
 
+            val updatedTree = result?.newTree
+
             queries?.updateFocusTree(
-                growth_point = updatedTree.growthPoint.toLong(),
-                growth_stage = updatedTree.growthStage.name,
-                total_completed_work_rounds = updatedTree.totalCompletedWorkRounds.toLong(),
-                total_focus_seconds = updatedTree.totalFocusSeconds.toLong(),
-                average_focus_score = updatedTree.averageFocusScore.toLong(),
-                last_growth_at_millis = updatedTree.lastGrowthAtMillis,
-                updated_at_millis = updatedTree.updatedAtMillis,
-                tree_id = updatedTree.treeId
+                growth_point = updatedTree?.growthPoint?.toLong() ?: 0,
+                growth_stage = updatedTree?.growthStage?.name ?: "",
+                total_completed_work_rounds = updatedTree?.totalCompletedWorkRounds?.toLong() ?: 0,
+                total_focus_seconds = updatedTree?.totalFocusSeconds?.toLong() ?: 0,
+                average_focus_score = updatedTree?.averageFocusScore?.toLong() ?: 0,
+                last_growth_at_millis = updatedTree?.lastGrowthAtMillis,
+                updated_at_millis = updatedTree?.updatedAtMillis ?: 0,
+                tree_id = updatedTree?.treeId ?: ""
             )
 
-            updatedTree
+            result!!
         }
     }
 

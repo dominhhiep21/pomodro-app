@@ -2,14 +2,25 @@ package thong.kotlin.pomodoro.features.pomodoro._base
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Eco
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
@@ -31,11 +43,13 @@ import pomodrokotlin.shared.generated.resources.Res
 import pomodrokotlin.shared.generated.resources.startup_bg
 import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
 import thong.kotlin.pomodoro.core.designsystem.components.AuraButton
+import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.core.designsystem.theme.rememberBreathingEffect
 import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.focus.score.presentation.FocusScoreCard
+import thong.kotlin.pomodoro.features.focus.tree.presentation.components.AnimatedFocusTree
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro._base.components.LandscapeCompactUI
@@ -465,10 +479,7 @@ fun PomodoroScreenUIv2(
             totalPomodoroUiState.workspaceUiState.focusScoreResult?.let { result ->
                 Dialog(
                     onDismissRequest = {
-                        appViewModel.dismissFocusScore {
-                            soundManager?.stopAllSounds()
-                            navigator.replace(SessionHistoryScreen())
-                        }
+                        appViewModel.dismissFocusScore()
                     }
                 ) {
                     Column(
@@ -481,13 +492,167 @@ fun PomodoroScreenUIv2(
                         
                         AuraButton(
                             onClick = {
-                                appViewModel.dismissFocusScore {
-                                    soundManager?.stopAllSounds()
-                                    navigator.replace(SessionHistoryScreen())
-                                }
+                                appViewModel.dismissFocusScore()
                             }
                         ) {
                             Text("OK", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+
+            // Focus Tree Reward Modal
+            totalPomodoroUiState.workspaceUiState.focusTreeReward?.let { points ->
+                Dialog(
+                    onDismissRequest = {
+                        appViewModel.dismissFocusTreeReward {
+                            soundManager?.stopAllSounds()
+                            navigator.replace(SessionHistoryScreen())
+                        }
+                    }
+                ) {
+                    GlassBox(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        shape = RoundedCornerShape(28.dp),
+                        backgroundColor = AuraColors.BottomBarBackground.copy(alpha = 0.95f)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .background(AuraColors.ShortBreakMode.copy(alpha = 0.1f), CircleShape)
+                                    .border(1.dp, AuraColors.ShortBreakMode.copy(alpha = 0.3f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.Eco,
+                                    contentDescription = null,
+                                    tint = AuraColors.ShortBreakMode,
+                                    modifier = Modifier.size(40.dp)
+                                )
+                            }
+                            
+                            Spacer(modifier = Modifier.height(24.dp))
+                            
+                            Text(
+                                text = "PHẦN THƯỞNG!",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 2.sp
+                            )
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "+$points",
+                                    color = Color.White,
+                                    fontSize = 48.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Icon(
+                                    Icons.Default.AutoAwesome,
+                                    contentDescription = null,
+                                    tint = Color(0xFFFFD700),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            
+                            Text(
+                                text = "ĐIỂM FOCUS TREE",
+                                color = AuraColors.ShortBreakMode,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            
+                            Spacer(modifier = Modifier.height(24.dp))
+                            
+                            Text(
+                                text = "Chúc mừng! Bạn vừa đóng góp thêm năng lượng cho Focus Tree của mình.",
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 14.sp,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                lineHeight = 20.sp
+                            )
+                            
+                            Spacer(modifier = Modifier.height(32.dp))
+                            
+                            AuraButton(
+                                onClick = {
+                                    appViewModel.dismissFocusTreeReward {
+                                        soundManager?.stopAllSounds()
+                                        navigator.replace(SessionHistoryScreen())
+                                    }
+                                }
+                            ) {
+                                Text("TUYỆT VỜI", color = Color.White, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Focus Tree Growth Modal
+            totalPomodoroUiState.workspaceUiState.focusTreeGrowthResult?.let { result ->
+                if (result.stageChanged && totalPomodoroUiState.workspaceUiState.focusTreeReward == null) {
+                    Dialog(
+                        onDismissRequest = {
+                            appViewModel.dismissTreeGrowth()
+                        }
+                    ) {
+                        GlassBox(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            shape = RoundedCornerShape(28.dp),
+                            backgroundColor = AuraColors.BottomBarBackground.copy(alpha = 0.95f)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(32.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    "CÂY ĐÃ TĂNG TRƯỞNG!",
+                                    color = AuraColors.ShortBreakMode,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 1.sp
+                                )
+
+                                Spacer(modifier = Modifier.height(24.dp))
+
+                                AnimatedFocusTree(
+                                    focusTree = result.newTree,
+                                    animationEvent = null // We just want to show the new stage
+                                )
+
+                                Spacer(modifier = Modifier.height(24.dp))
+
+                                Text(
+                                    text = "Cây của bạn đã đạt đến giai đoạn ${result.newTree.growthStage.name}!",
+                                    color = Color.White,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                )
+
+                                Spacer(modifier = Modifier.height(32.dp))
+
+                                AuraButton(
+                                    onClick = {
+                                        appViewModel.dismissTreeGrowth()
+                                    }
+                                ) {
+                                    Text("TIẾP TỤC", color = Color.White, fontWeight = FontWeight.Bold)
+                                }
+                            }
                         }
                     }
                 }

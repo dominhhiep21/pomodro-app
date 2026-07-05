@@ -41,13 +41,16 @@ enum class TreeGrowthStage {
     BLOOMING_TREE   // Cây nở hoa
 }
 
-private fun calculateGrowthPoint(focusScore: Int): Int {
+fun calculateGrowthPoint(focusScore: Int): Int {
     return when {
         focusScore >= 90 -> 35
         focusScore >= 75 -> 25
         focusScore >= 60 -> 15
         focusScore >= 40 -> 8
-        else -> 3
+        focusScore >= 20 -> 4
+        focusScore >= 10 -> 2
+        focusScore > 0 -> 1
+        else -> 0
     }
 }
 
@@ -61,22 +64,23 @@ fun getTreeGrowthStage(growthPoint: Int): TreeGrowthStage {
     }
 }
 
-fun FocusTreeRecord.growAfterWorkCompleted(
+fun FocusTreeRecord.growAfterWorkCompletedWithResult(
     focusScore: Int,
     focusSeconds: Int
-): FocusTreeRecord {
+): FocusTreeGrowthResult {
+    val oldTree = this
     val addedGrowthPoint = calculateGrowthPoint(focusScore)
-
     val newGrowthPoint = growthPoint + addedGrowthPoint
     val newCompletedRounds = totalCompletedWorkRounds + 1
     val newTotalFocusSeconds = totalFocusSeconds + focusSeconds
+
 
     val newAverageFocusScore =
         ((averageFocusScore * totalCompletedWorkRounds) + focusScore) / newCompletedRounds
 
     val now = Clock.System.now().toEpochMilliseconds()
 
-    return copy(
+    val newTree = copy(
         growthPoint = newGrowthPoint,
         growthStage = getTreeGrowthStage(newGrowthPoint),
         totalCompletedWorkRounds = newCompletedRounds,
@@ -84,5 +88,13 @@ fun FocusTreeRecord.growAfterWorkCompleted(
         averageFocusScore = newAverageFocusScore,
         lastGrowthAtMillis = now,
         updatedAtMillis = now
+    )
+
+    return FocusTreeGrowthResult(
+        oldTree = oldTree,
+        newTree = newTree,
+        addedGrowthPoint = addedGrowthPoint,
+        focusScore = focusScore,
+        stageChanged = oldTree.growthStage != newTree.growthStage
     )
 }

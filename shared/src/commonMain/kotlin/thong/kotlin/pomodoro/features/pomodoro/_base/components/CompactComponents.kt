@@ -237,6 +237,7 @@ fun CompactSectionUiComponent(
                 onToggleTask = onToggleTask,
                 onNewTaskTextChange = onNewTaskTextChange,
                 useLazyColumn = true,
+                validationError = totallyPomodoroUiState.tasksUiState.taskValidationError,
                 modifier = Modifier.fillMaxSize()
             )
         }

@@ -32,6 +32,7 @@ import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
  */
 @Composable
 fun TaskSideBar(
+    modifier: Modifier = Modifier,
     sessionTasks: List<SessionTask>,
     isExpanded: Boolean,
     onToggleExpand: () -> Unit,
@@ -40,7 +41,7 @@ fun TaskSideBar(
     onDeleteTask: (String) -> Unit,
     onToggleTask: (String) -> Unit,
     onNewTaskTextChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
+    taskValidationError: String? = null,
 ) {
     // Shared animation spec for synchronized motion
     val animationSpec = spring<Dp>(
@@ -131,6 +132,7 @@ fun TaskSideBar(
                                 onToggleTask = onToggleTask,
                                 onNewTaskTextChange = onNewTaskTextChange,
                                 useLazyColumn = true,
+                                validationError = taskValidationError,
                                 modifier = Modifier.weight(1f)
                             )
                         }

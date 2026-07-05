@@ -62,6 +62,7 @@ import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoro
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.PomodoroUiState
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettingsV2
+import thong.kotlin.pomodoro.features.pomodoro.task.components.MandatoryTaskModal
 import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.ExitConfirmationModal
 import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.PomodoroSettingsModal
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.AppViewModel
@@ -473,6 +474,22 @@ fun PomodoroScreenUIv2(
                             navigator.replace(SessionHistoryScreen())
                         }
                     }
+                )
+            }
+
+            // Mandatory Task Modal
+            if (totalPomodoroUiState.workspaceUiState.isMandatoryTaskModalVisible) {
+                MandatoryTaskModal(
+                    totallyPomodoroUiState = totalPomodoroUiState,
+                    onAddTask = appViewModel::addTask,
+                    onDeleteTask = appViewModel::deleteTask,
+                    onToggleTask = appViewModel::toggleTask,
+                    onNewTaskTextChange = appViewModel::onNewTaskTextChange,
+                    onStartFocus = {
+                        appViewModel.toggleMandatoryTaskModal()
+                        appViewModel.toggleTimer()
+                    },
+                    onDismiss = appViewModel::toggleMandatoryTaskModal
                 )
             }
 

@@ -1,10 +1,12 @@
 package thong.kotlin.pomodoro.features.pomodoro.task.components
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
@@ -15,8 +17,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import thong.kotlin.pomodoro.core.designsystem.components.AuraButton
 import thong.kotlin.pomodoro.core.designsystem.components.AuraInputField
+import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.SessionTask
 import thong.kotlin.pomodoro.features.pomodoro._base.components.BreakEndBannerSmall
 
@@ -30,7 +34,8 @@ fun CompactTaskSectionComponent(
     onToggleTask: (String) -> Unit,
     onNewTaskTextChange: (String) -> Unit,
     showBreakEndBanner: Boolean = false,
-    useLazyColumn: Boolean = true
+    useLazyColumn: Boolean = true,
+    validationError: String? = null,
 ) {
     val focusManager = LocalFocusManager.current
 
@@ -51,6 +56,21 @@ fun CompactTaskSectionComponent(
                 }
             }
         )
+
+        AnimatedVisibility(
+            visible = validationError != null,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            validationError?.let {
+                Text(
+                    text = it,
+                    color = AuraColors.WorkMode,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(start = 12.dp, top = 4.dp)
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 

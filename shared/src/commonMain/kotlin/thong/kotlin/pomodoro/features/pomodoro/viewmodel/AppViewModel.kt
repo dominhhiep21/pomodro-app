@@ -302,6 +302,12 @@ class AppViewModel(
             }
 
             !state.timerUiState.isActive && currentMode == PomodoroMode.WORK && isStartOfRound -> {
+                // Check if there are tasks before starting a new work round
+                if (state.tasksUiState.sessionTasks.isEmpty()) {
+                    toggleMandatoryTaskModal()
+                    return
+                }
+                
                 eventType = LearningSessionEventType.WORK_ROUND_STARTED
                 action = "start_work"
                 nextStatus = LearningSessionStatus.RUNNING
@@ -1130,6 +1136,16 @@ class AppViewModel(
         }
     }
 
+    fun toggleMandatoryTaskModal() {
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    isMandatoryTaskModalVisible = !it.workspaceUiState.isMandatoryTaskModalVisible
+                )
+            )
+        }
+    }
+
     fun endSession() {
         val session = _uiState.value.currentSession
         val now = Clock.System.now().toEpochMilliseconds()
@@ -1321,7 +1337,8 @@ class AppViewModel(
         _uiState.update {
             it.copy(
                 tasksUiState = it.tasksUiState.copy(
-                    newTaskText = text
+                    newTaskText = text,
+                    taskValidationError = null
                 )
             )
         }
@@ -1332,17 +1349,18 @@ class AppViewModel(
         val currentSession = currentState.currentSession
         val text = _uiState.value.tasksUiState.newTaskText
 
-        if (text.isNotBlank()) {
+        if (text.trim().length > 3) {
             val newSessionTask = SessionTask(
                 sessionId = currentSession.sessionId,
-                title = text
+                title = text.trim()
             )
 
             _uiState.update {
                 it.copy(
                     tasksUiState = it.tasksUiState.copy(
                         sessionTasks = it.tasksUiState.sessionTasks + newSessionTask,
-                        newTaskText = ""
+                        newTaskText = "",
+                        taskValidationError = null
                     )
                 )
             }
@@ -1360,6 +1378,25 @@ class AppViewModel(
                         )
                     )
                 )
+            }
+        } else {
+            _uiState.update {
+                it.copy(
+                    tasksUiState = it.tasksUiState.copy(
+                        taskValidationError = "Công việc phải có nhiều hơn 3 ký tự"
+                    )
+                )
+            }
+            
+            viewModelScope.launch {
+                delay(3000)
+                _uiState.update {
+                    it.copy(
+                        tasksUiState = it.tasksUiState.copy(
+                            taskValidationError = null
+                        )
+                    )
+                }
             }
         }
     }

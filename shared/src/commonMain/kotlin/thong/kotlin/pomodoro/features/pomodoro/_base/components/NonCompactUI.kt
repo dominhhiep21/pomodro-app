@@ -128,6 +128,7 @@ fun LandscapePomodoroUI(
             onDeleteTask = onDeleteTask,
             onToggleTask = onToggleTask,
             onNewTaskTextChange = onNewTaskTextChange,
+            taskValidationError = totallyPomodoroUiState.tasksUiState.taskValidationError,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(bottom = 16.dp, end = 16.dp)
@@ -244,6 +245,7 @@ fun LandscapePomodoroGroupUI(
                 onDeleteTask = onDeleteTask,
                 onToggleTask = onToggleTask,
                 onNewTaskTextChange = onNewTaskTextChange,
+                taskValidationError = totallyPomodoroUiState.tasksUiState.taskValidationError,
             )
         }
     }
@@ -333,6 +335,7 @@ fun PortraitPomodoroUI(
             onDeleteTask = onDeleteTask,
             onToggleTask = onToggleTask,
             onNewTaskTextChange = onNewTaskTextChange,
+            taskValidationError = totallyPomodoroUiState.tasksUiState.taskValidationError,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
@@ -433,6 +436,7 @@ fun PortraitPomodoroGroupUI(
             onDeleteTask = onDeleteTask,
             onToggleTask = onToggleTask,
             onNewTaskTextChange = onNewTaskTextChange,
+            taskValidationError = totallyPomodoroUiState.tasksUiState.taskValidationError,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)

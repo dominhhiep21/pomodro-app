@@ -13,7 +13,12 @@ import thong.kotlin.pomodoro.core.config.AppConfig
 import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.core.notification.NotificationManager
 import thong.kotlin.pomodoro.di.DependencyRegistry
+import thong.kotlin.pomodoro.features.background.data.BackgroundRepository
 import thong.kotlin.pomodoro.features.background.model.BackgroundConfig
+import thong.kotlin.pomodoro.features.focus.score.domain.FocusScoreCalculator
+import thong.kotlin.pomodoro.features.focus.tree.data.FocusTreeRepository
+import thong.kotlin.pomodoro.features.focus.tree.domain.calculateGrowthPoint
+import thong.kotlin.pomodoro.features.focus.tree.presentation.animation.FocusTreeAnimationEvent
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.CompactSection
@@ -31,7 +36,6 @@ import thong.kotlin.pomodoro.features.session.domain.LearningSessionEvent
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionEventType
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
-import thong.kotlin.pomodoro.features.background.data.BackgroundRepository
 import kotlin.time.Clock
 
 data class TotallyPomodoroUiState(
@@ -47,6 +51,7 @@ class AppViewModel(
     private val notificationManager: NotificationManager? = DependencyRegistry.notificationManager,
     private val repository: UserAppStateRepositoryV2 = DependencyRegistry.userAppStateRepositoryV2,
     private val learningSessionManager: LearningSessionManager = DependencyRegistry.learningSessionManager,
+    private val focusTreeRepository: FocusTreeRepository = DependencyRegistry.focusTreeRepository,
     private val currentSession: LearningSessionRecord,
     private val isNewSession: Boolean,
 ) : ViewModel() {
@@ -77,6 +82,7 @@ class AppViewModel(
         loadInitialTimerStateData()
         loadWorkspaceSettings()
         loadTasks()
+        loadFocusTree()
     }
 
     private fun loadInitialTimerStateData() {
@@ -128,7 +134,7 @@ class AppViewModel(
                 repository.getSettingsFlow().collect { settings ->
                     _uiState.update { state ->
                         state.copy(
-                            workspaceUiState = _uiState.value.workspaceUiState.copy(
+                            workspaceUiState = state.workspaceUiState.copy(
                                 availableTracks = MusicRepository.availableTracks,
                                 availableAmbientSounds = AmbientSoundRepository.availableSounds,
                                 availableBackgrounds = BackgroundRepository.availableBackgrounds,
@@ -143,7 +149,7 @@ class AppViewModel(
                 // Load danh sách dữ liệu tĩnh từ 3 Object Repositories
                 _uiState.update { state ->
                     state.copy(
-                        workspaceUiState = _uiState.value.workspaceUiState.copy(
+                        workspaceUiState = state.workspaceUiState.copy(
                             availableTracks = MusicRepository.availableTracks,
                             availableAmbientSounds = AmbientSoundRepository.availableSounds,
                             availableBackgrounds = BackgroundRepository.availableBackgrounds,
@@ -166,6 +172,19 @@ class AppViewModel(
                 state.copy(
                     tasksUiState = state.tasksUiState.copy(
                         sessionTasks = tasks
+                    )
+                )
+            }
+        }
+    }
+
+    private fun loadFocusTree() {
+        viewModelScope.launch {
+            val focusTree = focusTreeRepository.getFocusTree()
+            _uiState.update { state ->
+                state.copy(
+                    workspaceUiState = state.workspaceUiState.copy(
+                        focusTree = focusTree
                     )
                 )
             }
@@ -315,7 +334,10 @@ class AppViewModel(
         var updatedSession = session.copy(
             status = nextStatus,
             currentLearningMode = nextLearningMode,
-            completedWorkRounds = state.timerUiState.pomodorosToday
+            completedWorkRounds = state.timerUiState.pomodorosToday,
+            pausedCount = if (eventType == LearningSessionEventType.WORK_ROUND_PAUSED || eventType == LearningSessionEventType.BREAK_ROUND_PAUSED) {
+                session.pausedCount + 1
+            } else session.pausedCount
         )
 
         if (shouldStartTimer) {
@@ -461,7 +483,8 @@ class AppViewModel(
                 currentSession.copy(
                     status = LearningSessionStatus.PAUSED,
                     currentLearningMode = nextLearningMode,
-                    totalFocusSeconds = currentSession.totalFocusSeconds + elapsedSeconds
+                    totalFocusSeconds = currentSession.totalFocusSeconds + elapsedSeconds,
+                    skipCount = currentSession.skipCount + 1
                 )
             }
 
@@ -470,7 +493,8 @@ class AppViewModel(
                 currentSession.copy(
                     status = LearningSessionStatus.PAUSED,
                     currentLearningMode = nextLearningMode,
-                    totalBreakSeconds = currentSession.totalBreakSeconds + elapsedSeconds
+                    totalBreakSeconds = currentSession.totalBreakSeconds + elapsedSeconds,
+                    skipCount = currentSession.skipCount + 1
                 )
             }
         }
@@ -630,7 +654,11 @@ class AppViewModel(
 
             delay(2000)
 
-            toggleTimer()
+            if (userSettings.autoStartWork && currentMode == PomodoroMode.SHORT_BREAK) {
+                toggleTimer()
+            } else if (userSettings.autoStartBreak && currentMode == PomodoroMode.WORK) {
+                toggleTimer()
+            }
         }
     }
 
@@ -1102,18 +1130,37 @@ class AppViewModel(
         }
     }
 
-    fun endSession(onComplete: () -> Unit) {
+    fun endSession() {
         val session = _uiState.value.currentSession
         val now = Clock.System.now().toEpochMilliseconds()
+
+        // Calculate Focus Score
+        val scoreResult = FocusScoreCalculator.calculate(
+            session = session,
+            pausedCount = session.pausedCount,
+            skippedCount = session.skipCount,
+        )
+
         val updatedSession = session.copy(
             status = LearningSessionStatus.COMPLETED,
+            focusScore = scoreResult.score,
             endedAtMillis = now,
             updatedAtMillis = now
         )
-        _uiState.update { it.copy(currentSession = updatedSession) }
+
+        _uiState.update {
+            it.copy(
+                currentSession = updatedSession,
+                workspaceUiState = it.workspaceUiState.copy(
+                    focusScoreResult = scoreResult
+                )
+            )
+        }
+
         viewModelScope.launch {
             try {
                 updateSession(updatedSession)
+                val updatedFocusTreeResult = updateFocusTreeResult(scoreResult.score, session.totalFocusSeconds)
                 insertEvent(
                     LearningSessionEvent(
                         sessionId = updatedSession.sessionId,
@@ -1121,6 +1168,7 @@ class AppViewModel(
                         metadata = mapOf(
                             "source" to "session_ui",
                             "action" to "session_completed_by_user",
+                            "score" to scoreResult.score.toString()
                         )
                     )
                 )
@@ -1128,7 +1176,22 @@ class AppViewModel(
                 repository.saveUserSettings(
                     userSettings.copy(currentSessionId = null)
                 )
-                onComplete()
+
+                _uiState.update {
+                    it.copy(
+                        workspaceUiState = it.workspaceUiState.copy(
+                            focusTree = updatedFocusTreeResult.newTree,
+                            focusTreeAnimationEvent = FocusTreeAnimationEvent(
+                                addedGrowthPoint = updatedFocusTreeResult.addedGrowthPoint,
+                                focusScore = updatedFocusTreeResult.focusScore,
+                                oldStage = updatedFocusTreeResult.oldTree.growthStage,
+                                newStage = updatedFocusTreeResult.newTree.growthStage,
+                                stageChanged = updatedFocusTreeResult.stageChanged
+                            ),
+                            focusTreeGrowthResult = updatedFocusTreeResult
+                        )
+                    )
+                }
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
@@ -1138,6 +1201,41 @@ class AppViewModel(
                     )
                 }
             }
+        }
+    }
+
+    fun dismissFocusScore() {
+        val focusTreeReward = calculateGrowthPoint(_uiState.value.workspaceUiState.focusScoreResult?.score ?: 0)
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    focusScoreResult = null,
+                    focusTreeReward = focusTreeReward,
+                    isFocusTreeGrowthAnimationVisible = true
+                )
+            )
+        }
+    }
+
+    fun dismissFocusTreeReward(onComplete: () -> Unit) {
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    focusTreeReward = null
+                )
+            )
+        }
+        onComplete()
+    }
+
+    fun dismissTreeGrowth() {
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    focusTreeGrowthResult = null,
+                    isFocusTreeGrowthAnimationVisible = false
+                )
+            )
         }
     }
 
@@ -1387,4 +1485,6 @@ class AppViewModel(
     suspend fun updateTask(task: SessionTask) = learningSessionManager.updateTask(task)
 
     suspend fun deleteTask(taskId: String, sessionId: String) = learningSessionManager.deleteTaskById(taskId, sessionId)
+
+    suspend fun updateFocusTreeResult(focusScore: Int, focusSeconds: Int) = focusTreeRepository.growTreeAfterWorkCompleted(focusScore, focusSeconds)
 }

@@ -14,4 +14,6 @@ object AppConfig {
 
     const val DEFAULT_POMODORO_MINI_SERVER_URL = "http://localhost:8999"
 
+    const val DEFAULT_FOCUS_TREE_ID = "main_focus_tree"
+
 }

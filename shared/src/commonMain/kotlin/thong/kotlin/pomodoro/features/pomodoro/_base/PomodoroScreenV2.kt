@@ -2,16 +2,39 @@ package thong.kotlin.pomodoro.features.pomodoro._base
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Eco
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
@@ -20,10 +43,14 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import pomodrokotlin.shared.generated.resources.Res
 import pomodrokotlin.shared.generated.resources.startup_bg
 import thong.kotlin.pomodoro.core.designsystem.components.AuraBackground
+import thong.kotlin.pomodoro.core.designsystem.components.AuraButton
+import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.core.designsystem.theme.rememberBreathingEffect
 import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.di.DependencyRegistry
+import thong.kotlin.pomodoro.features.focus.score.presentation.FocusScoreCard
+import thong.kotlin.pomodoro.features.focus.tree.presentation.components.AnimatedFocusTree
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro._base.components.LandscapeCompactUI
@@ -432,10 +459,7 @@ fun PomodoroScreenUIv2(
                 ExitConfirmationModal(
                     onDismiss = appViewModel::toggleExitModal,
                     onEndSession = {
-                        appViewModel.endSession {
-                            soundManager?.stopAllSounds()
-                            navigator.replace(SessionHistoryScreen())
-                        }
+                        appViewModel.endSession()
                     },
                     onPauseSession = {
                         appViewModel.pauseSession {
@@ -450,6 +474,189 @@ fun PomodoroScreenUIv2(
                         }
                     }
                 )
+            }
+
+            // Focus Score Modal
+            totalPomodoroUiState.workspaceUiState.focusScoreResult?.let { result ->
+                Dialog(
+                    onDismissRequest = {
+                        appViewModel.dismissFocusScore()
+                    }
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        FocusScoreCard(result = result)
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
+                        AuraButton(
+                            onClick = {
+                                appViewModel.dismissFocusScore()
+                            }
+                        ) {
+                            Text("OK", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+
+            // Focus Tree Reward Modal
+            totalPomodoroUiState.workspaceUiState.focusTreeReward?.let { points ->
+                Dialog(
+                    onDismissRequest = {
+                        appViewModel.dismissFocusTreeReward {
+                            soundManager?.stopAllSounds()
+                            navigator.replace(SessionHistoryScreen())
+                        }
+                    }
+                ) {
+                    GlassBox(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        shape = RoundedCornerShape(28.dp),
+                        backgroundColor = AuraColors.BottomBarBackground.copy(alpha = 0.95f)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(32.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .background(AuraColors.ShortBreakMode.copy(alpha = 0.1f), CircleShape)
+                                    .border(1.dp, AuraColors.ShortBreakMode.copy(alpha = 0.3f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.Eco,
+                                    contentDescription = null,
+                                    tint = AuraColors.ShortBreakMode,
+                                    modifier = Modifier.size(40.dp)
+                                )
+                            }
+                            
+                            Spacer(modifier = Modifier.height(24.dp))
+                            
+                            Text(
+                                text = "PHẦN THƯỞNG!",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 2.sp
+                            )
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "+$points",
+                                    color = Color.White,
+                                    fontSize = 48.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Icon(
+                                    Icons.Default.AutoAwesome,
+                                    contentDescription = null,
+                                    tint = Color(0xFFFFD700),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            
+                            Text(
+                                text = "ĐIỂM FOCUS TREE",
+                                color = AuraColors.ShortBreakMode,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            
+                            Spacer(modifier = Modifier.height(24.dp))
+                            
+                            Text(
+                                text = "Chúc mừng! Bạn vừa đóng góp thêm năng lượng cho Focus Tree của mình.",
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 14.sp,
+                                textAlign = TextAlign.Center,
+                                lineHeight = 20.sp
+                            )
+                            
+                            Spacer(modifier = Modifier.height(32.dp))
+                            
+                            AuraButton(
+                                onClick = {
+                                    appViewModel.dismissFocusTreeReward {
+                                        soundManager?.stopAllSounds()
+                                        navigator.replace(SessionHistoryScreen())
+                                    }
+                                }
+                            ) {
+                                Text("TUYỆT VỜI", color = Color.White, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Focus Tree Growth Modal
+            totalPomodoroUiState.workspaceUiState.focusTreeGrowthResult?.let { result ->
+                if (result.stageChanged && totalPomodoroUiState.workspaceUiState.isFocusTreeGrowthAnimationVisible) {
+                    Dialog(
+                        onDismissRequest = {
+                            appViewModel.dismissTreeGrowth()
+                        }
+                    ) {
+                        GlassBox(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            shape = RoundedCornerShape(28.dp),
+                            backgroundColor = AuraColors.BottomBarBackground.copy(alpha = 0.95f)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(32.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    "CÂY ĐÃ TĂNG TRƯỞNG!",
+                                    color = AuraColors.ShortBreakMode,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 1.sp
+                                )
+
+                                Spacer(modifier = Modifier.height(24.dp))
+
+                                AnimatedFocusTree(
+                                    focusTree = result.newTree,
+                                    animationEvent = totalPomodoroUiState.workspaceUiState.focusTreeAnimationEvent
+                                )
+
+                                Spacer(modifier = Modifier.height(24.dp))
+
+                                Text(
+                                    text = "Cây của bạn đã đạt đến giai đoạn ${result.newTree.growthStage.name}!",
+                                    color = Color.White,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    textAlign = TextAlign.Center
+                                )
+
+                                Spacer(modifier = Modifier.height(32.dp))
+
+                                AuraButton(
+                                    onClick = {
+                                        appViewModel.dismissTreeGrowth()
+                                    }
+                                ) {
+                                    Text("TIẾP TỤC", color = Color.White, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

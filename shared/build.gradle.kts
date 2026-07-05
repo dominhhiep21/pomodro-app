@@ -85,6 +85,8 @@ kotlin {
             implementation(libs.sqldelight.coroutines)
             implementation(libs.sqldelight.runtime)
             implementation(libs.kotlinx.datetime)
+            implementation(libs.compottie)
+            implementation("org.slf4j:slf4j-simple:2.0.18")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

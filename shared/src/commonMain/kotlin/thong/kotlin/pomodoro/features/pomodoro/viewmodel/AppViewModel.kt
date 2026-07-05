@@ -1210,7 +1210,8 @@ class AppViewModel(
             it.copy(
                 workspaceUiState = it.workspaceUiState.copy(
                     focusScoreResult = null,
-                    focusTreeReward = focusTreeReward
+                    focusTreeReward = focusTreeReward,
+                    isFocusTreeGrowthAnimationVisible = true
                 )
             )
         }
@@ -1231,7 +1232,8 @@ class AppViewModel(
         _uiState.update {
             it.copy(
                 workspaceUiState = it.workspaceUiState.copy(
-                    focusTreeGrowthResult = null
+                    focusTreeGrowthResult = null,
+                    isFocusTreeGrowthAnimationVisible = false
                 )
             )
         }

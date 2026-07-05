@@ -50,7 +50,7 @@ fun calculateGrowthPoint(focusScore: Int): Int {
         focusScore >= 20 -> 4
         focusScore >= 10 -> 2
         focusScore > 0 -> 1
-        else -> 0
+        else -> 50
     }
 }
 

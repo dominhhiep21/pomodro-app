@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -578,7 +579,7 @@ fun PomodoroScreenUIv2(
                                 text = "Chúc mừng! Bạn vừa đóng góp thêm năng lượng cho Focus Tree của mình.",
                                 color = Color.White.copy(alpha = 0.7f),
                                 fontSize = 14.sp,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                textAlign = TextAlign.Center,
                                 lineHeight = 20.sp
                             )
                             
@@ -601,7 +602,7 @@ fun PomodoroScreenUIv2(
 
             // Focus Tree Growth Modal
             totalPomodoroUiState.workspaceUiState.focusTreeGrowthResult?.let { result ->
-                if (result.stageChanged && totalPomodoroUiState.workspaceUiState.focusTreeReward == null) {
+                if (result.stageChanged && totalPomodoroUiState.workspaceUiState.isFocusTreeGrowthAnimationVisible) {
                     Dialog(
                         onDismissRequest = {
                             appViewModel.dismissTreeGrowth()
@@ -630,7 +631,7 @@ fun PomodoroScreenUIv2(
 
                                 AnimatedFocusTree(
                                     focusTree = result.newTree,
-                                    animationEvent = null // We just want to show the new stage
+                                    animationEvent = totalPomodoroUiState.workspaceUiState.focusTreeAnimationEvent
                                 )
 
                                 Spacer(modifier = Modifier.height(24.dp))
@@ -640,7 +641,7 @@ fun PomodoroScreenUIv2(
                                     color = Color.White,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Medium,
-                                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                    textAlign = TextAlign.Center
                                 )
 
                                 Spacer(modifier = Modifier.height(32.dp))

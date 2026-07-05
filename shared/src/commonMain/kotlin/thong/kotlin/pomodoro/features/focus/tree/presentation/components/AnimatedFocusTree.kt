@@ -1,6 +1,9 @@
 package thong.kotlin.pomodoro.features.focus.tree.presentation.components
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -16,8 +19,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.unit.dp
+import io.github.alexzhirkevich.compottie.Compottie
 import io.github.alexzhirkevich.compottie.LottieCompositionSpec
-import io.github.alexzhirkevich.compottie.animateLottieCompositionAsState
+import io.github.alexzhirkevich.compottie.rememberLottieAnimatable
 import io.github.alexzhirkevich.compottie.rememberLottieComposition
 import io.github.alexzhirkevich.compottie.rememberLottiePainter
 import org.jetbrains.compose.resources.painterResource
@@ -37,33 +41,46 @@ fun AnimatedFocusTree(
     focusTree: FocusTreeRecord,
     animationEvent: FocusTreeAnimationEvent?
 ) {
-    var isGrowing by remember { mutableStateOf(false) }
-
-    val treeScale by animateFloatAsState(
-        targetValue = if (isGrowing) 1.12f else 1f,
-        animationSpec = tween(durationMillis = 450),
-        label = "treeScale"
-    )
-
-    val growComposition by rememberLottieComposition {
+    val composition by rememberLottieComposition {
         LottieCompositionSpec.JsonString(
             Res.readBytes("files/animations/tree_grow.json").decodeToString()
         )
     }
 
-    val growProgress by animateLottieCompositionAsState(
-        composition = growComposition,
-        iterations = 1,
-        isPlaying = isGrowing,
-        restartOnPlay = true
+    val animatable = rememberLottieAnimatable()
+
+    var isGrowing by remember { mutableStateOf(false) }
+
+    val infiniteTransition = rememberInfiniteTransition(label = "treeInfiniteScale")
+
+    val treeScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.12f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 700),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "treeScale"
     )
 
-    LaunchedEffect(animationEvent?.id) {
-        if (animationEvent != null) {
-            isGrowing = true
-            kotlinx.coroutines.delay(450)
-            isGrowing = false
-        }
+    LaunchedEffect(animationEvent?.id, composition) {
+        if (animationEvent == null) return@LaunchedEffect
+        if (composition == null) return@LaunchedEffect
+
+        isGrowing = true
+
+        animatable.snapTo(
+            composition = composition,
+            progress = 0f
+        )
+
+        animatable.animate(
+            composition = composition,
+            iterations = Compottie.IterateForever
+        )
+
+        // Không cần dòng này nữa vì animation chạy vô hạn
+        // isGrowing = false
     }
 
     Box(
@@ -78,11 +95,11 @@ fun AnimatedFocusTree(
                 .scale(treeScale)
         )
 
-        if (isGrowing && growComposition != null) {
+        if (composition != null && isGrowing) {
             Image(
                 painter = rememberLottiePainter(
-                    composition = growComposition,
-                    progress = { growProgress }
+                    composition = composition,
+                    progress = { animatable.progress }
                 ),
                 contentDescription = null,
                 modifier = Modifier.size(180.dp)

@@ -61,5 +61,6 @@ data class WorkspaceUiState(
     val focusTreeReward: Int? = null,
     val focusTree: FocusTreeRecord? = FocusTreeRecord(),
     val focusTreeAnimationEvent: FocusTreeAnimationEvent? = null,
-    val focusTreeGrowthResult: FocusTreeGrowthResult? = null
+    val focusTreeGrowthResult: FocusTreeGrowthResult? = null,
+    val isFocusTreeGrowthAnimationVisible: Boolean = false
 )

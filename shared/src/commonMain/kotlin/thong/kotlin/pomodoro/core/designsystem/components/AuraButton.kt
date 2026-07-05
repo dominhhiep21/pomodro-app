@@ -25,13 +25,14 @@ fun AuraButton(
     fillContent: Boolean = false,
     horizontalPadding: Dp = 24.dp,
     verticalPadding: Dp = 14.dp,
+    enabled: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
 
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.95f else 1.0f,
+        targetValue = if (isPressed && enabled) 0.95f else 1.0f,
         label = "ButtonScaleAnimation"
     )
 
@@ -49,6 +50,7 @@ fun AuraButton(
             .graphicsLayer(scaleX = scale, scaleY = scale)
             .clip(RoundedCornerShape(20.dp))
             .clickable(
+                enabled = enabled,
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick
@@ -56,7 +58,9 @@ fun AuraButton(
         shape = RoundedCornerShape(20.dp)
     ) {
         Box(
-            modifier = contentModifier,
+            modifier = contentModifier.graphicsLayer {
+                alpha = if (enabled) 1f else 0.4f
+            },
             contentAlignment = Alignment.Center
         ) {
             content()

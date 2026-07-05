@@ -331,6 +331,8 @@ CREATE TABLE IF NOT EXISTS session_task (
 
     title TEXT NOT NULL,
     is_completed INTEGER NOT NULL DEFAULT 0,
+    task_status TEXT NOT NULL DEFAULT 'IDLE',
+    task_position INTEGER NOT NULL DEFAULT 0,
 
     focus_seconds INTEGER NOT NULL DEFAULT 0,
 
@@ -347,25 +349,29 @@ INSERT INTO session_task(
     session_id,
     title,
     is_completed,
+    task_status,
+    task_position,
     focus_seconds,
     created_at,
     updated_at,
     completed_at,
     sync_status
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 selectTasksBySessionId:
 SELECT *
 FROM session_task
 WHERE session_id = ?
-ORDER BY created_at ASC;
+ORDER BY task_position ASC, created_at ASC;
 
 updateTask:
 UPDATE session_task
 SET session_id = ?,
     title = ?,
     is_completed = ?,
+    task_status = ?,
+    task_position = ?,
     focus_seconds = ?,
     updated_at = ?,
     completed_at = ?,

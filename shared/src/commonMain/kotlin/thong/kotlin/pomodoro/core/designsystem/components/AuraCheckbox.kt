@@ -27,7 +27,8 @@ fun AuraCheckbox(
     onCheckedChange: (Boolean) -> Unit,
     activeColor: Color,
     modifier: Modifier = Modifier,
-    size: Dp = 24.dp
+    size: Dp = 24.dp,
+    enabled: Boolean = true
 ) {
     // Tự động mượt hóa màu nền từ trong suốt sang màu chủ đạo
     val backgroundColor by animateColorAsState(
@@ -49,9 +50,9 @@ fun AuraCheckbox(
             .size(size)
             .graphicsLayer(scaleX = scale, scaleY = scale)
             .clip(CircleShape)
-            .background(backgroundColor)
-            .border(1.dp, borderColor, CircleShape)
-            .clickable { onCheckedChange(!checked) },
+            .background(backgroundColor.copy(alpha = if (enabled) 1f else 0.3f))
+            .border(1.dp, borderColor.copy(alpha = if (enabled) borderColor.alpha else 0.1f), CircleShape)
+            .clickable(enabled = enabled) { onCheckedChange(!checked) },
         contentAlignment = Alignment.Center
     ) {
         if (checked) {

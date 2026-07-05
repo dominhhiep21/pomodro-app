@@ -46,6 +46,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
 import thong.kotlin.pomodoro.features.background.presentation.components.CompactBackgroundSection
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.CompactSection
 import thong.kotlin.pomodoro.features.pomodoro.ambient.presentation.components.CompactAmbientSoundSection
@@ -221,6 +222,8 @@ fun CompactSectionUiComponent(
     onAddTask: () -> Unit,
     onDeleteTask: (String) -> Unit,
     onToggleTask: (String) -> Unit,
+    onMoveTaskUp: (String) -> Unit,
+    onMoveTaskDown: (String) -> Unit,
     onNewTaskTextChange: (String) -> Unit,
     onWorkChange: (String) -> Unit,
     onBreakChange: (String) -> Unit,
@@ -229,14 +232,19 @@ fun CompactSectionUiComponent(
 ) {
     when (section) {
         CompactSection.TASKS -> {
+            val isReadOnly = totallyPomodoroUiState.timerUiState.isActive && totallyPomodoroUiState.currentMode == PomodoroMode.WORK
             CompactTaskSectionComponent(
                 sessionTasks = totallyPomodoroUiState.tasksUiState.sessionTasks,
                 newTaskText = totallyPomodoroUiState.tasksUiState.newTaskText,
                 onAddTask = onAddTask,
                 onDeleteTask = onDeleteTask,
                 onToggleTask = onToggleTask,
+                onMoveTaskUp = onMoveTaskUp,
+                onMoveTaskDown = onMoveTaskDown,
                 onNewTaskTextChange = onNewTaskTextChange,
                 useLazyColumn = true,
+                validationError = totallyPomodoroUiState.tasksUiState.taskValidationError,
+                isReadOnly = isReadOnly,
                 modifier = Modifier.fillMaxSize()
             )
         }

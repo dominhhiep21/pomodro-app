@@ -22,7 +22,6 @@ import thong.kotlin.pomodoro.core.designsystem.components.AuraButton
 import thong.kotlin.pomodoro.core.designsystem.components.AuraInputField
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.SessionTask
-import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.TaskStatus
 import thong.kotlin.pomodoro.features.pomodoro._base.components.BreakEndBannerSmall
 
 @Composable
@@ -102,7 +101,7 @@ fun CompactTaskSectionComponent(
                         onDelete = onDelete,
                         onMoveUp = onMoveUp,
                         onMoveDown = onMoveDown,
-                        isReadOnly = isReadOnly && task.status != TaskStatus.IN_PROGRESS
+//                        isReadOnly = isReadOnly && task.status != TaskStatus.IN_PROGRESS
                     )
                 }
             }
@@ -123,7 +122,7 @@ fun CompactTaskSectionComponent(
                         onDelete = onDelete,
                         onMoveUp = onMoveUp,
                         onMoveDown = onMoveDown,
-                        isReadOnly = isReadOnly && task.status != TaskStatus.IN_PROGRESS
+//                        isReadOnly = isReadOnly && task.status != TaskStatus.IN_PROGRESS
                     )
                 }
             }

@@ -210,24 +210,52 @@ class AppViewModel(
     }
 
     private fun startTimer() {
+        var taskToUpdate: SessionTask? = null
+        val now = Clock.System.now().toEpochMilliseconds()
+
         _uiState.update { currentState ->
+            val willBeInProgressTaskId = currentState.tasksUiState.willBeInProgressTaskId
+
+            val updatedTasks = currentState.tasksUiState.sessionTasks.map { task ->
+                if (task.taskId == willBeInProgressTaskId && task.status == TaskStatus.PAUSED) {
+                    task.copy(
+                        status = TaskStatus.IN_PROGRESS,
+                        updatedAtMillis = now
+                    ).also { updatedTask ->
+                        taskToUpdate = updatedTask
+                    }
+                } else {
+                    task
+                }
+            }
+
             currentState.copy(
                 timerUiState = currentState.timerUiState.copy(
                     isActive = true,
                     event = resolveStartEvent(currentState.timerUiState)
+                ),
+                tasksUiState = currentState.tasksUiState.copy(
+                    sessionTasks = updatedTasks,
+                    willBeInProgressTaskId = null
                 )
             )
         }
 
-        timerJob?.cancel() // Hủy job cũ đề phòng trùng lặp
+        taskToUpdate?.let { task ->
+            viewModelScope.launch {
+                updateTask(task)
+            }
+        }
+
+        timerJob?.cancel()
 
         timerJob = viewModelScope.launch {
             while (_uiState.value.timerUiState.timeLeft > 0) {
-                delay(1000) // Đếm lùi 1 giây
+                delay(1000)
+
                 _uiState.update { state ->
                     val newTimeLeft = state.timerUiState.timeLeft - 1
 
-                    // Phát tiếng bíp ở những giây cuối
                     val userSettings = repository.getUserSettings()
                     val shouldPlayChime = userSettings.isSoundEnabled
                     if (shouldPlayChime && newTimeLeft in 1L..4L) {
@@ -247,13 +275,44 @@ class AppViewModel(
 
     private fun pauseTimer() {
         timerJob?.cancel()
+        timerJob = null
+
+        val now = Clock.System.now().toEpochMilliseconds()
+        val state = _uiState.value
+
+        val inProgressTask = state.tasksUiState.sessionTasks.firstOrNull { it.status == TaskStatus.IN_PROGRESS }
+        val pausedTask = inProgressTask?.copy(status = TaskStatus.PAUSED, updatedAtMillis = now)
+
+        // Paused timer PAUSED task đang IN_PROGRESS lại và nếu tiếp tục thì chạy tiếp
         _uiState.update { currentState ->
+            val updatedTasks = if (pausedTask != null) {
+                currentState.tasksUiState.sessionTasks.map { task ->
+                    if (task.taskId == pausedTask.taskId) {
+                        pausedTask
+                    } else {
+                        task
+                    }
+                }
+            } else {
+                currentState.tasksUiState.sessionTasks
+            }
+
             currentState.copy(
                 timerUiState = currentState.timerUiState.copy(
                     isActive = false,
                     event = resolvePauseEvent(currentState.timerUiState)
+                ),
+                tasksUiState = currentState.tasksUiState.copy(
+                    sessionTasks = updatedTasks,
+                    willBeInProgressTaskId = pausedTask?.taskId
                 )
             )
+        }
+
+        pausedTask?.let { task ->
+            viewModelScope.launch {
+                updateTask(task)
+            }
         }
     }
 
@@ -365,7 +424,7 @@ class AppViewModel(
 
             startTimer()
         } else {
-            stopTimerJobOnly(timerJob)
+            pauseTimer()
 
             _uiState.update {
                 it.copy(
@@ -1599,6 +1658,7 @@ class AppViewModel(
         val state = _uiState.value
         val tasks = state.tasksUiState.sessionTasks.toMutableList()
         val index = tasks.indexOfFirst { it.taskId == taskId }
+        val now = Clock.System.now().toEpochMilliseconds()
 
         if (index > 0) {
             val task = tasks[index]
@@ -1608,7 +1668,21 @@ class AppViewModel(
             tasks[index] = prevTask.copy(position = task.position)
             tasks[index - 1] = task.copy(position = prevTask.position)
 
-            val updatedTasks = tasks.toList()
+            // Nếu là task đứng thứ 2 đẩy lên đầu tiên mà task đầu tiên đang IN_PROGRESS
+            // Chuyển Task đang IN_PROGRESS thành PAUSED, Task này lên IN_PROGRESS
+            if (prevTask.status == TaskStatus.IN_PROGRESS) {
+                tasks[index] = tasks[index].copy(
+                    status = TaskStatus.PAUSED,
+                    focusSeconds = (_uiState.value.currentSession.plannedWorkMinutes * 60 - _uiState.value.timerUiState.timeLeft).toLong(),
+                    updatedAtMillis = now
+                )
+                tasks[index - 1] = tasks[index - 1].copy(
+                    status = TaskStatus.IN_PROGRESS,
+                    updatedAtMillis = now
+                )
+            }
+
+            val updatedTasks = tasks.toList().sortedBy { it.position }
             _uiState.update {
                 it.copy(tasksUiState = it.tasksUiState.copy(sessionTasks = updatedTasks))
             }

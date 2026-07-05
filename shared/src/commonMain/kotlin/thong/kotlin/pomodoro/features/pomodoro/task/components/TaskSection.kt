@@ -103,7 +103,7 @@ fun TaskSection(
                         onDelete = onDelete,
                         onMoveUp = onMoveUp,
                         onMoveDown = onMoveDown,
-                        isReadOnly = isReadOnly && (task.status != TaskStatus.IN_PROGRESS)
+                        isOpenForDeleted = task.status != TaskStatus.IDLE
                     )
                 }
             }
@@ -124,7 +124,7 @@ fun TaskSection(
                         onDelete = onDelete,
                         onMoveUp = onMoveUp,
                         onMoveDown = onMoveDown,
-                        isReadOnly = isReadOnly && (task.status != TaskStatus.IN_PROGRESS)
+                        isOpenForDeleted = task.status != TaskStatus.IDLE
                     )
                 }
             }

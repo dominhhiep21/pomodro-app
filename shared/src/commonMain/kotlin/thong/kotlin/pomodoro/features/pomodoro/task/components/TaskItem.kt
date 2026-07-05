@@ -45,7 +45,7 @@ fun TaskItem(
     onMoveUp: (() -> Unit)? = null,
     onMoveDown: (() -> Unit)? = null,
     compact: Boolean = false,
-    isReadOnly: Boolean = false
+    isOpenForDeleted : Boolean = true
 ) {
     GlassBox(
         shape = RoundedCornerShape(if (compact) 12.dp else 16.dp),
@@ -65,10 +65,9 @@ fun TaskItem(
             ) {
                 AuraCheckbox(
                     checked = sessionTask.isCompleted,
-                    onCheckedChange = { if (!isReadOnly) onToggle() },
+                    onCheckedChange = { onToggle() },
                     activeColor = AuraColors.WorkMode,
-                    size = if (compact) 20.dp else 24.dp,
-                    enabled = !isReadOnly
+                    size = if (compact) 20.dp else 24.dp
                 )
 
                 Spacer(modifier = Modifier.width(if (compact) 8.dp else 12.dp))
@@ -101,7 +100,7 @@ fun TaskItem(
                         .horizontalScroll(scrollState, enabled = false) // Disable manual scroll to let animation take over
                 ) {
                     Column {
-                        if (sessionTask.status == TaskStatus.IN_PROGRESS && !sessionTask.isCompleted) {
+                            if (sessionTask.status == TaskStatus.IN_PROGRESS && !sessionTask.isCompleted) {
                             Text(
                                 text = "ĐANG THỰC HIỆN",
                                 color = AuraColors.WorkMode,
@@ -110,6 +109,15 @@ fun TaskItem(
                                 letterSpacing = 0.5.sp,
                                 modifier = Modifier.padding(bottom = 2.dp)
                             )
+                        } else if (sessionTask.status == TaskStatus.PAUSED && !sessionTask.isCompleted) {
+                                Text(
+                                    text = "ĐANG TẠM DỪNG",
+                                    color = AuraColors.BestStreakDay,
+                                    fontSize = 8.sp,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 0.5.sp,
+                                    modifier = Modifier.padding(bottom = 2.dp)
+                                )
                         }
                         Text(
                             text = sessionTask.title,
@@ -126,7 +134,7 @@ fun TaskItem(
 
             Spacer(modifier = Modifier.width(if (compact) 4.dp else 8.dp))
 
-            if (!compact && !isReadOnly && onMoveUp != null && onMoveDown != null) {
+            if (!compact && onMoveUp != null && onMoveDown != null) {
                 Column {
                     IconButton(
                         onClick = onMoveUp,
@@ -155,14 +163,13 @@ fun TaskItem(
             }
 
             IconButton(
-                onClick = { if (!isReadOnly) onDelete() },
+                onClick = { if (isOpenForDeleted) onDelete() },
                 modifier = Modifier.size(if (compact) 28.dp else 32.dp),
-                enabled = !isReadOnly
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Delete",
-                    tint = if (isReadOnly) AuraColors.TextSecondary.copy(alpha = 0.2f) else AuraColors.TextSecondary,
+                    tint = AuraColors.TextSecondary,
                     modifier = Modifier.size(if (compact) 18.dp else 20.dp)
                 )
             }

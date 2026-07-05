@@ -56,6 +56,9 @@ data class WorkspaceUiState(
 
     // Mandatory Task Modal
     val isMandatoryTaskModalVisible: Boolean = false,
+
+    // Session Guidance Modal
+    val isSessionGuidanceModalVisible: Boolean = true,
     
     // Focus Score
     val focusScoreResult: FocusScoreResult? = null,

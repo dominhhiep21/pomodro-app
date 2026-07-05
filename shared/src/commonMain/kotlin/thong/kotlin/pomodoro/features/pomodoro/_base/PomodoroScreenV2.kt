@@ -63,6 +63,7 @@ import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.PomodoroUiState
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettingsV2
 import thong.kotlin.pomodoro.features.pomodoro.task.components.MandatoryTaskModal
+import thong.kotlin.pomodoro.features.pomodoro._base.components.SessionGuidanceModal
 import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.ExitConfirmationModal
 import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.PomodoroSettingsModal
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.AppViewModel
@@ -205,6 +206,8 @@ fun PomodoroScreenUIv2(
                             onAddTask = appViewModel::addTask,
                             onDeleteTask = appViewModel::deleteTask,
                             onToggleTask = appViewModel::toggleTask,
+                            onMoveTaskUp = appViewModel::moveTaskUp,
+                            onMoveTaskDown = appViewModel::moveTaskDown,
                             onNewTaskTextChange = appViewModel::onNewTaskTextChange,
                             onWorkChange = appViewModel::onWorkMinutesChange,
                             onBreakChange = appViewModel::onBreakMinutesChange,
@@ -244,6 +247,8 @@ fun PomodoroScreenUIv2(
                             onAddTask = appViewModel::addTask,
                             onDeleteTask = appViewModel::deleteTask,
                             onToggleTask = appViewModel::toggleTask,
+                            onMoveTaskUp = appViewModel::moveTaskUp,
+                            onMoveTaskDown = appViewModel::moveTaskDown,
                             onNewTaskTextChange = appViewModel::onNewTaskTextChange,
                             onWorkChange = appViewModel::onWorkMinutesChange,
                             onBreakChange = appViewModel::onBreakMinutesChange,
@@ -259,7 +264,7 @@ fun PomodoroScreenUIv2(
                             },
                             onResetSettings = appViewModel::resetSettingsToDefault,
                             onToggleSettings = appViewModel::toggleSettings,
-                            onExit = appViewModel::toggleExitModal
+                            onExit = appViewModel::toggleExitModal,
                         )
                     }
                     // Gen UI Portrait Compact Group
@@ -285,6 +290,8 @@ fun PomodoroScreenUIv2(
                             onAddTask = appViewModel::addTask,
                             onDeleteTask = appViewModel::deleteTask,
                             onToggleTask = appViewModel::toggleTask,
+                            onMoveTaskUp = appViewModel::moveTaskUp,
+                            onMoveTaskDown = appViewModel::moveTaskDown,
                             onNewTaskTextChange = appViewModel::onNewTaskTextChange,
                             onWorkChange = appViewModel::onWorkMinutesChange,
                             onBreakChange = appViewModel::onBreakMinutesChange,
@@ -299,7 +306,7 @@ fun PomodoroScreenUIv2(
                                 }
                             },
                             onResetSettings = appViewModel::resetSettingsToDefault,
-                            onExit = appViewModel::toggleExitModal
+                            onExit = appViewModel::toggleExitModal,
                         )
                     }
                     // Gen UI Portrait Compact Solo
@@ -323,6 +330,8 @@ fun PomodoroScreenUIv2(
                             onAddTask = appViewModel::addTask,
                             onDeleteTask = appViewModel::deleteTask,
                             onToggleTask = appViewModel::toggleTask,
+                            onMoveTaskUp = appViewModel::moveTaskUp,
+                            onMoveTaskDown = appViewModel::moveTaskDown,
                             onNewTaskTextChange = appViewModel::onNewTaskTextChange,
                             onWorkChange = appViewModel::onWorkMinutesChange,
                             onBreakChange = appViewModel::onBreakMinutesChange,
@@ -338,7 +347,7 @@ fun PomodoroScreenUIv2(
                             },
                             onResetSettings = appViewModel::resetSettingsToDefault,
                             onToggleSettings = appViewModel::toggleSettings,
-                            onExit = appViewModel::toggleExitModal
+                            onExit = appViewModel::toggleExitModal,
                         )
                     }
                     // Gen UI Landscape Group
@@ -359,6 +368,8 @@ fun PomodoroScreenUIv2(
                             onAddTask = appViewModel::addTask,
                             onDeleteTask = appViewModel::deleteTask,
                             onToggleTask = appViewModel::toggleTask,
+                            onMoveTaskUp = appViewModel::moveTaskUp,
+                            onMoveTaskDown = appViewModel::moveTaskDown,
                             onNewTaskTextChange = appViewModel::onNewTaskTextChange,
                             onToggleTasksExpanded = appViewModel::toggleTasksExpanded,
                             onExit = appViewModel::toggleExitModal
@@ -381,6 +392,8 @@ fun PomodoroScreenUIv2(
                             onAddTask = appViewModel::addTask,
                             onDeleteTask = appViewModel::deleteTask,
                             onToggleTask = appViewModel::toggleTask,
+                            onMoveTaskUp = appViewModel::moveTaskUp,
+                            onMoveTaskDown = appViewModel::moveTaskDown,
                             onNewTaskTextChange = appViewModel::onNewTaskTextChange,
                             onToggleTasksExpanded = appViewModel::toggleTasksExpanded,
                             onExit = appViewModel::toggleExitModal
@@ -401,6 +414,8 @@ fun PomodoroScreenUIv2(
                             onDeleteTask = appViewModel::deleteTask,
                             onToggleTasksExpanded = appViewModel::toggleTasksExpanded,
                             onToggleTask = appViewModel::toggleTask,
+                            onMoveTaskUp = appViewModel::moveTaskUp,
+                            onMoveTaskDown = appViewModel::moveTaskDown,
                             onNewTaskTextChange = appViewModel::onNewTaskTextChange,
                             onToggleMusic = appViewModel::toggleMusic,
                             onSelectTrack = appViewModel::selectTrack,
@@ -423,6 +438,8 @@ fun PomodoroScreenUIv2(
                             onDeleteTask = appViewModel::deleteTask,
                             onToggleTasksExpanded = appViewModel::toggleTasksExpanded,
                             onToggleTask = appViewModel::toggleTask,
+                            onMoveTaskUp = appViewModel::moveTaskUp,
+                            onMoveTaskDown = appViewModel::moveTaskDown,
                             onNewTaskTextChange = appViewModel::onNewTaskTextChange,
                             onToggleMusic = appViewModel::toggleMusic,
                             onSelectTrack = appViewModel::selectTrack,
@@ -490,6 +507,13 @@ fun PomodoroScreenUIv2(
                         appViewModel.toggleTimer()
                     },
                     onDismiss = appViewModel::toggleMandatoryTaskModal
+                )
+            }
+
+            // Session Guidance Modal
+            if (totalPomodoroUiState.workspaceUiState.isSessionGuidanceModalVisible) {
+                SessionGuidanceModal(
+                    onDismiss = appViewModel::toggleSessionGuidanceModal
                 )
             }
 

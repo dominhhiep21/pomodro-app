@@ -93,6 +93,7 @@ fun MandatoryTaskModal(
                     onNewTaskTextChange = onNewTaskTextChange,
                     useLazyColumn = true,
                     validationError = totallyPomodoroUiState.tasksUiState.taskValidationError,
+                    isReadOnly = false,
                     modifier = Modifier.weight(1f, fill = false)
                 )
 

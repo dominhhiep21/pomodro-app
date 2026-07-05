@@ -40,8 +40,11 @@ fun TaskSideBar(
     onAddTask: () -> Unit,
     onDeleteTask: (String) -> Unit,
     onToggleTask: (String) -> Unit,
+    onMoveTaskUp: (String) -> Unit,
+    onMoveTaskDown: (String) -> Unit,
     onNewTaskTextChange: (String) -> Unit,
     taskValidationError: String? = null,
+    isReadOnly: Boolean = false,
 ) {
     // Shared animation spec for synchronized motion
     val animationSpec = spring<Dp>(
@@ -130,9 +133,12 @@ fun TaskSideBar(
                                 onAddTask = onAddTask,
                                 onDeleteTask = onDeleteTask,
                                 onToggleTask = onToggleTask,
+                                onMoveTaskUp = onMoveTaskUp,
+                                onMoveTaskDown = onMoveTaskDown,
                                 onNewTaskTextChange = onNewTaskTextChange,
                                 useLazyColumn = true,
                                 validationError = taskValidationError,
+                                isReadOnly = isReadOnly,
                                 modifier = Modifier.weight(1f)
                             )
                         }

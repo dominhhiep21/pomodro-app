@@ -40,8 +40,11 @@ fun TaskBottomBar(
     onAddTask: () -> Unit,
     onDeleteTask: (String) -> Unit,
     onToggleTask: (String) -> Unit,
+    onMoveTaskUp: (String) -> Unit,
+    onMoveTaskDown: (String) -> Unit,
     onNewTaskTextChange: (String) -> Unit,
     taskValidationError: String? = null,
+    isReadOnly: Boolean = false,
 ) {
     var currentTaskIndex by remember { mutableIntStateOf(0) }
 
@@ -133,9 +136,12 @@ fun TaskBottomBar(
                             onAddTask = onAddTask,
                             onDeleteTask = onDeleteTask,
                             onToggleTask = onToggleTask,
+                            onMoveTaskUp = onMoveTaskUp,
+                            onMoveTaskDown = onMoveTaskDown,
                             onNewTaskTextChange = onNewTaskTextChange,
                             useLazyColumn = true,
                             validationError = taskValidationError,
+                            isReadOnly = isReadOnly,
                             modifier = Modifier.weight(1f)
                         )
                     }

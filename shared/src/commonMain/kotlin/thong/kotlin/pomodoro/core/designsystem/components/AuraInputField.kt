@@ -25,11 +25,13 @@ fun AuraInputField(
     modifier: Modifier = Modifier,
     trailingIcon: @Composable (() -> Unit)? = null,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    keyboardActions: KeyboardActions = KeyboardActions.Default
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    enabled: Boolean = true
 ) {
     TextField(
         value = value,
         onValueChange = onValueChange,
+        enabled = enabled,
         modifier = modifier.onPreviewKeyEvent {
             if (it.key == Key.Spacebar) {
                 // On Desktop, prevent the space key from bubbling up to parent containers 

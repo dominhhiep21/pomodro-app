@@ -6,5 +6,7 @@ data class TasksUiState(
     val sessionTasks: List<SessionTask> = emptyList(),
     val newTaskText: String = "",
     val isTasksExpanded: Boolean = false,
-    val taskValidationError: String? = null
+    val taskValidationError: String? = null,
+    val willBeInProgressTaskId: String? = null,
+    val nextProgressTaskPosition: Int = -1
 )

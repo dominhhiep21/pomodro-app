@@ -63,6 +63,7 @@ import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.PomodoroUiState
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettingsV2
 import thong.kotlin.pomodoro.features.pomodoro.task.components.MandatoryTaskModal
+import thong.kotlin.pomodoro.features.pomodoro.task.components.AllTasksCompletedModal
 import thong.kotlin.pomodoro.features.pomodoro._base.components.SessionGuidanceModal
 import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.ExitConfirmationModal
 import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.PomodoroSettingsModal
@@ -495,7 +496,7 @@ fun PomodoroScreenUIv2(
             }
 
             // Mandatory Task Modal
-            if (totalPomodoroUiState.workspaceUiState.isMandatoryTaskModalVisible) {
+            if (totalPomodoroUiState.workspaceUiState.isMandatoryTaskModalVisible && totalPomodoroUiState.currentMode == PomodoroMode.WORK) {
                 MandatoryTaskModal(
                     totallyPomodoroUiState = totalPomodoroUiState,
                     onAddTask = appViewModel::addTask,
@@ -507,6 +508,22 @@ fun PomodoroScreenUIv2(
                         appViewModel.toggleTimer()
                     },
                     onDismiss = appViewModel::toggleMandatoryTaskModal
+                )
+            }
+
+            // All Tasks Completed Modal
+            if (totalPomodoroUiState.workspaceUiState.isAllTasksCompletedModalVisible) {
+                AllTasksCompletedModal(
+                    totallyPomodoroUiState = totalPomodoroUiState,
+                    onSkipAndGetPoints = {
+                        appViewModel.toggleAllTasksCompletedModal()
+                        appViewModel.handleTimerCompleteManually()
+                    },
+                    onContinueAndAddTask = {
+                        appViewModel.toggleAllTasksCompletedModal()
+                        appViewModel.toggleMandatoryTaskModal()
+                    },
+                    onDismiss = appViewModel::toggleAllTasksCompletedModal
                 )
             }
 

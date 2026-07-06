@@ -73,6 +73,12 @@ class LearningSessionManager(
         }
     }
 
+    suspend fun updateTasks(tasks : List<SessionTask>) {
+        withContext(ioDispatcher) {
+            repository.updateTasks(tasks)
+        }
+    }
+
     suspend fun deleteTaskById(taskId: String, sessionId: String) {
         withContext(ioDispatcher) {
             repository.deleteTask(taskId, sessionId)

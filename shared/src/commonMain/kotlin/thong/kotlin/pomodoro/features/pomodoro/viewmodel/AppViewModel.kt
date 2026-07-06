@@ -171,7 +171,8 @@ class AppViewModel(
             _uiState.update { state ->
                 state.copy(
                     tasksUiState = state.tasksUiState.copy(
-                        sessionTasks = tasks
+                        sessionTasks = tasks,
+                        isAllTasksCompleted = tasks.all { it.status == TaskStatus.COMPLETED },
                     )
                 )
             }
@@ -210,9 +211,31 @@ class AppViewModel(
     }
 
     private fun startTimer() {
+        continuePausedTask()
+
+        if (_uiState.value.tasksUiState.isAllTasksCompleted) {
+            toggleMandatoryTaskModal()
+            stopTimerJobOnly(timerJob)
+            return
+        }
+
+        _uiState.update { currentState ->
+            currentState.copy(
+                timerUiState = currentState.timerUiState.copy(
+                    isActive = true,
+                    event = resolveStartEvent(currentState.timerUiState)
+                )
+            )
+        }
+
+        runningTimerJob()
+    }
+
+    private fun continuePausedTask() {
+        if (_uiState.value.currentMode != PomodoroMode.WORK) return
+
         var taskToUpdate: SessionTask? = null
         val now = Clock.System.now().toEpochMilliseconds()
-
         _uiState.update { currentState ->
             val willBeInProgressTaskId = currentState.tasksUiState.willBeInProgressTaskId
 
@@ -227,13 +250,9 @@ class AppViewModel(
                 } else {
                     task
                 }
-            }
 
+            }
             currentState.copy(
-                timerUiState = currentState.timerUiState.copy(
-                    isActive = true,
-                    event = resolveStartEvent(currentState.timerUiState)
-                ),
                 tasksUiState = currentState.tasksUiState.copy(
                     sessionTasks = updatedTasks,
                     willBeInProgressTaskId = null
@@ -246,7 +265,9 @@ class AppViewModel(
                 updateTask(task)
             }
         }
+    }
 
+    private fun runningTimerJob() {
         timerJob?.cancel()
 
         timerJob = viewModelScope.launch {
@@ -276,25 +297,25 @@ class AppViewModel(
     private fun pauseTimer() {
         timerJob?.cancel()
         timerJob = null
+        pauseTask()
+    }
 
+    private fun pauseTask(nextAction : () -> Unit = {}) {
         val now = Clock.System.now().toEpochMilliseconds()
         val state = _uiState.value
 
         val inProgressTask = state.tasksUiState.sessionTasks.firstOrNull { it.status == TaskStatus.IN_PROGRESS }
-        val pausedTask = inProgressTask?.copy(status = TaskStatus.PAUSED, updatedAtMillis = now)
+        if (inProgressTask == null) return
+        val pausedTask = inProgressTask.copy(status = TaskStatus.PAUSED, updatedAtMillis = now)
 
         // Paused timer PAUSED task đang IN_PROGRESS lại và nếu tiếp tục thì chạy tiếp
         _uiState.update { currentState ->
-            val updatedTasks = if (pausedTask != null) {
-                currentState.tasksUiState.sessionTasks.map { task ->
-                    if (task.taskId == pausedTask.taskId) {
-                        pausedTask
-                    } else {
-                        task
-                    }
+            val updatedTasks = currentState.tasksUiState.sessionTasks.map { task ->
+                if (task.taskId == pausedTask.taskId) {
+                    pausedTask
+                } else {
+                    task
                 }
-            } else {
-                currentState.tasksUiState.sessionTasks
             }
 
             currentState.copy(
@@ -304,16 +325,16 @@ class AppViewModel(
                 ),
                 tasksUiState = currentState.tasksUiState.copy(
                     sessionTasks = updatedTasks,
-                    willBeInProgressTaskId = pausedTask?.taskId
+                    willBeInProgressTaskId = pausedTask.taskId
                 )
             )
         }
-
-        pausedTask?.let { task ->
+        pausedTask.let { task ->
             viewModelScope.launch {
                 updateTask(task)
             }
         }
+        nextAction()
     }
 
     fun toggleTimer() {
@@ -362,7 +383,7 @@ class AppViewModel(
 
             !state.timerUiState.isActive && currentMode == PomodoroMode.WORK && isStartOfRound -> {
                 // Check if there are tasks before starting a new work round
-                if (state.tasksUiState.sessionTasks.isEmpty()) {
+                if (state.tasksUiState.sessionTasks.none { it.status == TaskStatus.IDLE || it.status == TaskStatus.PAUSED }) {
                     toggleMandatoryTaskModal()
                     return
                 }
@@ -528,7 +549,7 @@ class AppViewModel(
     }
 
     fun skipTimer() {
-        stopTimerJobOnly(timerJob)
+        pauseTimer()
         val state = _uiState.value
         val currentSession = state.currentSession
         val currentMode = state.currentMode
@@ -653,6 +674,10 @@ class AppViewModel(
                 updateTask(task)
             }
         }
+    }
+
+    fun handleTimerCompleteManually() {
+        handleTimerComplete()
     }
 
     private fun handleTimerComplete() {
@@ -1251,6 +1276,16 @@ class AppViewModel(
         }
     }
 
+    fun toggleAllTasksCompletedModal() {
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    isAllTasksCompletedModalVisible = !it.workspaceUiState.isAllTasksCompletedModalVisible
+                )
+            )
+        }
+    }
+
     fun toggleSessionGuidanceModal() {
         _uiState.update {
             it.copy(
@@ -1465,36 +1500,40 @@ class AppViewModel(
         val text = _uiState.value.tasksUiState.newTaskText
 
         if (text.trim().length > 3) {
-            val maxPosition = currentState.tasksUiState.sessionTasks.maxOfOrNull { it.position } ?: -1
+            val maxPosition = currentState.tasksUiState.sessionTasks
+                .filter { it.status == TaskStatus.IDLE || it.status == TaskStatus.PAUSED }
+                .size
             val newSessionTask = SessionTask(
                 sessionId = currentSession.sessionId,
                 title = text.trim(),
-                position = maxPosition + 1
+                position = maxPosition
             )
-
-            // Nếu là Task đầu tiên được add
-            if (maxPosition == -1) {
-                _uiState.update {
-                    it.copy(
-                        tasksUiState = it.tasksUiState.copy(
-                            nextProgressTaskPosition = newSessionTask.position + 1
-                        )
-                    )
-                }
-            }
 
             _uiState.update {
                 it.copy(
                     tasksUiState = it.tasksUiState.copy(
-                        sessionTasks = it.tasksUiState.sessionTasks + newSessionTask,
+                        sessionTasks = (it.tasksUiState.sessionTasks + newSessionTask).map { task ->
+                            if (task.taskId == newSessionTask.taskId) {
+                                newSessionTask
+                            } else if (task.position >= newSessionTask.position) {
+                                val updatedTask = task.copy(
+                                    position = task.position + 1
+                                )
+                                updatedTask
+                            } else {
+                                task
+                            }
+                        }.sortedBy { task -> task.position },
                         newTaskText = "",
-                        taskValidationError = null
+                        taskValidationError = null,
+                        isAllTasksCompleted = false
                     )
                 )
             }
 
             viewModelScope.launch {
                 insertTask(newSessionTask)
+                updateTasks(_uiState.value.tasksUiState.sessionTasks)
                 insertEvent(
                     LearningSessionEvent(
                         sessionId = currentSession.sessionId,
@@ -1565,6 +1604,7 @@ class AppViewModel(
     }
 
     fun toggleTask(taskId: String) {
+        val now = Clock.System.now().toEpochMilliseconds()
         val state = _uiState.value
         val task = state.tasksUiState.sessionTasks.find { it.taskId == taskId }
 
@@ -1577,47 +1617,61 @@ class AppViewModel(
 
         // Nếu đánh dấu hoàn thành trong khi làm việc thì chuyển position khác lên thay
         if (task?.status == TaskStatus.IN_PROGRESS) {
+            val completedTaskOldPosition = task.position
             _uiState.update { state ->
+                val currentTasks = state.tasksUiState.sessionTasks
+                val lastPosition = currentTasks.size - 1
+
                 state.copy(
                     tasksUiState = state.tasksUiState.copy(
-                        nextProgressTaskPosition = task.position + 1,
+                        nextProgressTaskPosition = 0,
                         sessionTasks = state.tasksUiState.sessionTasks.map { task ->
                             val newStatus = !task.isCompleted
                             if (task.taskId == taskId) {
                                 updatedSessionTask = task.copy(
+                                    position = lastPosition,
                                     isCompleted = newStatus,
                                     status = if (newStatus) TaskStatus.COMPLETED else TaskStatus.PAUSED,
-                                    completedAtMillis = if (newStatus) Clock.System.now().toEpochMilliseconds() else null
+                                    completedAtMillis = if (newStatus) now else null,
+                                    updatedAtMillis = now
                                 )
                                 updatedSessionTask
+                            } else if (task.position > completedTaskOldPosition) {
+                                task.copy(
+                                    position = task.position - 1,
+                                    updatedAtMillis = now
+                                )
                             } else {
                                 task
                             }
-                        }
+                        }.sortedBy { it.position }
                     )
                 )
             }
         }
 
-        val nextTask: SessionTask? = state.tasksUiState.sessionTasks.find {
-            it.position == state.tasksUiState.nextProgressTaskPosition
-        }?.copy(status = TaskStatus.IN_PROGRESS)
+        val nextTask: SessionTask? = _uiState.value.tasksUiState.sessionTasks
+            .filter { it.status == TaskStatus.IDLE }
+            .minByOrNull { it.position }
+            ?.copy(status = TaskStatus.IN_PROGRESS)
 
-        // Nếu tick done task đang IN_PROGRESS, chọn task tiếp theo
-        if (updatedSessionTask?.status == TaskStatus.COMPLETED) {
-            _uiState.update { state ->
-                state.copy(
-                    tasksUiState = state.tasksUiState.copy(
-                        nextProgressTaskPosition = updatedSessionTask.position + 1,
-                        sessionTasks = state.tasksUiState.sessionTasks.map { task ->
-                            if (task.taskId == nextTask?.taskId) {
-                                nextTask
-                            } else {
-                                task
-                            }
-                        }
+        // Hết task để làm
+        if (nextTask != null) {
+            // Nếu tick done task đang IN_PROGRESS, chọn task tiếp theo
+            if (updatedSessionTask?.status == TaskStatus.COMPLETED) {
+                _uiState.update { state ->
+                    state.copy(
+                        tasksUiState = state.tasksUiState.copy(
+                            sessionTasks = state.tasksUiState.sessionTasks.map { task ->
+                                if (task.taskId == nextTask.taskId) {
+                                    nextTask
+                                } else {
+                                    task
+                                }
+                            }.sortedBy { it.position }
+                        )
                     )
-                )
+                }
             }
         }
 
@@ -1626,6 +1680,24 @@ class AppViewModel(
         viewModelScope.launch {
             if (updatedSessionTask != null) {
                 updateTask(updatedSessionTask)
+
+                val currentState = _uiState.value
+                val allCompleted = currentState.tasksUiState.sessionTasks.all { it.isCompleted }
+                val isTimerRunning = currentState.timerUiState.isActive
+                val isWorkMode = currentState.currentMode == PomodoroMode.WORK
+
+                if (allCompleted) {
+                    _uiState.update {
+                        it.copy(
+                            tasksUiState = it.tasksUiState.copy(isAllTasksCompleted = true),
+                            workspaceUiState = it.workspaceUiState.copy(
+                                isAllTasksCompletedModalVisible = isTimerRunning && isWorkMode
+                            )
+                        )
+                    }
+                    toggleTimer()
+                }
+
                 insertEvent(
                     LearningSessionEvent(
                         sessionId = currentSession.sessionId,
@@ -1637,9 +1709,7 @@ class AppViewModel(
                         )
                     )
                 )
-                if (nextTask != null) {
-                    updateTask(nextTask)
-                }
+                updateTasks(currentState.tasksUiState.sessionTasks)
             }
         }
     }
@@ -1759,6 +1829,8 @@ class AppViewModel(
     suspend fun insertTask(task: SessionTask) = learningSessionManager.insertTask(task, _uiState.value.currentSession.sessionId)
 
     suspend fun updateTask(task: SessionTask) = learningSessionManager.updateTask(task)
+
+    suspend fun updateTasks(tasks: List<SessionTask>) = learningSessionManager.updateTasks(tasks)
 
     suspend fun deleteTask(taskId: String, sessionId: String) = learningSessionManager.deleteTaskById(taskId, sessionId)
 

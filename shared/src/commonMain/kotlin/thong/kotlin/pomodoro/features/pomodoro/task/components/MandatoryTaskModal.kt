@@ -99,7 +99,7 @@ fun MandatoryTaskModal(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                val hasTasks = totallyPomodoroUiState.tasksUiState.sessionTasks.isNotEmpty()
+                val hasTasks = totallyPomodoroUiState.tasksUiState.sessionTasks.any { !it.isCompleted }
 
                 AnimatedContent(
                     targetState = hasTasks,

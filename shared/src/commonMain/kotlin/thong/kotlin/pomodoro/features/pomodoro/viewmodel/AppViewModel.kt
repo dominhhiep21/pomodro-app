@@ -210,9 +210,25 @@ class AppViewModel(
     }
 
     private fun startTimer() {
+        continuePausedTask()
+
+        _uiState.update { currentState ->
+            currentState.copy(
+                timerUiState = currentState.timerUiState.copy(
+                    isActive = true,
+                    event = resolveStartEvent(currentState.timerUiState)
+                )
+            )
+        }
+
+        runningTimerJob()
+    }
+
+    private fun continuePausedTask() {
+        if (_uiState.value.currentMode != PomodoroMode.WORK) return
+
         var taskToUpdate: SessionTask? = null
         val now = Clock.System.now().toEpochMilliseconds()
-
         _uiState.update { currentState ->
             val willBeInProgressTaskId = currentState.tasksUiState.willBeInProgressTaskId
 
@@ -227,13 +243,9 @@ class AppViewModel(
                 } else {
                     task
                 }
-            }
 
+            }
             currentState.copy(
-                timerUiState = currentState.timerUiState.copy(
-                    isActive = true,
-                    event = resolveStartEvent(currentState.timerUiState)
-                ),
                 tasksUiState = currentState.tasksUiState.copy(
                     sessionTasks = updatedTasks,
                     willBeInProgressTaskId = null
@@ -246,7 +258,9 @@ class AppViewModel(
                 updateTask(task)
             }
         }
+    }
 
+    private fun runningTimerJob() {
         timerJob?.cancel()
 
         timerJob = viewModelScope.launch {
@@ -276,25 +290,25 @@ class AppViewModel(
     private fun pauseTimer() {
         timerJob?.cancel()
         timerJob = null
+        pauseTask()
+    }
 
+    private fun pauseTask(nextAction : () -> Unit = {}) {
         val now = Clock.System.now().toEpochMilliseconds()
         val state = _uiState.value
 
         val inProgressTask = state.tasksUiState.sessionTasks.firstOrNull { it.status == TaskStatus.IN_PROGRESS }
-        val pausedTask = inProgressTask?.copy(status = TaskStatus.PAUSED, updatedAtMillis = now)
+        if (inProgressTask == null) return
+        val pausedTask = inProgressTask.copy(status = TaskStatus.PAUSED, updatedAtMillis = now)
 
         // Paused timer PAUSED task đang IN_PROGRESS lại và nếu tiếp tục thì chạy tiếp
         _uiState.update { currentState ->
-            val updatedTasks = if (pausedTask != null) {
-                currentState.tasksUiState.sessionTasks.map { task ->
-                    if (task.taskId == pausedTask.taskId) {
-                        pausedTask
-                    } else {
-                        task
-                    }
+            val updatedTasks = currentState.tasksUiState.sessionTasks.map { task ->
+                if (task.taskId == pausedTask.taskId) {
+                    pausedTask
+                } else {
+                    task
                 }
-            } else {
-                currentState.tasksUiState.sessionTasks
             }
 
             currentState.copy(
@@ -304,16 +318,16 @@ class AppViewModel(
                 ),
                 tasksUiState = currentState.tasksUiState.copy(
                     sessionTasks = updatedTasks,
-                    willBeInProgressTaskId = pausedTask?.taskId
+                    willBeInProgressTaskId = pausedTask.taskId
                 )
             )
         }
-
-        pausedTask?.let { task ->
+        pausedTask.let { task ->
             viewModelScope.launch {
                 updateTask(task)
             }
         }
+        nextAction()
     }
 
     fun toggleTimer() {
@@ -528,7 +542,7 @@ class AppViewModel(
     }
 
     fun skipTimer() {
-        stopTimerJobOnly(timerJob)
+        pauseTimer()
         val state = _uiState.value
         val currentSession = state.currentSession
         val currentMode = state.currentMode
@@ -1565,6 +1579,7 @@ class AppViewModel(
     }
 
     fun toggleTask(taskId: String) {
+        val now = Clock.System.now().toEpochMilliseconds()
         val state = _uiState.value
         val task = state.tasksUiState.sessionTasks.find { it.taskId == taskId }
 
@@ -1577,47 +1592,62 @@ class AppViewModel(
 
         // Nếu đánh dấu hoàn thành trong khi làm việc thì chuyển position khác lên thay
         if (task?.status == TaskStatus.IN_PROGRESS) {
+            val completedTaskOldPosition = task.position
             _uiState.update { state ->
+                val currentTasks = state.tasksUiState.sessionTasks
+                val lastPosition = currentTasks.maxOfOrNull { it.position } ?: completedTaskOldPosition
+
                 state.copy(
                     tasksUiState = state.tasksUiState.copy(
-                        nextProgressTaskPosition = task.position + 1,
+                        nextProgressTaskPosition = 0,
                         sessionTasks = state.tasksUiState.sessionTasks.map { task ->
                             val newStatus = !task.isCompleted
                             if (task.taskId == taskId) {
                                 updatedSessionTask = task.copy(
+                                    position = lastPosition,
                                     isCompleted = newStatus,
                                     status = if (newStatus) TaskStatus.COMPLETED else TaskStatus.PAUSED,
-                                    completedAtMillis = if (newStatus) Clock.System.now().toEpochMilliseconds() else null
+                                    completedAtMillis = if (newStatus) now else null,
+                                    updatedAtMillis = now
                                 )
                                 updatedSessionTask
+                            } else if (task.position > completedTaskOldPosition) {
+                                task.copy(
+                                    position = task.position - 1,
+                                    updatedAtMillis = now
+                                )
                             } else {
                                 task
                             }
-                        }
+                        }.sortedBy { it.position }
                     )
                 )
             }
         }
 
-        val nextTask: SessionTask? = state.tasksUiState.sessionTasks.find {
-            it.position == state.tasksUiState.nextProgressTaskPosition
-        }?.copy(status = TaskStatus.IN_PROGRESS)
+        val nextTask: SessionTask? = state.tasksUiState.sessionTasks
+            .filter { it.status == TaskStatus.IDLE }
+            .minByOrNull { it.position }
+            ?.copy(status = TaskStatus.IN_PROGRESS)
 
-        // Nếu tick done task đang IN_PROGRESS, chọn task tiếp theo
-        if (updatedSessionTask?.status == TaskStatus.COMPLETED) {
-            _uiState.update { state ->
-                state.copy(
-                    tasksUiState = state.tasksUiState.copy(
-                        nextProgressTaskPosition = updatedSessionTask.position + 1,
-                        sessionTasks = state.tasksUiState.sessionTasks.map { task ->
-                            if (task.taskId == nextTask?.taskId) {
-                                nextTask
-                            } else {
-                                task
-                            }
-                        }
+        // Hết task để làm
+        if (nextTask != null) {
+            // Nếu tick done task đang IN_PROGRESS, chọn task tiếp theo
+            if (updatedSessionTask?.status == TaskStatus.COMPLETED) {
+                _uiState.update { state ->
+                    state.copy(
+                        tasksUiState = state.tasksUiState.copy(
+                            nextProgressTaskPosition = 1,
+                            sessionTasks = state.tasksUiState.sessionTasks.map { task ->
+                                if (task.taskId == nextTask?.taskId) {
+                                    nextTask
+                                } else {
+                                    task
+                                }
+                            }.sortedBy { it.position }
+                        )
                     )
-                )
+                }
             }
         }
 

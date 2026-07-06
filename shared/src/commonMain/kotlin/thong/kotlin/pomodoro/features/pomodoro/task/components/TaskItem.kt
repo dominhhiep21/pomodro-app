@@ -100,16 +100,18 @@ fun TaskItem(
                         .horizontalScroll(scrollState, enabled = false) // Disable manual scroll to let animation take over
                 ) {
                     Column {
-                            if (sessionTask.status == TaskStatus.IN_PROGRESS && !sessionTask.isCompleted) {
-                            Text(
-                                text = "ĐANG THỰC HIỆN",
-                                color = AuraColors.WorkMode,
-                                fontSize = 8.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 0.5.sp,
-                                modifier = Modifier.padding(bottom = 2.dp)
-                            )
-                        } else if (sessionTask.status == TaskStatus.PAUSED && !sessionTask.isCompleted) {
+                        when (sessionTask.status) {
+                            TaskStatus.IN_PROGRESS if !sessionTask.isCompleted -> {
+                                Text(
+                                    text = "ĐANG THỰC HIỆN",
+                                    color = AuraColors.WorkMode,
+                                    fontSize = 8.sp,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 0.5.sp,
+                                    modifier = Modifier.padding(bottom = 2.dp)
+                                )
+                            }
+                            TaskStatus.PAUSED if !sessionTask.isCompleted -> {
                                 Text(
                                     text = "ĐANG TẠM DỪNG",
                                     color = AuraColors.BestStreakDay,
@@ -118,6 +120,19 @@ fun TaskItem(
                                     letterSpacing = 0.5.sp,
                                     modifier = Modifier.padding(bottom = 2.dp)
                                 )
+                            }
+                            TaskStatus.COMPLETED -> {
+                                Text(
+                                    text = "ĐÃ HOÀN THÀNH",
+                                    color = AuraColors.IncreaseMode,
+                                    fontSize = 8.sp,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 0.5.sp,
+                                    modifier = Modifier.padding(bottom = 2.dp)
+                                )
+                            }
+
+                            else -> {}
                         }
                         Text(
                             text = sessionTask.title,

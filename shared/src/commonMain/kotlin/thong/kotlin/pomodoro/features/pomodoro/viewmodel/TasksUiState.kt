@@ -8,5 +8,6 @@ data class TasksUiState(
     val isTasksExpanded: Boolean = false,
     val taskValidationError: String? = null,
     val willBeInProgressTaskId: String? = null,
-    val nextProgressTaskPosition: Int = -1
+    val nextProgressTaskPosition: Int = -1,
+    val isAllTasksCompleted: Boolean = false,
 )

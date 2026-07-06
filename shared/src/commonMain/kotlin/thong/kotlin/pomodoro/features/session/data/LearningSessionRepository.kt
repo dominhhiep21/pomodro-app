@@ -36,6 +36,8 @@ interface LearningSessionRepository {
 
     fun updateTask(task: SessionTask)
 
+    fun updateTasks(tasks: List<SessionTask>)
+
     fun deleteTask(taskId: String, sessionId: String)
 
     fun clearAllSessionsData()

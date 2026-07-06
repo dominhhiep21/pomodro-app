@@ -208,6 +208,25 @@ class LearningSessionRepositoryImpl(
         )
     }
 
+    override fun updateTasks(tasks: List<SessionTask>) {
+        database?.sessionHistoryLocalQueries?.transaction {
+            tasks.forEach { task ->
+                database.sessionHistoryLocalQueries.updateTask(
+                    task_id = task.taskId,
+                    session_id = task.sessionId,
+                    title = task.title,
+                    is_completed = if (task.isCompleted) 1 else 0,
+                    task_status = task.status.name,
+                    task_position = task.position.toLong(),
+                    focus_seconds = task.focusSeconds,
+                    updated_at = task.updatedAtMillis.toDateTimeText(),
+                    completed_at = task.completedAtMillis?.toDateTimeText(),
+                    sync_status = task.syncStatus.name
+                )
+            }
+        }
+    }
+
     override fun deleteTask(taskId: String, sessionId: String) {
         val queries = database?.sessionHistoryLocalQueries ?: return
         queries.deleteTask(taskId, sessionId)

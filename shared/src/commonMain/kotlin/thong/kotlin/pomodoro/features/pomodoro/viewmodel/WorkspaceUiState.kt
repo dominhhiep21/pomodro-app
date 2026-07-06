@@ -57,6 +57,9 @@ data class WorkspaceUiState(
     // Mandatory Task Modal
     val isMandatoryTaskModalVisible: Boolean = false,
 
+    // All Tasks Completed Modal
+    val isAllTasksCompletedModalVisible: Boolean = false,
+
     // Session Guidance Modal
     val isSessionGuidanceModalVisible: Boolean = true,
     

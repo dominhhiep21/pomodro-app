@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddCard
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -55,31 +56,60 @@ fun MandatoryTaskModal(
                         .padding(12.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = "Warning",
-                        tint = AuraColors.WorkMode,
-                        modifier = Modifier.size(40.dp)
-                    )
+                    if (totallyPomodoroUiState.tasksUiState.isAllTasksCompleted) {
+                        Icon(
+                            imageVector = Icons.Default.AddCard,
+                            contentDescription = "Good",
+                            tint = AuraColors.WorkMode,
+                            modifier = Modifier.size(40.dp)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = "Warning",
+                            tint = AuraColors.WorkMode,
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Text(
-                    text = "Chưa có công việc!",
-                    color = Color.White,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Black
-                )
+                if (totallyPomodoroUiState.tasksUiState.isAllTasksCompleted) {
+                    Text(
+                        text = "Tốt lắm, tận dụng thời gian lên đỉnh nào!",
+                        color = Color.White,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 17.sp
+                    )
+                } else {
+                    Text(
+                        text = "Chưa có công việc!",
+                        color = Color.White,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Black
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                Text(
-                    text = "Bạn cần ít nhất một mục tiêu để bắt đầu phiên tập trung này.",
-                    color = Color.White.copy(alpha = 0.7f),
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center
-                )
+                if (totallyPomodoroUiState.tasksUiState.isAllTasksCompleted) {
+                    Text(
+                        text = "Aura khuyên rằng nên thêm nhiệm vụ check kĩ những task đã hoàn thành",
+                        color = Color.White.copy(alpha = 0.7f),
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        fontSize = 13.sp
+                    )
+                } else {
+                    Text(
+                        text = "Bạn cần ít nhất một mục tiêu để bắt đầu phiên tập trung này.",
+                        color = Color.White.copy(alpha = 0.7f),
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 

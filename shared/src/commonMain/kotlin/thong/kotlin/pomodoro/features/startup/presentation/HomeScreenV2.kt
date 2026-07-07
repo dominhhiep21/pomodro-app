@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.Eco
-import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocalFireDepartment
@@ -69,7 +68,6 @@ import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.core.utils.secondsToHourMinuteText
 import thong.kotlin.pomodoro.core.utils.toDateTimeText
 import thong.kotlin.pomodoro.features.focus.tree.presentation.FocusTreeScreen
-import thong.kotlin.pomodoro.features.focus.tree.presentation.FocusTreeSection
 import thong.kotlin.pomodoro.features.learning.mode.components.LearningStyleScreen
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.StatCardType
 import thong.kotlin.pomodoro.features.session.presentation.SessionHistoryScreen
@@ -135,7 +133,7 @@ private fun HomeScreenV2UI(
 
                     if (isLandscape) {
                         Spacer(modifier = Modifier.height(32.dp))
-                        ExploreSection(onViewHistory)
+                        ExploreSection(onViewHistory, onViewFocusTree)
                     }
 
                     Spacer(modifier = Modifier.height(32.dp))
@@ -367,7 +365,7 @@ private fun QuickStartCard(onStartNew: () -> Unit) {
             .clickable(onClick = onStartNew),
         shape = RoundedCornerShape(24.dp),
         backgroundBrush = Brush.horizontalGradient(
-            colors = listOf(Color.White.copy(alpha = 0.05f), Color.White.copy(alpha = 0.02f))
+            colors = listOf(Color.White.copy(alpha = 0.05f), Color.White.copy(alpha = 0.1f))
         )
     ) {
         Row(
@@ -450,7 +448,10 @@ private fun QuickStartCard(onStartNew: () -> Unit) {
 }
 
 @Composable
-private fun ExploreSection(onViewHistory: () -> Unit) {
+private fun ExploreSection(
+    onViewHistory: () -> Unit,
+    onViewFocusTree: () -> Unit = {}
+) {
     Column {
         Text(
             "Khám phá",
@@ -465,13 +466,13 @@ private fun ExploreSection(onViewHistory: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            ExploreCard(
-                Modifier.weight(1f),
-                "Dashboard",
-                "Tổng quan tiến độ",
-                Icons.Default.GridView,
-                Color(0xFF00CED1)
-            ) {}
+//            ExploreCard(
+//                Modifier.weight(1f),
+//                "Dashboard",
+//                "Tổng quan tiến độ",
+//                Icons.Default.GridView,
+//                Color(0xFF00CED1)
+//            ) {}
             ExploreCard(
                 Modifier.weight(1f),
                 "Lịch sử",
@@ -480,6 +481,13 @@ private fun ExploreSection(onViewHistory: () -> Unit) {
                 Color(0xFF9370DB),
                 onViewHistory
             )
+            ExploreCard(
+                Modifier.weight(1f),
+                "Thống kê",
+                "Phân tích hiệu suất",
+                Icons.Default.BarChart,
+                Color(0xFF4682B4)
+            ) {}
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -490,19 +498,22 @@ private fun ExploreSection(onViewHistory: () -> Unit) {
         ) {
             ExploreCard(
                 Modifier.weight(1f),
-                "Thống kê",
-                "Phân tích hiệu suất",
-                Icons.Default.BarChart,
-                Color(0xFF4682B4)
-            ) {}
-            ExploreCard(
-                Modifier.weight(1f),
                 "Nhiệm vụ",
                 "Quản lý mục tiêu",
                 Icons.Default.Checklist,
                 Color(0xFF1E90FF)
             ) {}
+            ExploreCard(
+                Modifier.weight(1f),
+                "Cây Focus",
+                "Vườn sinh trưởng",
+                Icons.Default.Nature,
+                AuraColors.ShortBreakMode,
+                onViewFocusTree
+            )
         }
+
+        Spacer(modifier = Modifier.height(12.dp))
     }
 }
 

@@ -84,6 +84,8 @@ import thong.kotlin.pomodoro.features.background.data.BackgroundRepository
 import thong.kotlin.pomodoro.features.background.presentation.components.CompactBackgroundSection
 import thong.kotlin.pomodoro.features.pomodoro.music.data.MusicRepository
 import thong.kotlin.pomodoro.features.pomodoro.music.presentation.CompactMusicSectionComponent
+import thong.kotlin.pomodoro.features.settings.viewmodel.SettingsUiState
+import thong.kotlin.pomodoro.features.settings.viewmodel.SettingsViewModelV2
 
 class SettingsScreenV2 : Screen {
     @Composable

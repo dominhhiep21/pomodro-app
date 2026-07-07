@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import thong.kotlin.pomodoro.core.config.AppConfig
 import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.core.notification.NotificationManager
+import thong.kotlin.pomodoro.core.notification.toast.AuraToast
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.background.data.BackgroundRepository
 import thong.kotlin.pomodoro.features.background.model.BackgroundConfig
@@ -1610,6 +1611,10 @@ class AppViewModel(
                 )
             }
 
+            if (_uiState.value.tasksUiState.sessionTasks.size > 3) {
+                AuraToast.showWarning("Số lượng Task cho một Pomo có vẻ hơi nhiều")
+            }
+
             viewModelScope.launch {
                 insertTask(newSessionTask)
                 updateTasks()
@@ -1657,11 +1662,19 @@ class AppViewModel(
 
         val currentState = _uiState.value
         val currentSession = currentState.currentSession
+        val taskPosition = currentState.tasksUiState.sessionTasks
+            .firstOrNull { it.taskId == taskId }?.position ?: -1
 
         _uiState.update { state ->
             state.copy(
                 tasksUiState = state.tasksUiState.copy(
-                    sessionTasks = state.tasksUiState.sessionTasks.filter { it.taskId != taskId }
+                    sessionTasks = state.tasksUiState.sessionTasks.filter { it.taskId != taskId }.map {
+                        if (it.position > taskPosition) {
+                            it.copy(position = it.position - 1)
+                        } else {
+                            it
+                        }
+                    }
                 )
             )
         }
@@ -1679,6 +1692,7 @@ class AppViewModel(
                     )
                 )
             )
+            updateTasks()
         }
     }
 
@@ -1689,6 +1703,7 @@ class AppViewModel(
 
         // Nếu Task chưa được thực hiện thì không thể đánh dấu là Done
         if (task?.status == TaskStatus.IDLE) {
+            AuraToast.showError("Task chưa thực hiện không thể hoàn thành!")
             return
         }
 

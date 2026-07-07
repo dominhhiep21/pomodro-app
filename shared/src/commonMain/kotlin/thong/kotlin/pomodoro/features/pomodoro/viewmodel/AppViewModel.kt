@@ -172,7 +172,7 @@ class AppViewModel(
                 state.copy(
                     tasksUiState = state.tasksUiState.copy(
                         sessionTasks = tasks,
-                        isAllTasksCompleted = tasks.all { it.status == TaskStatus.COMPLETED },
+                        isAllTasksCompleted = tasks.isNotEmpty() && tasks.all { it.status == TaskStatus.COMPLETED },
                     )
                 )
             }
@@ -683,19 +683,23 @@ class AppViewModel(
     private fun handleTimerComplete() {
         viewModelScope.launch {
             val userSettings = repository.getUserSettings()
+            val state = _uiState.value
+            val currentMode = state.currentMode
 
             if (userSettings.isSoundEnabled) {
                 soundManager?.playChimeSound()
             }
 
-            stopTimerJobOnly(timerJob)
-
-            val state = _uiState.value
-            val session = state.currentSession
-            val currentMode = state.currentMode
-            val config = state.timerUiState.config
-
             val isWorkMode = currentMode == PomodoroMode.WORK
+
+            if (isWorkMode) {
+                checkAndUpdateDoneTask()
+            }
+
+            pauseTimer()
+
+            val session = state.currentSession
+            val config = state.timerUiState.config
 
             val nextMode = if (isWorkMode) {
                 PomodoroMode.SHORT_BREAK
@@ -788,13 +792,51 @@ class AppViewModel(
                 )
             )
 
-            delay(2000)
-
             if (userSettings.autoStartWork && currentMode == PomodoroMode.SHORT_BREAK) {
+                delay(2000)
                 toggleTimer()
             } else if (userSettings.autoStartBreak && currentMode == PomodoroMode.WORK) {
+                delay(2000)
                 toggleTimer()
             }
+        }
+    }
+
+    private fun checkAndUpdateDoneTask() {
+        _uiState.update { state ->
+            state.copy(
+                tasksUiState = state.tasksUiState.copy(
+                    sessionTasks = state.tasksUiState.sessionTasks.map { task ->
+                        when (task.status) {
+                            TaskStatus.COMPLETED -> {
+                                task.copy(
+                                    completedPomodoros = task.completedPomodoros + 1,
+                                )
+                            }
+                            TaskStatus.IN_PROGRESS -> {
+                                task.copy(
+                                    completedPomodoros = task.completedPomodoros + 1,
+                                    estimatedPomodoros = task.estimatedPomodoros + 1,
+                                    focusSeconds = task.focusSeconds + (state.currentSession.plannedWorkMinutes * 60).toLong()
+                                )
+                            }
+                            TaskStatus.PAUSED -> {
+                                task.copy(
+                                    completedPomodoros = task.completedPomodoros + 1,
+                                    estimatedPomodoros = task.estimatedPomodoros + 1,
+                                )
+                            }
+                            else -> {
+                                task
+                            }
+                        }
+                    }
+                )
+            )
+        }
+
+        viewModelScope.launch {
+            updateTasks()
         }
     }
 
@@ -1533,7 +1575,7 @@ class AppViewModel(
 
             viewModelScope.launch {
                 insertTask(newSessionTask)
-                updateTasks(_uiState.value.tasksUiState.sessionTasks)
+                updateTasks()
                 insertEvent(
                     LearningSessionEvent(
                         sessionId = currentSession.sessionId,
@@ -1659,6 +1701,7 @@ class AppViewModel(
         if (nextTask != null) {
             // Nếu tick done task đang IN_PROGRESS, chọn task tiếp theo
             if (updatedSessionTask?.status == TaskStatus.COMPLETED) {
+                increaseTaskPomodoroCount(taskId)
                 _uiState.update { state ->
                     state.copy(
                         tasksUiState = state.tasksUiState.copy(
@@ -1679,8 +1722,6 @@ class AppViewModel(
 
         viewModelScope.launch {
             if (updatedSessionTask != null) {
-                updateTask(updatedSessionTask)
-
                 val currentState = _uiState.value
                 val allCompleted = currentState.tasksUiState.sessionTasks.all { it.isCompleted }
                 val isTimerRunning = currentState.timerUiState.isActive
@@ -1709,8 +1750,23 @@ class AppViewModel(
                         )
                     )
                 )
-                updateTasks(currentState.tasksUiState.sessionTasks)
+                updateTasks()
             }
+        }
+    }
+
+    private fun increaseTaskPomodoroCount(taskId: String) {
+        _uiState.update { state ->
+            val updatedTasks = state.tasksUiState.sessionTasks.map { task ->
+                if (task.taskId == taskId) {
+                    task.copy(pomodoroCount = task.pomodoroCount + 1)
+                } else {
+                    task
+                }
+            }
+            state.copy(
+                tasksUiState = state.tasksUiState.copy(sessionTasks = updatedTasks)
+            )
         }
     }
 
@@ -1830,7 +1886,7 @@ class AppViewModel(
 
     suspend fun updateTask(task: SessionTask) = learningSessionManager.updateTask(task)
 
-    suspend fun updateTasks(tasks: List<SessionTask>) = learningSessionManager.updateTasks(tasks)
+    suspend fun updateTasks() = learningSessionManager.updateTasks(_uiState.value.tasksUiState.sessionTasks)
 
     suspend fun deleteTask(taskId: String, sessionId: String) = learningSessionManager.deleteTaskById(taskId, sessionId)
 

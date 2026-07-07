@@ -81,14 +81,16 @@ fun MandatoryTaskModal(
                         color = Color.White,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Black,
-                        fontSize = 17.sp
+                        fontSize = 17.sp,
+                        textAlign = TextAlign.Center
                     )
                 } else {
                     Text(
                         text = "Chưa có công việc!",
                         color = Color.White,
                         style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Black
+                        fontWeight = FontWeight.Black,
+                        textAlign = TextAlign.Center
                     )
                 }
 

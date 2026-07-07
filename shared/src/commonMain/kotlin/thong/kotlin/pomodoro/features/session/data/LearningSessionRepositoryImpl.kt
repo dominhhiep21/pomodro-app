@@ -185,6 +185,8 @@ class LearningSessionRepositoryImpl(
             task_status = task.status.name,
             task_position = task.position.toLong(),
             focus_seconds = task.focusSeconds,
+            completed_pomodoros = task.completedPomodoros.toLong(),
+            estimated_pomodoros = task.estimatedPomodoros.toLong(),
             created_at = task.createdAtMillis.toDateTimeText(),
             updated_at = task.updatedAtMillis.toDateTimeText(),
             completed_at = task.completedAtMillis?.toDateTimeText(),
@@ -202,6 +204,8 @@ class LearningSessionRepositoryImpl(
             task_status = task.status.name,
             task_position = task.position.toLong(),
             focus_seconds = task.focusSeconds,
+            completed_pomodoros = task.completedPomodoros.toLong(),
+            estimated_pomodoros = task.estimatedPomodoros.toLong(),
             updated_at = task.updatedAtMillis.toDateTimeText(),
             completed_at = task.completedAtMillis?.toDateTimeText(),
             sync_status = task.syncStatus.name
@@ -219,6 +223,8 @@ class LearningSessionRepositoryImpl(
                     task_status = task.status.name,
                     task_position = task.position.toLong(),
                     focus_seconds = task.focusSeconds,
+                    completed_pomodoros = task.completedPomodoros.toLong(),
+                    estimated_pomodoros = task.estimatedPomodoros.toLong(),
                     updated_at = task.updatedAtMillis.toDateTimeText(),
                     completed_at = task.completedAtMillis?.toDateTimeText(),
                     sync_status = task.syncStatus.name

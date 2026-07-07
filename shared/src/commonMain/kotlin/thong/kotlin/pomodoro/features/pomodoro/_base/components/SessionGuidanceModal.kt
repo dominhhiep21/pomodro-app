@@ -10,7 +10,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
-import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,12 +30,13 @@ import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.launch
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
 import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
+import thong.kotlin.pomodoro.core.designsystem.theme.FocusRuleIcons
 
 @Composable
 fun SessionGuidanceModal(
     onDismiss: () -> Unit,
 ) {
-    val pagerState = rememberPagerState(pageCount = { 2 })
+    val pagerState = rememberPagerState(pageCount = { 5 })
     val scope = rememberCoroutineScope()
 
     Dialog(onDismissRequest = onDismiss) {
@@ -64,15 +64,36 @@ fun SessionGuidanceModal(
                     ) { page ->
                         when (page) {
                             0 -> GuidancePage(
+                                icon = FocusRuleIcons.TaskRequired,
+                                iconColor = AuraColors.WorkMode,
+                                title = "CHỌN TASK TRƯỚC KHI BẮT ĐẦU",
+                                description = "Mỗi phiên pomodoro phải gắn với task cụ thể, nếu chưa có task bạn sẽ không thể bắt đầu."
+                            )
+
+                            1 -> GuidancePage(
+                                icon = FocusRuleIcons.TaskRequired,
+                                iconColor = AuraColors.WorkMode,
+                                title = "HỆ THỐNG SẮP XẾP TASK",
+                                description = "Task được sắp xếp từ trên xuống dưới theo độ ưu tiên, Aura sẽ ưu tiên chọn task đầu tiên để bắt đầu focus."
+                            )
+
+                            2 -> GuidancePage(
                                 icon = Icons.Default.Warning,
                                 iconColor = AuraColors.WorkMode,
                                 title = "LƯU Ý KHI ĐANG TRONG PHIÊN HỌC",
                                 description = "Không được xóa task trong khi timer đang chạy để đảm bảo sự tập trung tuyệt đối."
                             )
 
-                            1 -> GuidancePage(
-                                icon = Icons.Default.Lightbulb,
-                                iconColor = AuraColors.BestStreakDay,
+                            3 -> GuidancePage(
+                                icon = FocusRuleIcons.SingleActiveTask,
+                                iconColor = AuraColors.WorkMode,
+                                title = "CHỈ 1 TASK ĐƯỢC ĐANG ĐƯỢC THỰC HIỆN",
+                                description = "Tại một thời điểm, aura chỉ cho phép 1 task ở trạng thái tập trung."
+                            )
+
+                            4 -> GuidancePage(
+                                icon = FocusRuleIcons.SplitTask,
+                                iconColor = AuraColors.WorkMode,
                                 title = "LỜI KHUYÊN CỦA AURA CHO VIỆC TẠO TASK",
                                 description = "Task nên đủ nhỏ để có thể hoàn thành trong 1-3 lần pomodoro."
                             )
@@ -100,7 +121,7 @@ fun SessionGuidanceModal(
                         }
                     }
 
-                    if (pagerState.currentPage < 1) {
+                    if (pagerState.currentPage < pagerState.pageCount - 1) {
                         IconButton(
                             onClick = {
                                 scope.launch {
@@ -121,14 +142,13 @@ fun SessionGuidanceModal(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
 
                 // Page Indicators (Dots)
                 Row(
                     modifier = Modifier.height(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    repeat(2) { iteration ->
+                    repeat(pagerState.pageCount) { iteration ->
                         val color =
                             if (pagerState.currentPage == iteration) Color.White else Color.White.copy(
                                 alpha = 0.2f
@@ -142,7 +162,7 @@ fun SessionGuidanceModal(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
                 Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                     TextButton(

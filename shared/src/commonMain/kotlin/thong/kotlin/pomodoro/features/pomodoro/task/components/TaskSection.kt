@@ -1,7 +1,6 @@
 package thong.kotlin.pomodoro.features.pomodoro.task.components
 
 import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.SessionTask
-import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.TaskStatus
 
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.Arrangement
@@ -102,8 +101,7 @@ fun TaskSection(
                         onToggle = onToggle,
                         onDelete = onDelete,
                         onMoveUp = onMoveUp,
-                        onMoveDown = onMoveDown,
-                        isOpenForDeleted = task.status == TaskStatus.IDLE
+                        onMoveDown = onMoveDown
                     )
                 }
             }
@@ -123,8 +121,7 @@ fun TaskSection(
                         onToggle = onToggle,
                         onDelete = onDelete,
                         onMoveUp = onMoveUp,
-                        onMoveDown = onMoveDown,
-                        isOpenForDeleted = task.status == TaskStatus.IDLE
+                        onMoveDown = onMoveDown
                     )
                 }
             }

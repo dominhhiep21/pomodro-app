@@ -162,7 +162,7 @@ fun FocusTreeSection(
                 fontWeight = FontWeight.Medium
             )
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Stats Grid
             Row(

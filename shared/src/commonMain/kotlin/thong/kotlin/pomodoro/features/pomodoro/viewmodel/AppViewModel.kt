@@ -1658,7 +1658,10 @@ class AppViewModel(
         val isWorkMode = state.currentMode == PomodoroMode.WORK
 
         // Nghiệp vụ: Không được xóa Task trong khi Timer đang chạy (trừ khi đang break)
-        if (isTimerRunning && isWorkMode) return
+        if (isTimerRunning && isWorkMode) {
+            AuraToast.showError("Không được xóa task khi đang làm việc")
+            return
+        }
 
         val currentState = _uiState.value
         val currentSession = currentState.currentSession

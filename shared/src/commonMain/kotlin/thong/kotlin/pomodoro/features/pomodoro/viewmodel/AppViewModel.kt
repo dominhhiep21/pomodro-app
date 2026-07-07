@@ -809,9 +809,13 @@ class AppViewModel(
                     sessionTasks = state.tasksUiState.sessionTasks.map { task ->
                         when (task.status) {
                             TaskStatus.COMPLETED -> {
-                                task.copy(
-                                    completedPomodoros = task.completedPomodoros + 1,
-                                )
+                                if (task.estimatedPomodoros != task.completedPomodoros) {
+                                    task.copy(
+                                        completedPomodoros = task.completedPomodoros + 1,
+                                    )
+                                } else {
+                                    task
+                                }
                             }
                             TaskStatus.IN_PROGRESS -> {
                                 task.copy(
@@ -1543,7 +1547,7 @@ class AppViewModel(
 
         if (text.trim().length > 3) {
             val maxPosition = currentState.tasksUiState.sessionTasks
-                .filter { it.status == TaskStatus.IDLE || it.status == TaskStatus.PAUSED }
+                .filter { it.status == TaskStatus.IDLE || it.status == TaskStatus.PAUSED || it.status == TaskStatus.IN_PROGRESS }
                 .size
             val newSessionTask = SessionTask(
                 sessionId = currentSession.sessionId,

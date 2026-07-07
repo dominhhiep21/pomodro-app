@@ -1,4 +1,4 @@
-package thong.kotlin.pomodoro.features.settings.presentation
+package thong.kotlin.pomodoro.features.settings.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

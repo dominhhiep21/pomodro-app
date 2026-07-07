@@ -23,6 +23,6 @@ fun main() = application {
         },
         title = "Pomodoro Desktop"
     ) {
-        App()
+        Aura()
     }
 }

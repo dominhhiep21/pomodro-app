@@ -75,7 +75,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             // Yêu cầu quyền thông báo trên Android 13+
             RequestNotificationPermissionEffect()
-            App()
+            Aura()
         }
     }
 }
@@ -83,5 +83,5 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 fun AppAndroidPreview() {
-    App()
+    Aura()
 }

@@ -122,7 +122,7 @@ fun LandscapePomodoroUI(
             }
         }
 
-        val isReadOnly = totallyPomodoroUiState.timerUiState.isActive && totallyPomodoroUiState.currentMode == PomodoroMode.WORK
+//        val isReadOnly = totallyPomodoroUiState.timerUiState.isActive && totallyPomodoroUiState.currentMode == PomodoroMode.WORK
 
         TaskSideBar(
             sessionTasks = totallyPomodoroUiState.tasksUiState.sessionTasks,
@@ -136,7 +136,6 @@ fun LandscapePomodoroUI(
             onMoveTaskDown = onMoveTaskDown,
             onNewTaskTextChange = onNewTaskTextChange,
             taskValidationError = totallyPomodoroUiState.tasksUiState.taskValidationError,
-            isReadOnly = isReadOnly,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(bottom = 16.dp, end = 16.dp)
@@ -246,7 +245,7 @@ fun LandscapePomodoroGroupUI(
         ) {
             ExpandableChatPanel()
 
-            val isReadOnly = totallyPomodoroUiState.timerUiState.isActive && totallyPomodoroUiState.currentMode == PomodoroMode.WORK
+//            val isReadOnly = totallyPomodoroUiState.timerUiState.isActive && totallyPomodoroUiState.currentMode == PomodoroMode.WORK
 
             TaskSideBar(
                 sessionTasks = totallyPomodoroUiState.tasksUiState.sessionTasks,
@@ -260,7 +259,6 @@ fun LandscapePomodoroGroupUI(
                 onMoveTaskDown = onMoveTaskDown,
                 onNewTaskTextChange = onNewTaskTextChange,
                 taskValidationError = totallyPomodoroUiState.tasksUiState.taskValidationError,
-                isReadOnly = isReadOnly
             )
         }
     }

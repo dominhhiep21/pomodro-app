@@ -62,6 +62,9 @@ data class WorkspaceUiState(
 
     // Session Guidance Modal
     val isSessionGuidanceModalVisible: Boolean = true,
+
+    // Task Too Long Warning Modal
+    val isTaskTooLongWarningModalVisible: Boolean = false,
     
     // Focus Score
     val focusScoreResult: FocusScoreResult? = null,

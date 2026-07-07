@@ -694,6 +694,7 @@ class AppViewModel(
 
             if (isWorkMode) {
                 checkAndUpdateDoneTask()
+                checkTaskTooLong()
             }
 
             pauseTimer()
@@ -841,6 +842,38 @@ class AppViewModel(
 
         viewModelScope.launch {
             updateTasks()
+        }
+    }
+
+    private fun checkTaskTooLong() {
+        val tasksTooLong = _uiState.value.tasksUiState.sessionTasks
+            .filter { it.completedPomodoros < it.estimatedPomodoros }
+            .filter { it.completedPomodoros >= 3 }
+
+        if (tasksTooLong.isNotEmpty()) {
+            _uiState.update {
+                it.copy(
+                    workspaceUiState = it.workspaceUiState.copy(
+                        isTaskTooLongWarningModalVisible = true
+                    )
+                )
+            }
+        }
+    }
+
+    fun getTasksTooLong(): List<SessionTask> {
+        return _uiState.value.tasksUiState.sessionTasks
+            .filter { it.completedPomodoros < it.estimatedPomodoros }
+            .filter { it.completedPomodoros >= 3 }
+    }
+
+    fun toggleTaskTooLongModal() {
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    isTaskTooLongWarningModalVisible = !it.workspaceUiState.isTaskTooLongWarningModalVisible
+                )
+            )
         }
     }
 

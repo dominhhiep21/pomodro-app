@@ -59,12 +59,13 @@ import thong.kotlin.pomodoro.features.pomodoro._base.components.LandscapePomodor
 import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitCompactUI
 import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoroGroupUI
 import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoroUI
+import thong.kotlin.pomodoro.features.pomodoro._base.components.SessionGuidanceModal
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.PomodoroUiState
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettingsV2
-import thong.kotlin.pomodoro.features.pomodoro.task.components.MandatoryTaskModal
 import thong.kotlin.pomodoro.features.pomodoro.task.components.AllTasksCompletedModal
-import thong.kotlin.pomodoro.features.pomodoro._base.components.SessionGuidanceModal
+import thong.kotlin.pomodoro.features.pomodoro.task.components.MandatoryTaskModal
+import thong.kotlin.pomodoro.features.pomodoro.task.components.WarningTaskTooLongModal
 import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.ExitConfirmationModal
 import thong.kotlin.pomodoro.features.pomodoro.timer.presentation.components.PomodoroSettingsModal
 import thong.kotlin.pomodoro.features.pomodoro.viewmodel.AppViewModel
@@ -531,6 +532,14 @@ fun PomodoroScreenUIv2(
             if (totalPomodoroUiState.workspaceUiState.isSessionGuidanceModalVisible) {
                 SessionGuidanceModal(
                     onDismiss = appViewModel::toggleSessionGuidanceModal
+                )
+            }
+
+            // Task Too Long Warning Modal
+            if (totalPomodoroUiState.workspaceUiState.isTaskTooLongWarningModalVisible) {
+                WarningTaskTooLongModal(
+                    onDismiss = appViewModel::toggleTaskTooLongModal,
+                    tooLongTasks = appViewModel.getTasksTooLong()
                 )
             }
 

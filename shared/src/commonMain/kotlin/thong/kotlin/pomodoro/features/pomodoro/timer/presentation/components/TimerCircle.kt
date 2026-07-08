@@ -62,10 +62,10 @@ fun TimerCircleComponent(
             (totalSeconds - totallyPomodoroUiState.timerUiState.timeLeft).toFloat() / totalSeconds
         }
         val progressBrush = remember(totallyPomodoroUiState.currentMode) {
-            if (totallyPomodoroUiState.currentMode == PomodoroMode.WORK) {
-                AuraGradients.WorkFlow
-            } else {
-                AuraGradients.BreakFlow
+            when (totallyPomodoroUiState.currentMode) {
+                PomodoroMode.WORK -> AuraGradients.WorkFlow
+                PomodoroMode.SHORT_BREAK -> AuraGradients.BreakFlow
+                PomodoroMode.LONG_BREAK -> AuraGradients.LongBreakFlow
             }
         }
 

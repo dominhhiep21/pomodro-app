@@ -63,7 +63,7 @@ fun AmbientSoundSection(
                 ) {
                     items(availableSounds) { sound ->
                         val isActive = activeSoundIds.contains(sound.id)
-                        
+
                         AmbientSoundItem(
                             sound = sound,
                             isActive = isActive,

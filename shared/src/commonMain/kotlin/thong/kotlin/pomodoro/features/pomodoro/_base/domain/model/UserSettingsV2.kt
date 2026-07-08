@@ -1,8 +1,9 @@
 package thong.kotlin.pomodoro.features.pomodoro._base.domain.model
 
 import thong.kotlin.pomodoro.core.config.AppConfig
+import thong.kotlin.pomodoro.features.background.data.BackgroundRepository
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
-import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
+import thong.kotlin.pomodoro.features.pomodoro.music.data.MusicRepository
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
 
 data class UserSettingsV2(
@@ -12,10 +13,16 @@ data class UserSettingsV2(
     val personalLongBreakMinutes: Int = AppConfig.DEFAULT_LONG_BREAK_MINUTES,
     val autoStartBreak: Boolean = AppConfig.DEFAULT_AUTO_START_BREAK,
     val autoStartWork: Boolean = AppConfig.DEFAULT_AUTO_START_WORK,
-    val personalSelectedBackgroundId: String? = null,
-    val personalLastSelectedMusicId: String? = null,
+    val personalSelectedBackgroundId: String? = BackgroundRepository.DEFAULT_BACKGROUND_ID,
+    val personalLastSelectedMusicId: String? = MusicRepository.DEFAULT_TRACK_ID,
     val hasCompletedOnboarding: Boolean = false,
-    val isNotificationEnabled: Boolean = false
+    val isNotificationEnabled: Boolean = false,
+    val dailyTargetMinutes: Int = 120,
+    val isSoundEnabled: Boolean = true,
+    val isVibrationEnabled: Boolean = true,
+    val firstDayOfWeek: Int = 1, // 1 for Monday
+    val language: String = "vi",
+    val isDarkMode: Boolean = true
 )
 
 data class PomodoroUiState(

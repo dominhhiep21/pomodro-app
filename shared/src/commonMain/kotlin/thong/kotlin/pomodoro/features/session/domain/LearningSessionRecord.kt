@@ -9,7 +9,7 @@ import thong.kotlin.pomodoro.core.utils.toMillisFromDateTimeTextOrNull
 import thong.kotlin.pomodoro.database.Session_history_local
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro.music.data.MusicRepository
-import thong.kotlin.pomodoro.features.settings.data.BackgroundRepository
+import thong.kotlin.pomodoro.features.background.data.BackgroundRepository
 import kotlin.time.Clock
 
 @Serializable
@@ -32,6 +32,9 @@ data class LearningSessionRecord(
     val totalFocusSeconds: Int = 0,
     val totalBreakSeconds: Int = 0,
     val totalPausedSeconds: Int = 0,
+    val pausedCount: Int = 0,
+    val skipCount: Int = 0,
+    val focusScore: Int = 0,
     val completedWorkRounds: Int = 0,
     val completedBreakRounds: Int = 0,
     val createdAtMillis: Long = Clock.System.now().toEpochMilliseconds(),
@@ -48,13 +51,13 @@ fun Session_history_local.toLearningSessionRecord(): LearningSessionRecord {
         status = status.toEnumOrDefault(LearningSessionStatus.IDLE),
         currentLearningMode = current_learning_mode.toEnumOrDefault(CurrentLearningMode.NOT_YET_STARTED),
 
-        startedAtMillis = started_at.toMillisFromDateTimeText(),
-        endedAtMillis = ended_at.toMillisFromDateTimeTextOrNull(),
-        lastPausedAtMillis = last_paused_at.toMillisFromDateTimeTextOrNull(),
+        startedAtMillis = started_at_millis ?: started_at.toMillisFromDateTimeText(),
+        endedAtMillis = ended_at_millis ?: ended_at.toMillisFromDateTimeTextOrNull(),
+        lastPausedAtMillis = last_paused_at_millis ?: last_paused_at.toMillisFromDateTimeTextOrNull(),
 
         plannedWorkMinutes = planned_work_minutes?.toInt() ?: 0,
         plannedBreakMinutes = planned_break_minutes?.toInt() ?: 0,
-        plannedLongBreakMinutes = 0,
+        plannedLongBreakMinutes = planned_long_break_minutes?.toInt() ?: 0,
 
         lastBackgroundId = last_background_id,
         lastMusicId = last_music_id,
@@ -69,12 +72,15 @@ fun Session_history_local.toLearningSessionRecord(): LearningSessionRecord {
         totalFocusSeconds = total_focus_seconds?.toInt() ?: 0,
         totalBreakSeconds = total_break_seconds?.toInt() ?: 0,
         totalPausedSeconds = total_paused_seconds?.toInt() ?: 0,
+        pausedCount = paused_count?.toInt() ?: 0,
+        skipCount = skip_count?.toInt() ?: 0,
+        focusScore = focus_score?.toInt() ?: 0,
 
         completedWorkRounds = completed_work_rounds?.toInt() ?: 0,
         completedBreakRounds = completed_break_rounds?.toInt() ?: 0,
 
-        createdAtMillis = created_at.toMillisFromDateTimeText(),
-        updatedAtMillis = updated_at.toMillisFromDateTimeText(),
+        createdAtMillis = created_at_millis ?: created_at.toMillisFromDateTimeText(),
+        updatedAtMillis = updated_at_millis ?: updated_at.toMillisFromDateTimeText(),
 
         syncStatus = sync_status.toEnumOrDefault(SyncStatus.LOCAL_ONLY)
     )

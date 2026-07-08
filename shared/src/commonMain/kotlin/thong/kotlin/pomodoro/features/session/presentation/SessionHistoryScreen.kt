@@ -81,7 +81,8 @@ import thong.kotlin.pomodoro.features.session.domain.CurrentLearningMode
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.color
 import thong.kotlin.pomodoro.features.session.domain.toDisplayText
-import thong.kotlin.pomodoro.features.settings.data.BackgroundRepository
+import thong.kotlin.pomodoro.features.background.data.BackgroundRepository
+import thong.kotlin.pomodoro.features.startup.presentation.HomeScreenV2
 
 class SessionHistoryScreen : Screen {
     @Composable
@@ -128,7 +129,8 @@ class SessionHistoryScreen : Screen {
                     navigator.push(
                         PomodoroScreenV2(
                             learningStyle = session.sessionMode,
-                            currentSessionId = session.sessionId
+                            currentSessionId = session.sessionId,
+                            isNewSession = false
                         )
                     )
                 },
@@ -143,10 +145,10 @@ class SessionHistoryScreen : Screen {
             selectedFilter = selectedFilter,
             onFilterSelect = { selectedFilter = it },
             onBack = {
-                navigator.pop()
+                navigator.replace(HomeScreenV2())
             },
             onCreateSession = {
-                navigator.push(LearningStyleScreen())
+                navigator.push(LearningStyleScreen("session_history"))
             },
             onSessionClick = { session ->
                 sessionToContinue = session
@@ -228,6 +230,8 @@ private fun SessionContinuationModal(
                     DetailRow("Bắt đầu lúc", session.startedAtMillis.toDateTimeText())
                     DetailRow("Tổng thời gian", secondsToMinutesText(session.totalFocusSeconds))
                     DetailRow("Số vòng hoàn thành", "${session.completedWorkRounds}")
+                    DetailRow("Số lần tạm dừng", "${session.pausedCount}")
+                    DetailRow("Số lần bỏ qua", "${session.skipCount}")
                     DetailRow("Background", BackgroundRepository.getNameById(session.lastBackgroundId.toString()))
                     DetailRow("Music", MusicRepository.getNameById(session.lastMusicId.toString()))
                     DetailRow("Ambient Sound", AmbientSoundRepository.getNameById(session.lastAmbientSounds.toList()).toString())

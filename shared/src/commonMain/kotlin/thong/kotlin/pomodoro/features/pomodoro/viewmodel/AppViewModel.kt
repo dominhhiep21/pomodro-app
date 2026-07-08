@@ -12,8 +12,14 @@ import kotlinx.coroutines.launch
 import thong.kotlin.pomodoro.core.config.AppConfig
 import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.core.notification.NotificationManager
+import thong.kotlin.pomodoro.core.notification.toast.AuraToast
 import thong.kotlin.pomodoro.di.DependencyRegistry
+import thong.kotlin.pomodoro.features.background.data.BackgroundRepository
 import thong.kotlin.pomodoro.features.background.model.BackgroundConfig
+import thong.kotlin.pomodoro.features.focus.score.domain.FocusScoreCalculator
+import thong.kotlin.pomodoro.features.focus.tree.data.FocusTreeRepository
+import thong.kotlin.pomodoro.features.focus.tree.domain.calculateGrowthPoint
+import thong.kotlin.pomodoro.features.focus.tree.presentation.animation.FocusTreeAnimationEvent
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.CompactSection
@@ -25,13 +31,13 @@ import thong.kotlin.pomodoro.features.pomodoro._base.domain.totalSeconds
 import thong.kotlin.pomodoro.features.pomodoro.ambient.data.AmbientSoundRepository
 import thong.kotlin.pomodoro.features.pomodoro.music.data.MusicRepository
 import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.SessionTask
+import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.TaskStatus
 import thong.kotlin.pomodoro.features.session.data.LearningSessionManager
 import thong.kotlin.pomodoro.features.session.domain.CurrentLearningMode
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionEvent
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionEventType
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
-import thong.kotlin.pomodoro.features.settings.data.BackgroundRepository
 import kotlin.time.Clock
 
 data class TotallyPomodoroUiState(
@@ -47,7 +53,9 @@ class AppViewModel(
     private val notificationManager: NotificationManager? = DependencyRegistry.notificationManager,
     private val repository: UserAppStateRepositoryV2 = DependencyRegistry.userAppStateRepositoryV2,
     private val learningSessionManager: LearningSessionManager = DependencyRegistry.learningSessionManager,
-    private val currentSession: LearningSessionRecord
+    private val focusTreeRepository: FocusTreeRepository = DependencyRegistry.focusTreeRepository,
+    private val currentSession: LearningSessionRecord,
+    private val isNewSession: Boolean,
 ) : ViewModel() {
 
     val timerUiState = TimerUiState(
@@ -76,6 +84,7 @@ class AppViewModel(
         loadInitialTimerStateData()
         loadWorkspaceSettings()
         loadTasks()
+        loadFocusTree()
     }
 
     private fun loadInitialTimerStateData() {
@@ -110,7 +119,6 @@ class AppViewModel(
                     learningStyle = currentSession.sessionMode,
                     editingWorkMinutes = currentSession.plannedWorkMinutes.toString(),
                     editingBreakMinutes = currentSession.plannedBreakMinutes.toString(),
-
                 )
             )
         }
@@ -123,32 +131,36 @@ class AppViewModel(
 
     private fun loadWorkspaceSettings() {
         viewModelScope.launch {
-            // Load danh sách dữ liệu tĩnh từ 3 Object Repositories
-            _uiState.update { state ->
-                state.copy(
-                    workspaceUiState = _uiState.value.workspaceUiState.copy(
-                        availableTracks = MusicRepository.availableTracks,
-                        availableAmbientSounds = AmbientSoundRepository.availableSounds,
-                        availableBackgrounds = BackgroundRepository.availableBackgrounds,
-                        selectedTrackId = currentSession.lastMusicId,
-                        selectedBackgroundId = currentSession.lastBackgroundId ?: BackgroundRepository.DEFAULT_BACKGROUND_ID,
-                        activeAmbientSoundIds = currentSession.lastAmbientSounds.toSet(),
+            if (isNewSession) {
+                repository.getSettingsFlow().collect { settings ->
+                    _uiState.update { state ->
+                        state.copy(
+                            workspaceUiState = state.workspaceUiState.copy(
+                                availableTracks = MusicRepository.availableTracks,
+                                availableAmbientSounds = AmbientSoundRepository.availableSounds,
+                                availableBackgrounds = BackgroundRepository.availableBackgrounds,
+                                selectedBackgroundId = settings.personalSelectedBackgroundId,
+                                selectedTrackId =  settings.personalLastSelectedMusicId,
+                                isNotificationEnabled = settings.isNotificationEnabled
+                            )
+                        )
+                    }
+                }
+            } else {
+                // Load danh sách dữ liệu tĩnh từ 3 Object Repositories
+                _uiState.update { state ->
+                    state.copy(
+                        workspaceUiState = state.workspaceUiState.copy(
+                            availableTracks = MusicRepository.availableTracks,
+                            availableAmbientSounds = AmbientSoundRepository.availableSounds,
+                            availableBackgrounds = BackgroundRepository.availableBackgrounds,
+                            selectedTrackId = currentSession.lastMusicId,
+                            selectedBackgroundId = currentSession.lastBackgroundId ?: BackgroundRepository.DEFAULT_BACKGROUND_ID,
+                            activeAmbientSoundIds = currentSession.lastAmbientSounds.toSet(),
+                        )
                     )
-                )
+                }
             }
-
-//            repository.getSettingsFlow().collect { settings ->
-//                _uiState.update { state ->
-//                    state.copy(
-//                        workspaceUiState = _uiState.value.workspaceUiState.copy(
-//                            selectedBackgroundId = state.workspaceUiState.selectedBackgroundId,
-//                            isNotificationEnabled = settings.isNotificationEnabled,
-//                            selectedTrackId =  state.workspaceUiState.selectedTrackId,
-//                            activeAmbientSoundIds = state.workspaceUiState.activeAmbientSoundIds,
-//                        )
-//                    )
-//                }
-//            }
         }
     }
 
@@ -160,7 +172,21 @@ class AppViewModel(
             _uiState.update { state ->
                 state.copy(
                     tasksUiState = state.tasksUiState.copy(
-                        sessionTasks = tasks
+                        sessionTasks = tasks,
+                        isAllTasksCompleted = tasks.isNotEmpty() && tasks.all { it.status == TaskStatus.COMPLETED },
+                    )
+                )
+            }
+        }
+    }
+
+    private fun loadFocusTree() {
+        viewModelScope.launch {
+            val focusTree = focusTreeRepository.getFocusTree()
+            _uiState.update { state ->
+                state.copy(
+                    workspaceUiState = state.workspaceUiState.copy(
+                        focusTree = focusTree
                     )
                 )
             }
@@ -186,6 +212,14 @@ class AppViewModel(
     }
 
     private fun startTimer() {
+        continuePausedTask()
+
+        if (_uiState.value.tasksUiState.isAllTasksCompleted) {
+            toggleMandatoryTaskModal()
+            stopTimerJobOnly(timerJob)
+            return
+        }
+
         _uiState.update { currentState ->
             currentState.copy(
                 timerUiState = currentState.timerUiState.copy(
@@ -195,16 +229,58 @@ class AppViewModel(
             )
         }
 
-        timerJob?.cancel() // Hủy job cũ đề phòng trùng lặp
+        runningTimerJob()
+    }
+
+    private fun continuePausedTask() {
+        if (_uiState.value.currentMode != PomodoroMode.WORK) return
+
+        var taskToUpdate: SessionTask? = null
+        val now = Clock.System.now().toEpochMilliseconds()
+        _uiState.update { currentState ->
+            val willBeInProgressTaskId = currentState.tasksUiState.willBeInProgressTaskId
+
+            val updatedTasks = currentState.tasksUiState.sessionTasks.map { task ->
+                if (task.taskId == willBeInProgressTaskId && task.status == TaskStatus.PAUSED) {
+                    task.copy(
+                        status = TaskStatus.IN_PROGRESS,
+                        updatedAtMillis = now
+                    ).also { updatedTask ->
+                        taskToUpdate = updatedTask
+                    }
+                } else {
+                    task
+                }
+
+            }
+            currentState.copy(
+                tasksUiState = currentState.tasksUiState.copy(
+                    sessionTasks = updatedTasks,
+                    willBeInProgressTaskId = null
+                )
+            )
+        }
+
+        taskToUpdate?.let { task ->
+            viewModelScope.launch {
+                updateTask(task)
+            }
+        }
+    }
+
+    private fun runningTimerJob() {
+        timerJob?.cancel()
 
         timerJob = viewModelScope.launch {
             while (_uiState.value.timerUiState.timeLeft > 0) {
-                delay(1000) // Đếm lùi 1 giây
+                delay(1000)
+
                 _uiState.update { state ->
                     val newTimeLeft = state.timerUiState.timeLeft - 1
 
-                    // Phát tiếng bíp ở những giây cuối
-                    if (newTimeLeft in 1L..4L) {
+                    val userSettings = repository.getUserSettings()
+                    val shouldPlayChime = userSettings.isSoundEnabled
+                    if (shouldPlayChime && newTimeLeft in 1L..4L) {
                         soundManager?.playBeepSound()
                     }
 
@@ -221,14 +297,45 @@ class AppViewModel(
 
     private fun pauseTimer() {
         timerJob?.cancel()
+        timerJob = null
+        pauseTask()
+    }
+
+    private fun pauseTask(nextAction : () -> Unit = {}) {
+        val now = Clock.System.now().toEpochMilliseconds()
+        val state = _uiState.value
+
+        val inProgressTask = state.tasksUiState.sessionTasks.firstOrNull { it.status == TaskStatus.IN_PROGRESS }
+        if (inProgressTask == null) return
+        val pausedTask = inProgressTask.copy(status = TaskStatus.PAUSED, updatedAtMillis = now)
+
+        // Paused timer PAUSED task đang IN_PROGRESS lại và nếu tiếp tục thì chạy tiếp
         _uiState.update { currentState ->
+            val updatedTasks = currentState.tasksUiState.sessionTasks.map { task ->
+                if (task.taskId == pausedTask.taskId) {
+                    pausedTask
+                } else {
+                    task
+                }
+            }
+
             currentState.copy(
                 timerUiState = currentState.timerUiState.copy(
                     isActive = false,
                     event = resolvePauseEvent(currentState.timerUiState)
+                ),
+                tasksUiState = currentState.tasksUiState.copy(
+                    sessionTasks = updatedTasks,
+                    willBeInProgressTaskId = pausedTask.taskId
                 )
             )
         }
+        pausedTask.let { task ->
+            viewModelScope.launch {
+                updateTask(task)
+            }
+        }
+        nextAction()
     }
 
     fun toggleTimer() {
@@ -276,6 +383,12 @@ class AppViewModel(
             }
 
             !state.timerUiState.isActive && currentMode == PomodoroMode.WORK && isStartOfRound -> {
+                // Check if there are tasks before starting a new work round
+                if (state.tasksUiState.sessionTasks.none { it.status == TaskStatus.IDLE || it.status == TaskStatus.PAUSED }) {
+                    toggleMandatoryTaskModal()
+                    return
+                }
+
                 eventType = LearningSessionEventType.WORK_ROUND_STARTED
                 action = "start_work"
                 nextStatus = LearningSessionStatus.RUNNING
@@ -302,13 +415,43 @@ class AppViewModel(
                 shouldInsertSessionStartedEvent = false
             }
 
+            !state.timerUiState.isActive && currentMode == PomodoroMode.LONG_BREAK && isMiddleOfRound -> {
+                eventType = LearningSessionEventType.LONG_BREAK_ROUND_RESUMED
+                action = "resume_long_break"
+                nextStatus = LearningSessionStatus.RUNNING
+                nextLearningMode = CurrentLearningMode.LONG_BREAK
+                shouldStartTimer = true
+                shouldInsertSessionStartedEvent = false
+            }
+
+            !state.timerUiState.isActive && currentMode == PomodoroMode.LONG_BREAK && isStartOfRound -> {
+                eventType = LearningSessionEventType.LONG_BREAK_ROUND_STARTED
+                action = "start_long_break"
+                nextStatus = LearningSessionStatus.RUNNING
+                nextLearningMode = CurrentLearningMode.LONG_BREAK
+                shouldStartTimer = true
+                shouldInsertSessionStartedEvent = false
+            }
+
+            state.timerUiState.isActive && currentMode == PomodoroMode.LONG_BREAK -> {
+                eventType = LearningSessionEventType.LONG_BREAK_ROUND_PAUSED
+                action = "pause_long_break"
+                nextStatus = LearningSessionStatus.PAUSED
+                nextLearningMode = CurrentLearningMode.LONG_BREAK
+                shouldStartTimer = false
+                shouldInsertSessionStartedEvent = false
+            }
+
             else -> return
         }
 
-        val updatedSession = session.copy(
+        var updatedSession = session.copy(
             status = nextStatus,
             currentLearningMode = nextLearningMode,
-            completedWorkRounds = state.timerUiState.pomodorosToday
+            completedWorkRounds = state.timerUiState.pomodorosToday,
+            pausedCount = if (eventType == LearningSessionEventType.WORK_ROUND_PAUSED || eventType == LearningSessionEventType.BREAK_ROUND_PAUSED) {
+                session.pausedCount + 1
+            } else session.pausedCount
         )
 
         if (shouldStartTimer) {
@@ -323,9 +466,14 @@ class AppViewModel(
                 )
             }
 
+            // Nghiệp vụ: Sau khi bấm bắt đầu, Task (đầu tiên chưa hoàn thành) sẽ chuyển sang trạng thái IN_PROGRESS
+            if (nextLearningMode == CurrentLearningMode.WORK) {
+                updateTaskToInProgress()
+            }
+
             startTimer()
         } else {
-            stopTimerJobOnly(timerJob)
+            pauseTimer()
 
             _uiState.update {
                 it.copy(
@@ -338,8 +486,10 @@ class AppViewModel(
         }
 
         viewModelScope.launch {
-            updateSession(updatedSession)
             if (shouldInsertSessionStartedEvent) {
+                updatedSession = updatedSession.copy(
+                    startedAtMillis = Clock.System.now().toEpochMilliseconds()
+                )
                 insertEvent(
                     LearningSessionEvent(
                         sessionId = session.sessionId,
@@ -352,6 +502,7 @@ class AppViewModel(
                     )
                 )
             }
+            updateSession(updatedSession)
 
             insertEvent(
                 LearningSessionEvent(
@@ -426,7 +577,7 @@ class AppViewModel(
     }
 
     fun skipTimer() {
-        stopTimerJobOnly(timerJob)
+        pauseTimer()
         val state = _uiState.value
         val currentSession = state.currentSession
         val currentMode = state.currentMode
@@ -434,11 +585,7 @@ class AppViewModel(
 
         val elapsedSeconds = currentTotalSeconds - state.timerUiState.timeLeft
 
-        val nextMode = when (currentMode) {
-            PomodoroMode.WORK -> PomodoroMode.SHORT_BREAK
-            PomodoroMode.SHORT_BREAK -> PomodoroMode.WORK
-            PomodoroMode.LONG_BREAK -> PomodoroMode.WORK
-        }
+        val nextMode = getNextModeWhenTimerEnds()
 
         val nextLearningMode = when (nextMode) {
             PomodoroMode.WORK -> CurrentLearningMode.WORK
@@ -446,24 +593,12 @@ class AppViewModel(
             PomodoroMode.LONG_BREAK -> CurrentLearningMode.LONG_BREAK
         }
 
-        val updatedSession = when (currentMode) {
-            PomodoroMode.WORK -> {
-                currentSession.copy(
-                    status = LearningSessionStatus.PAUSED,
-                    currentLearningMode = nextLearningMode,
-                    totalFocusSeconds = currentSession.totalFocusSeconds + elapsedSeconds
-                )
-            }
-
-            PomodoroMode.SHORT_BREAK,
-            PomodoroMode.LONG_BREAK -> {
-                currentSession.copy(
-                    status = LearningSessionStatus.PAUSED,
-                    currentLearningMode = nextLearningMode,
-                    totalBreakSeconds = currentSession.totalBreakSeconds + elapsedSeconds
-                )
-            }
-        }
+        val updatedSession = currentSession.copy(
+            status = LearningSessionStatus.PAUSED,
+            currentLearningMode = nextLearningMode,
+            totalFocusSeconds = currentSession.totalFocusSeconds + elapsedSeconds,
+            skipCount = currentSession.skipCount + 1
+        )
 
         _uiState.update {
             it.copy(
@@ -510,95 +645,165 @@ class AppViewModel(
         }
     }
 
-    private fun handleTimerComplete() {
-        soundManager?.playChimeSound()
-        stopTimerJobOnly(timerJob)
-        val state = _uiState.value
-        val session = state.currentSession
-        val currentMode = state.currentMode
-
-        val isWorkMode = currentMode == PomodoroMode.WORK
-
-        val nextMode = if (isWorkMode) {
-            PomodoroMode.SHORT_BREAK
-        } else {
-            PomodoroMode.WORK
+    private fun getNextModeWhenTimerEnds(): PomodoroMode {
+        return when (_uiState.value.currentMode) {
+            PomodoroMode.WORK -> { if ((_uiState.value.currentSession.completedWorkRounds + 1) % 4 == 0) {
+                    PomodoroMode.LONG_BREAK
+                } else {
+                    PomodoroMode.SHORT_BREAK
+                }
+            }
+            PomodoroMode.SHORT_BREAK -> PomodoroMode.WORK
+            PomodoroMode.LONG_BREAK -> PomodoroMode.WORK
         }
+    }
 
-        val nextTime = nextMode.totalSeconds(state.timerUiState.config)
+    private fun updateTaskToInProgress() {
+        var taskToUpdate: SessionTask? = null
+        _uiState.update { state ->
+            val tasks = state.tasksUiState.sessionTasks
 
-        val updatedSession = if (isWorkMode) {
-            session.copy(
-                status = LearningSessionStatus.PAUSED,
-                currentLearningMode = CurrentLearningMode.BREAK,
-                completedWorkRounds = session.completedWorkRounds + 1,
-                totalFocusSeconds = session.totalFocusSeconds + PomodoroMode.WORK.totalSeconds(state.timerUiState.config)
-            )
-        } else {
-            session.copy(
-                status = LearningSessionStatus.PAUSED,
-                currentLearningMode = CurrentLearningMode.WORK,
-                completedBreakRounds = session.completedBreakRounds + 1,
-                totalBreakSeconds = session.totalBreakSeconds + currentMode.totalSeconds(state.timerUiState.config)
-            )
-        }
+            // Tìm task chưa hoàn thành có position thấp nhất
+            val minOrderTask = tasks.filter { !it.isCompleted }.minByOrNull { it.position }
+            if (minOrderTask != null) {
+                val updatedTasks = tasks.map { task ->
+                    when {
+                        // Update trang thai Task uu tien nhat
+                        task.taskId == minOrderTask.taskId -> {
+                            val updatedTask = task.copy(status = TaskStatus.IN_PROGRESS)
+                            taskToUpdate = updatedTask
+                            updatedTask
+                        }
 
-        val eventType = if (isWorkMode) {
-            LearningSessionEventType.WORK_ROUND_COMPLETED
-        } else {
-            LearningSessionEventType.BREAK_ROUND_ENDED
-        }
+                        task.status == TaskStatus.IN_PROGRESS -> {
+                            task.copy(status = TaskStatus.IDLE)
+                        }
 
-        val currentRound = if (isWorkMode) {
-            updatedSession.completedWorkRounds
-        } else {
-            updatedSession.completedBreakRounds
-        }
-
-        val result = if (isWorkMode) {
-            TimerCompleteResult(
-                newMode = nextMode,
-                nextTime = nextTime,
-                eventType = EventType.WORK_END,
-                notification = "Work session completed. Time for a break!"
-            )
-        } else {
-            TimerCompleteResult(
-                newMode = nextMode,
-                nextTime = nextTime,
-                eventType = EventType.BREAK_END,
-                notification = "Break finished. Time to focus again!"
-            )
-        }
-
-        showTimerCompletedNotification()
-
-        _uiState.update {
-            it.copy(
-                currentMode = result.newMode,
-                currentSession = updatedSession,
-                timerUiState = it.timerUiState.copy(
-                    isActive = false,
-                    pomodorosToday = if (isWorkMode) {
-                        it.timerUiState.pomodorosToday + 1
-                    } else {
-                        it.timerUiState.pomodorosToday
-                    },
-                    isJustEndedBreak = !isWorkMode,
-                    timeLeft = result.nextTime,
-                    event = result.eventType,
-                    pendingNotification = result.notification
+                        else -> task
+                    }
+                }
+                state.copy(
+                    tasksUiState = state.tasksUiState.copy(
+                        sessionTasks = updatedTasks
+                    )
                 )
-            )
+            } else {
+                state
+            }
         }
 
+        taskToUpdate?.let { task ->
+            viewModelScope.launch {
+                updateTask(task)
+            }
+        }
+    }
+
+    fun handleTimerCompleteManually() {
+        handleTimerComplete()
+    }
+
+    private fun handleTimerComplete() {
         viewModelScope.launch {
+            val userSettings = repository.getUserSettings()
+            val state = _uiState.value
+            val currentMode = state.currentMode
+
+            if (userSettings.isSoundEnabled) {
+                soundManager?.playChimeSound()
+            }
+
+            val isWorkMode = currentMode == PomodoroMode.WORK
+
+            if (isWorkMode) {
+                checkAndUpdateDoneTask()
+                checkTaskTooLong()
+            }
+
+            pauseTimer()
+            val nextMode = getNextModeWhenTimerEnds()
+
+            val session = state.currentSession
+            val config = state.timerUiState.config
+
+            val updatedSession = if (isWorkMode) {
+                session.copy(
+                    status = LearningSessionStatus.PAUSED,
+                    currentLearningMode = if (nextMode == PomodoroMode.SHORT_BREAK) {
+                        CurrentLearningMode.BREAK
+                    } else {
+                        CurrentLearningMode.LONG_BREAK
+                    },
+                    completedWorkRounds = session.completedWorkRounds + 1,
+                    totalFocusSeconds = session.totalFocusSeconds + currentMode.totalSeconds(config)
+                )
+            } else {
+                session.copy(
+                    status = LearningSessionStatus.PAUSED,
+                    currentLearningMode = CurrentLearningMode.WORK,
+                    completedBreakRounds = session.completedBreakRounds + 1,
+                    totalBreakSeconds = session.totalBreakSeconds + currentMode.totalSeconds(config)
+                )
+            }
+
+            val nextTime = nextMode.totalSeconds(config)
+
+            val learningEventType = if (isWorkMode) {
+                LearningSessionEventType.WORK_ROUND_COMPLETED
+            } else {
+                LearningSessionEventType.BREAK_ROUND_ENDED
+            }
+
+            val timerEventType = if (isWorkMode) {
+                EventType.WORK_END
+            } else {
+                EventType.BREAK_END
+            }
+
+            val notificationMessage = if (isWorkMode) {
+                if (nextMode == PomodoroMode.LONG_BREAK) {
+                    "Great job! You've completed 4 sessions. Enjoy a long break!"
+                } else {
+                    "Work session completed. Time for a break!"
+                }
+            } else {
+                "Break finished. Time to focus again!"
+            }
+
+            val currentRound = if (isWorkMode) {
+                updatedSession.completedWorkRounds
+            } else {
+                updatedSession.completedBreakRounds
+            }
+
+            showTimerCompletedNotification()
+
+            _uiState.update { currentState ->
+                currentState.copy(
+                    currentMode = nextMode,
+                    currentSession = updatedSession,
+                    timerUiState = currentState.timerUiState.copy(
+                        isActive = false,
+                        pomodorosToday = if (isWorkMode) {
+                            currentState.timerUiState.pomodorosToday + 1
+                        } else {
+                            currentState.timerUiState.pomodorosToday
+                        },
+                        isJustEndedBreak = !isWorkMode,
+                        timeLeft = nextTime,
+                        event = timerEventType,
+                        pendingNotification = notificationMessage
+                    )
+                )
+            }
+
             updateSession(updatedSession)
+
             insertEvent(
                 LearningSessionEvent(
                     eventId = "auto_event_${Clock.System.now().toEpochMilliseconds()}",
                     sessionId = session.sessionId,
-                    eventType = eventType,
+                    eventType = learningEventType,
                     remainingSeconds = 0,
                     currentRound = currentRound,
                     metadata = mapOf(
@@ -613,10 +818,91 @@ class AppViewModel(
                     )
                 )
             )
-            // Increment streak when work session completes
-            if (isWorkMode) {
-                DependencyRegistry.streakRepository.incrementToday()
+
+            if (userSettings.autoStartWork && currentMode == PomodoroMode.SHORT_BREAK) {
+                delay(2000)
+                toggleTimer()
+            } else if (userSettings.autoStartBreak && currentMode == PomodoroMode.WORK) {
+                delay(2000)
+                toggleTimer()
+            } else if (userSettings.autoStartBreak && currentMode == PomodoroMode.LONG_BREAK) {
+                delay(2000)
+                toggleTimer()
             }
+        }
+    }
+
+    private fun checkAndUpdateDoneTask() {
+        _uiState.update { state ->
+            state.copy(
+                tasksUiState = state.tasksUiState.copy(
+                    sessionTasks = state.tasksUiState.sessionTasks.map { task ->
+                        when (task.status) {
+                            TaskStatus.COMPLETED -> {
+                                if (task.estimatedPomodoros != task.completedPomodoros) {
+                                    task.copy(
+                                        completedPomodoros = task.completedPomodoros + 1,
+                                    )
+                                } else {
+                                    task
+                                }
+                            }
+                            TaskStatus.IN_PROGRESS -> {
+                                task.copy(
+                                    completedPomodoros = task.completedPomodoros + 1,
+                                    estimatedPomodoros = task.estimatedPomodoros + 1,
+                                    focusSeconds = task.focusSeconds + (state.currentSession.plannedWorkMinutes * 60).toLong()
+                                )
+                            }
+                            TaskStatus.PAUSED -> {
+                                task.copy(
+                                    completedPomodoros = task.completedPomodoros + 1,
+                                    estimatedPomodoros = task.estimatedPomodoros + 1,
+                                )
+                            }
+                            else -> {
+                                task
+                            }
+                        }
+                    }
+                )
+            )
+        }
+
+        viewModelScope.launch {
+            updateTasks()
+        }
+    }
+
+    private fun checkTaskTooLong() {
+        val tasksTooLong = _uiState.value.tasksUiState.sessionTasks
+            .filter { it.completedPomodoros < it.estimatedPomodoros }
+            .filter { it.completedPomodoros >= 3 }
+
+        if (tasksTooLong.isNotEmpty()) {
+            _uiState.update {
+                it.copy(
+                    workspaceUiState = it.workspaceUiState.copy(
+                        isTaskTooLongWarningModalVisible = true
+                    )
+                )
+            }
+        }
+    }
+
+    fun getTasksTooLong(): List<SessionTask> {
+        return _uiState.value.tasksUiState.sessionTasks
+            .filter { it.completedPomodoros < it.estimatedPomodoros }
+            .filter { it.completedPomodoros >= 3 }
+    }
+
+    fun toggleTaskTooLongModal() {
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    isTaskTooLongWarningModalVisible = !it.workspaceUiState.isTaskTooLongWarningModalVisible
+                )
+            )
         }
     }
 
@@ -697,14 +983,43 @@ class AppViewModel(
     }
 
     fun selectTrack(trackId: String) {
+        val currentState = _uiState.value
+        val currentWorkspace = currentState.workspaceUiState
+        val currentSession = currentState.currentSession
+        val isMusicPlaying = currentWorkspace.isMusicPlaying
+
+        val updatedSession = if (isMusicPlaying) {
+            currentSession.copy(lastMusicId = trackId)
+        } else {
+            currentSession
+        }
+
         _uiState.update { state ->
-            if (state.workspaceUiState.isMusicPlaying) {
+            if (isMusicPlaying) {
                 soundManager?.playBackgroundMusic(trackId)
             }
             state.copy(
                 workspaceUiState = state.workspaceUiState.copy(
                     selectedTrackId = trackId,
                     musicPosition = 0L
+                ),
+                currentSession = updatedSession
+            )
+        }
+
+        viewModelScope.launch {
+            updateSession(updatedSession)
+
+            insertEvent(
+                LearningSessionEvent(
+                    sessionId = updatedSession.sessionId,
+                    eventType = LearningSessionEventType.MUSIC_CHANGED,
+                    remainingSeconds = _uiState.value.timerUiState.timeLeft,
+                    metadata = mapOf(
+                        "source" to "workspace",
+                        "action" to if (isMusicPlaying) "music_play" else "music_pause",
+                        "track_id" to trackId
+                    )
                 )
             )
         }
@@ -1059,18 +1374,67 @@ class AppViewModel(
         }
     }
 
-    fun endSession(onComplete: () -> Unit) {
+    fun toggleMandatoryTaskModal() {
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    isMandatoryTaskModalVisible = !it.workspaceUiState.isMandatoryTaskModalVisible
+                )
+            )
+        }
+    }
+
+    fun toggleAllTasksCompletedModal() {
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    isAllTasksCompletedModalVisible = !it.workspaceUiState.isAllTasksCompletedModalVisible
+                )
+            )
+        }
+    }
+
+    fun toggleSessionGuidanceModal() {
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    isSessionGuidanceModalVisible = false
+                )
+            )
+        }
+    }
+
+    fun endSession() {
         val session = _uiState.value.currentSession
         val now = Clock.System.now().toEpochMilliseconds()
+
+        // Calculate Focus Score
+        val scoreResult = FocusScoreCalculator.calculate(
+            session = session,
+            pausedCount = session.pausedCount,
+            skippedCount = session.skipCount,
+        )
+
         val updatedSession = session.copy(
             status = LearningSessionStatus.COMPLETED,
+            focusScore = scoreResult.score,
             endedAtMillis = now,
             updatedAtMillis = now
         )
-        _uiState.update { it.copy(currentSession = updatedSession) }
+
+        _uiState.update {
+            it.copy(
+                currentSession = updatedSession,
+                workspaceUiState = it.workspaceUiState.copy(
+                    focusScoreResult = scoreResult
+                )
+            )
+        }
+
         viewModelScope.launch {
             try {
                 updateSession(updatedSession)
+                val updatedFocusTreeResult = updateFocusTreeResult(scoreResult.score, session.totalFocusSeconds)
                 insertEvent(
                     LearningSessionEvent(
                         sessionId = updatedSession.sessionId,
@@ -1078,6 +1442,7 @@ class AppViewModel(
                         metadata = mapOf(
                             "source" to "session_ui",
                             "action" to "session_completed_by_user",
+                            "score" to scoreResult.score.toString()
                         )
                     )
                 )
@@ -1085,7 +1450,22 @@ class AppViewModel(
                 repository.saveUserSettings(
                     userSettings.copy(currentSessionId = null)
                 )
-                onComplete()
+
+                _uiState.update {
+                    it.copy(
+                        workspaceUiState = it.workspaceUiState.copy(
+                            focusTree = updatedFocusTreeResult.newTree,
+                            focusTreeAnimationEvent = FocusTreeAnimationEvent(
+                                addedGrowthPoint = updatedFocusTreeResult.addedGrowthPoint,
+                                focusScore = updatedFocusTreeResult.focusScore,
+                                oldStage = updatedFocusTreeResult.oldTree.growthStage,
+                                newStage = updatedFocusTreeResult.newTree.growthStage,
+                                stageChanged = updatedFocusTreeResult.stageChanged
+                            ),
+                            focusTreeGrowthResult = updatedFocusTreeResult
+                        )
+                    )
+                }
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
@@ -1095,6 +1475,41 @@ class AppViewModel(
                     )
                 }
             }
+        }
+    }
+
+    fun dismissFocusScore() {
+        val focusTreeReward = calculateGrowthPoint(_uiState.value.workspaceUiState.focusScoreResult?.score ?: 0)
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    focusScoreResult = null,
+                    focusTreeReward = focusTreeReward,
+                    isFocusTreeGrowthAnimationVisible = true
+                )
+            )
+        }
+    }
+
+    fun dismissFocusTreeReward(onComplete: () -> Unit) {
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    focusTreeReward = null
+                )
+            )
+        }
+        onComplete()
+    }
+
+    fun dismissTreeGrowth() {
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    focusTreeGrowthResult = null,
+                    isFocusTreeGrowthAnimationVisible = false
+                )
+            )
         }
     }
 
@@ -1180,7 +1595,8 @@ class AppViewModel(
         _uiState.update {
             it.copy(
                 tasksUiState = it.tasksUiState.copy(
-                    newTaskText = text
+                    newTaskText = text,
+                    taskValidationError = null
                 )
             )
         }
@@ -1191,23 +1607,45 @@ class AppViewModel(
         val currentSession = currentState.currentSession
         val text = _uiState.value.tasksUiState.newTaskText
 
-        if (text.isNotBlank()) {
+        if (text.trim().length > 3) {
+            val maxPosition = currentState.tasksUiState.sessionTasks
+                .filter { it.status == TaskStatus.IDLE || it.status == TaskStatus.PAUSED || it.status == TaskStatus.IN_PROGRESS }
+                .size
             val newSessionTask = SessionTask(
                 sessionId = currentSession.sessionId,
-                title = text
+                title = text.trim(),
+                position = maxPosition
             )
 
             _uiState.update {
                 it.copy(
                     tasksUiState = it.tasksUiState.copy(
-                        sessionTasks = it.tasksUiState.sessionTasks + newSessionTask,
-                        newTaskText = ""
+                        sessionTasks = (it.tasksUiState.sessionTasks + newSessionTask).map { task ->
+                            if (task.taskId == newSessionTask.taskId) {
+                                newSessionTask
+                            } else if (task.position >= newSessionTask.position) {
+                                val updatedTask = task.copy(
+                                    position = task.position + 1
+                                )
+                                updatedTask
+                            } else {
+                                task
+                            }
+                        }.sortedBy { task -> task.position },
+                        newTaskText = "",
+                        taskValidationError = null,
+                        isAllTasksCompleted = false
                     )
                 )
             }
 
+            if (_uiState.value.tasksUiState.sessionTasks.size > 3) {
+                AuraToast.showWarning("Số lượng Task cho một Pomo có vẻ hơi nhiều")
+            }
+
             viewModelScope.launch {
                 insertTask(newSessionTask)
+                updateTasks()
                 insertEvent(
                     LearningSessionEvent(
                         sessionId = currentSession.sessionId,
@@ -1220,17 +1658,54 @@ class AppViewModel(
                     )
                 )
             }
+        } else {
+            _uiState.update {
+                it.copy(
+                    tasksUiState = it.tasksUiState.copy(
+                        taskValidationError = "Công việc phải có nhiều hơn 3 ký tự"
+                    )
+                )
+            }
+
+            viewModelScope.launch {
+                delay(2000)
+                _uiState.update {
+                    it.copy(
+                        tasksUiState = it.tasksUiState.copy(
+                            taskValidationError = null
+                        )
+                    )
+                }
+            }
         }
     }
 
     fun deleteTask(taskId: String) {
+        val state = _uiState.value
+        val isTimerRunning = state.timerUiState.isActive
+        val isWorkMode = state.currentMode == PomodoroMode.WORK
+
+        // Nghiệp vụ: Không được xóa Task trong khi Timer đang chạy (trừ khi đang break)
+        if (isTimerRunning && isWorkMode) {
+            AuraToast.showError("Không được xóa task khi đang làm việc")
+            return
+        }
+
         val currentState = _uiState.value
         val currentSession = currentState.currentSession
+        val taskPosition = currentState.tasksUiState.sessionTasks
+            .firstOrNull { it.taskId == taskId }?.position ?: -1
 
         _uiState.update { state ->
             state.copy(
                 tasksUiState = state.tasksUiState.copy(
-                    sessionTasks = state.tasksUiState.sessionTasks.filter { it.taskId != taskId }
+                    sessionTasks = state.tasksUiState.sessionTasks.filter { it.taskId != taskId }.map {
+                        if (it.position > taskPosition) {
+                            it.copy(position = it.position - 1)
+                        } else {
+                            it
+                        }
+                    }
                 )
             )
         }
@@ -1248,35 +1723,105 @@ class AppViewModel(
                     )
                 )
             )
+            updateTasks()
         }
     }
 
     fun toggleTask(taskId: String) {
-        var updatedSessionTask: SessionTask? = null
-        val currentSession = _uiState.value.currentSession
+        val now = Clock.System.now().toEpochMilliseconds()
+        val state = _uiState.value
+        val task = state.tasksUiState.sessionTasks.find { it.taskId == taskId }
 
-        _uiState.update { state ->
-            state.copy(
-                tasksUiState = state.tasksUiState.copy(
-                    sessionTasks = state.tasksUiState.sessionTasks.map { task ->
-                        if (task.taskId == taskId) {
-                            val newStatus = !task.isCompleted
-                            updatedSessionTask = task.copy(
-                                isCompleted = newStatus,
-                                completedAtMillis = if (newStatus) Clock.System.now().toEpochMilliseconds() else null
-                            )
-                            updatedSessionTask
-                        } else {
-                            task
-                        }
-                    }
-                )
-            )
+        // Nếu Task chưa được thực hiện thì không thể đánh dấu là Done
+        if (task?.status == TaskStatus.IDLE) {
+            AuraToast.showError("Task chưa thực hiện không thể hoàn thành!")
+            return
         }
+
+        var updatedSessionTask: SessionTask? = null
+
+        // Nếu đánh dấu hoàn thành trong khi làm việc thì chuyển position khác lên thay
+        if (task?.status == TaskStatus.IN_PROGRESS) {
+            val completedTaskOldPosition = task.position
+            _uiState.update { state ->
+                val currentTasks = state.tasksUiState.sessionTasks
+                val lastPosition = currentTasks.size - 1
+
+                state.copy(
+                    tasksUiState = state.tasksUiState.copy(
+                        nextProgressTaskPosition = 0,
+                        sessionTasks = state.tasksUiState.sessionTasks.map { task ->
+                            val newStatus = !task.isCompleted
+                            if (task.taskId == taskId) {
+                                updatedSessionTask = task.copy(
+                                    position = lastPosition,
+                                    isCompleted = newStatus,
+                                    status = if (newStatus) TaskStatus.COMPLETED else TaskStatus.PAUSED,
+                                    completedAtMillis = if (newStatus) now else null,
+                                    updatedAtMillis = now
+                                )
+                                updatedSessionTask
+                            } else if (task.position > completedTaskOldPosition) {
+                                task.copy(
+                                    position = task.position - 1,
+                                    updatedAtMillis = now
+                                )
+                            } else {
+                                task
+                            }
+                        }.sortedBy { it.position }
+                    )
+                )
+            }
+        }
+
+        val nextTask: SessionTask? = _uiState.value.tasksUiState.sessionTasks
+            .filter { it.status == TaskStatus.IDLE }
+            .minByOrNull { it.position }
+            ?.copy(status = TaskStatus.IN_PROGRESS)
+
+        // Hết task để làm
+        if (nextTask != null) {
+            // Nếu tick done task đang IN_PROGRESS, chọn task tiếp theo
+            if (updatedSessionTask?.status == TaskStatus.COMPLETED) {
+                increaseTaskPomodoroCount(taskId)
+                _uiState.update { state ->
+                    state.copy(
+                        tasksUiState = state.tasksUiState.copy(
+                            sessionTasks = state.tasksUiState.sessionTasks.map { task ->
+                                if (task.taskId == nextTask.taskId) {
+                                    nextTask
+                                } else {
+                                    task
+                                }
+                            }.sortedBy { it.position }
+                        )
+                    )
+                }
+            }
+        }
+
+        val currentSession = _uiState.value.currentSession
 
         viewModelScope.launch {
             if (updatedSessionTask != null) {
-                updateTask(updatedSessionTask)
+                val currentState = _uiState.value
+                val allCompleted = currentState.tasksUiState.sessionTasks.all { it.isCompleted }
+                val isTimerRunning = currentState.timerUiState.isActive
+                val isWorkMode = currentState.currentMode == PomodoroMode.WORK
+
+                if (allCompleted) {
+                    _uiState.update {
+                        it.copy(
+                            tasksUiState = it.tasksUiState.copy(isAllTasksCompleted = true),
+                            workspaceUiState = it.workspaceUiState.copy(
+                                isAllTasksCompletedModalVisible = isTimerRunning && isWorkMode
+                            )
+                        )
+                    }
+                    toggleTimer()
+                }
+
                 insertEvent(
                     LearningSessionEvent(
                         sessionId = currentSession.sessionId,
@@ -1288,7 +1833,23 @@ class AppViewModel(
                         )
                     )
                 )
+                updateTasks()
             }
+        }
+    }
+
+    private fun increaseTaskPomodoroCount(taskId: String) {
+        _uiState.update { state ->
+            val updatedTasks = state.tasksUiState.sessionTasks.map { task ->
+                if (task.taskId == taskId) {
+                    task.copy(pomodoroCount = task.pomodoroCount + 1)
+                } else {
+                    task
+                }
+            }
+            state.copy(
+                tasksUiState = state.tasksUiState.copy(sessionTasks = updatedTasks)
+            )
         }
     }
 
@@ -1302,31 +1863,100 @@ class AppViewModel(
         }
     }
 
+    fun moveTaskUp(taskId: String) {
+        val state = _uiState.value
+        val tasks = state.tasksUiState.sessionTasks.toMutableList()
+        val index = tasks.indexOfFirst { it.taskId == taskId }
+        val now = Clock.System.now().toEpochMilliseconds()
+
+        if (index > 0) {
+            val task = tasks[index]
+            val prevTask = tasks[index - 1]
+
+            // Swap positions
+            tasks[index] = prevTask.copy(position = task.position)
+            tasks[index - 1] = task.copy(position = prevTask.position)
+
+            // Nếu là task đứng thứ 2 đẩy lên đầu tiên mà task đầu tiên đang IN_PROGRESS
+            // Chuyển Task đang IN_PROGRESS thành PAUSED, Task này lên IN_PROGRESS
+            if (prevTask.status == TaskStatus.IN_PROGRESS) {
+                tasks[index] = tasks[index].copy(
+                    status = TaskStatus.PAUSED,
+                    focusSeconds = (_uiState.value.currentSession.plannedWorkMinutes * 60 - _uiState.value.timerUiState.timeLeft).toLong(),
+                    updatedAtMillis = now
+                )
+                tasks[index - 1] = tasks[index - 1].copy(
+                    status = TaskStatus.IN_PROGRESS,
+                    updatedAtMillis = now
+                )
+            }
+
+            val updatedTasks = tasks.toList().sortedBy { it.position }
+            _uiState.update {
+                it.copy(tasksUiState = it.tasksUiState.copy(sessionTasks = updatedTasks))
+            }
+
+            viewModelScope.launch {
+                updateTask(tasks[index])
+                updateTask(tasks[index - 1])
+            }
+        }
+    }
+
+    fun moveTaskDown(taskId: String) {
+        val state = _uiState.value
+        val tasks = state.tasksUiState.sessionTasks.toMutableList()
+        val index = tasks.indexOfFirst { it.taskId == taskId }
+
+        if (index != -1 && index < tasks.size - 1) {
+            val task = tasks[index]
+            val nextTask = tasks[index + 1]
+
+            // Swap positions
+            tasks[index] = nextTask.copy(position = task.position)
+            tasks[index + 1] = task.copy(position = nextTask.position)
+
+            val updatedTasks = tasks.toList()
+            _uiState.update {
+                it.copy(tasksUiState = it.tasksUiState.copy(sessionTasks = updatedTasks))
+            }
+
+            viewModelScope.launch {
+                updateTask(tasks[index])
+                updateTask(tasks[index + 1])
+            }
+        }
+    }
+
     private fun showTimerCompletedNotification() {
         val state = _uiState.value
 
         if (!state.workspaceUiState.isNotificationEnabled) return
 
-        when (state.currentMode) {
-            PomodoroMode.WORK -> {
-                notificationManager?.showNotification(
-                    title = "Work round completed",
-                    message = "Bạn đã hoàn thành một phiên học. Đến giờ nghỉ!"
-                )
-            }
+        val userSettings = repository.getUserSettings()
 
-            PomodoroMode.SHORT_BREAK -> {
-                notificationManager?.showNotification(
-                    title = "Break ended",
-                    message = "Hết giờ nghỉ. Quay lại tập trung nào!"
-                )
-            }
+        if (userSettings.isNotificationEnabled) {
+            when (state.currentMode) {
+                PomodoroMode.WORK -> {
+                    notificationManager?.showNotification(
+                        title = "Work round completed",
+                        message = "Bạn đã hoàn thành một phiên học. Đến giờ nghỉ!"
+                    )
+                }
 
-            PomodoroMode.LONG_BREAK -> {
-                notificationManager?.showNotification(
-                    title = "Long break ended",
-                    message = "Hết giờ nghỉ dài. Sẵn sàng học tiếp!"
-                )
+                PomodoroMode.SHORT_BREAK -> {
+                    notificationManager?.showNotification(
+                        title = "Break ended",
+                        message = "Hết giờ nghỉ. Quay lại tập trung nào!"
+                    )
+                }
+
+                PomodoroMode.LONG_BREAK -> {
+                    notificationManager?.showNotification(
+                        title = "Long break ended",
+                        message = "Hết giờ nghỉ dài. Sẵn sàng học tiếp thôi nào!"
+                    )
+                }
             }
         }
     }
@@ -1339,5 +1969,9 @@ class AppViewModel(
 
     suspend fun updateTask(task: SessionTask) = learningSessionManager.updateTask(task)
 
+    suspend fun updateTasks() = learningSessionManager.updateTasks(_uiState.value.tasksUiState.sessionTasks)
+
     suspend fun deleteTask(taskId: String, sessionId: String) = learningSessionManager.deleteTaskById(taskId, sessionId)
+
+    suspend fun updateFocusTreeResult(focusScore: Int, focusSeconds: Int) = focusTreeRepository.growTreeAfterWorkCompleted(focusScore, focusSeconds)
 }

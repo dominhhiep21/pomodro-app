@@ -25,10 +25,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import thong.kotlin.pomodoro.features.background.presentation.components.BackgroundSection
 import thong.kotlin.pomodoro.features.learning.mode.components.ExpandableChatPanel
 import thong.kotlin.pomodoro.features.learning.mode.components.ExpandableMembersPanel
 import thong.kotlin.pomodoro.features.learning.mode.components.RoomIdBadge
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
+import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
 import thong.kotlin.pomodoro.features.pomodoro.ambient.presentation.components.AmbientSoundSection
 import thong.kotlin.pomodoro.features.pomodoro.music.presentation.MusicSection
 import thong.kotlin.pomodoro.features.pomodoro.task.components.TaskBottomBar
@@ -49,6 +51,8 @@ fun LandscapePomodoroUI(
     onAddTask: () -> Unit,
     onDeleteTask: (String) -> Unit,
     onToggleTask: (String) -> Unit,
+    onMoveTaskUp: (String) -> Unit,
+    onMoveTaskDown: (String) -> Unit,
     onNewTaskTextChange: (String) -> Unit,
     onToggleMusic: () -> Unit,
     onSelectTrack: (String) -> Unit,
@@ -118,6 +122,8 @@ fun LandscapePomodoroUI(
             }
         }
 
+//        val isReadOnly = totallyPomodoroUiState.timerUiState.isActive && totallyPomodoroUiState.currentMode == PomodoroMode.WORK
+
         TaskSideBar(
             sessionTasks = totallyPomodoroUiState.tasksUiState.sessionTasks,
             isExpanded = totallyPomodoroUiState.tasksUiState.isTasksExpanded,
@@ -126,7 +132,10 @@ fun LandscapePomodoroUI(
             onAddTask = onAddTask,
             onDeleteTask = onDeleteTask,
             onToggleTask = onToggleTask,
+            onMoveTaskUp = onMoveTaskUp,
+            onMoveTaskDown = onMoveTaskDown,
             onNewTaskTextChange = onNewTaskTextChange,
+            taskValidationError = totallyPomodoroUiState.tasksUiState.taskValidationError,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(bottom = 16.dp, end = 16.dp)
@@ -147,6 +156,8 @@ fun LandscapePomodoroGroupUI(
     onAddTask: () -> Unit,
     onDeleteTask: (String) -> Unit,
     onToggleTask: (String) -> Unit,
+    onMoveTaskUp: (String) -> Unit,
+    onMoveTaskDown: (String) -> Unit,
     onNewTaskTextChange: (String) -> Unit,
     onToggleMusic: () -> Unit,
     onSelectTrack: (String) -> Unit,
@@ -234,6 +245,8 @@ fun LandscapePomodoroGroupUI(
         ) {
             ExpandableChatPanel()
 
+//            val isReadOnly = totallyPomodoroUiState.timerUiState.isActive && totallyPomodoroUiState.currentMode == PomodoroMode.WORK
+
             TaskSideBar(
                 sessionTasks = totallyPomodoroUiState.tasksUiState.sessionTasks,
                 isExpanded = totallyPomodoroUiState.tasksUiState.isTasksExpanded,
@@ -242,7 +255,10 @@ fun LandscapePomodoroGroupUI(
                 onAddTask = onAddTask,
                 onDeleteTask = onDeleteTask,
                 onToggleTask = onToggleTask,
+                onMoveTaskUp = onMoveTaskUp,
+                onMoveTaskDown = onMoveTaskDown,
                 onNewTaskTextChange = onNewTaskTextChange,
+                taskValidationError = totallyPomodoroUiState.tasksUiState.taskValidationError,
             )
         }
     }
@@ -260,6 +276,8 @@ fun PortraitPomodoroUI(
     onAddTask: () -> Unit,
     onDeleteTask: (String) -> Unit,
     onToggleTask: (String) -> Unit,
+    onMoveTaskUp: (String) -> Unit,
+    onMoveTaskDown: (String) -> Unit,
     onNewTaskTextChange: (String) -> Unit,
     onToggleMusic: () -> Unit,
     onSelectTrack: (String) -> Unit,
@@ -323,6 +341,8 @@ fun PortraitPomodoroUI(
             Spacer(modifier = Modifier.height(100.dp))
         }
 
+        val isReadOnly = totallyPomodoroUiState.timerUiState.isActive && totallyPomodoroUiState.currentMode == PomodoroMode.WORK
+
         TaskBottomBar(
             sessionTasks = totallyPomodoroUiState.tasksUiState.sessionTasks,
             isExpanded = totallyPomodoroUiState.tasksUiState.isTasksExpanded,
@@ -331,7 +351,11 @@ fun PortraitPomodoroUI(
             onAddTask = onAddTask,
             onDeleteTask = onDeleteTask,
             onToggleTask = onToggleTask,
+            onMoveTaskUp = onMoveTaskUp,
+            onMoveTaskDown = onMoveTaskDown,
             onNewTaskTextChange = onNewTaskTextChange,
+            taskValidationError = totallyPomodoroUiState.tasksUiState.taskValidationError,
+            isReadOnly = isReadOnly,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
@@ -354,6 +378,8 @@ fun PortraitPomodoroGroupUI(
     onAddTask: () -> Unit,
     onDeleteTask: (String) -> Unit,
     onToggleTask: (String) -> Unit,
+    onMoveTaskUp: (String) -> Unit,
+    onMoveTaskDown: (String) -> Unit,
     onNewTaskTextChange: (String) -> Unit,
     onToggleMusic: () -> Unit,
     onSelectTrack: (String) -> Unit,
@@ -423,6 +449,8 @@ fun PortraitPomodoroGroupUI(
             Spacer(modifier = Modifier.height(100.dp))
         }
 
+        val isReadOnly = totallyPomodoroUiState.timerUiState.isActive && totallyPomodoroUiState.currentMode == PomodoroMode.WORK
+
         TaskBottomBar(
             sessionTasks = totallyPomodoroUiState.tasksUiState.sessionTasks,
             isExpanded = totallyPomodoroUiState.tasksUiState.isTasksExpanded,
@@ -431,7 +459,11 @@ fun PortraitPomodoroGroupUI(
             onAddTask = onAddTask,
             onDeleteTask = onDeleteTask,
             onToggleTask = onToggleTask,
+            onMoveTaskUp = onMoveTaskUp,
+            onMoveTaskDown = onMoveTaskDown,
             onNewTaskTextChange = onNewTaskTextChange,
+            taskValidationError = totallyPomodoroUiState.tasksUiState.taskValidationError,
+            isReadOnly = isReadOnly,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)

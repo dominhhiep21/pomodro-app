@@ -4,6 +4,7 @@ import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.LearningSessio
 import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.SessionTask
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionEvent
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
+import thong.kotlin.pomodoro.features.startup.domain.HomeUiDomain
 
 interface LearningSessionRepository {
 
@@ -35,7 +36,11 @@ interface LearningSessionRepository {
 
     fun updateTask(task: SessionTask)
 
+    fun updateTasks(tasks: List<SessionTask>)
+
     fun deleteTask(taskId: String, sessionId: String)
 
     fun clearAllSessionsData()
+
+    fun getHomeDashboardStats(): HomeUiDomain
 }

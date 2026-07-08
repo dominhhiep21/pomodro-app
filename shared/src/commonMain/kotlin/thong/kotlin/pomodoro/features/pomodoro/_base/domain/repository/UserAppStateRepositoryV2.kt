@@ -21,6 +21,18 @@ interface UserAppStateRepositoryV2 {
 
     fun updateSelectedBackground(backgroundId: String?)
 
+    fun updateDailyTarget(minutes: Int)
+
+    fun updateNotificationSound(enabled: Boolean)
+
+    fun updateVibration(enabled: Boolean)
+
+    fun updateFirstDayOfWeek(day: Int)
+
+    fun updateLanguage(lang: String)
+
+    fun updateDarkMode(enabled: Boolean)
+
     fun resetUserSettings()
 //
 //    // Tasks

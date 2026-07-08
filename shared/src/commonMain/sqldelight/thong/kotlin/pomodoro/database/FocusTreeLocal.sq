@@ -1,0 +1,48 @@
+CREATE TABLE IF NOT EXISTS focus_tree_local (
+    tree_id TEXT NOT NULL PRIMARY KEY,
+    growth_point INTEGER NOT NULL DEFAULT 0,
+    growth_stage TEXT NOT NULL,
+    total_completed_work_rounds INTEGER NOT NULL DEFAULT 0,
+    total_focus_seconds INTEGER NOT NULL DEFAULT 0,
+    average_focus_score INTEGER NOT NULL DEFAULT 0,
+    current_streak_days INTEGER NOT NULL DEFAULT 0,
+    last_growth_at_millis INTEGER,
+    created_at_millis INTEGER NOT NULL,
+    updated_at_millis INTEGER NOT NULL
+);
+
+getFocusTree:
+SELECT *
+FROM focus_tree_local
+WHERE tree_id = ?;
+
+insertFocusTree:
+INSERT INTO focus_tree_local(
+    tree_id,
+    growth_point,
+    growth_stage,
+    total_completed_work_rounds,
+    total_focus_seconds,
+    average_focus_score,
+    current_streak_days,
+    last_growth_at_millis,
+    created_at_millis,
+    updated_at_millis
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateFocusTree:
+UPDATE focus_tree_local
+SET
+    growth_point = ?,
+    growth_stage = ?,
+    total_completed_work_rounds = ?,
+    total_focus_seconds = ?,
+    average_focus_score = ?,
+    last_growth_at_millis = ?,
+    updated_at_millis = ?
+WHERE tree_id = ?;
+
+deleteFocusTree:
+DELETE FROM focus_tree_local
+WHERE tree_id = ?;

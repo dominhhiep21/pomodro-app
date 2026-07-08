@@ -1,40 +1,42 @@
 package thong.kotlin.pomodoro.features.pomodoro.music.presentation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
+import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.features.pomodoro.music.domain.MusicTrack
 
 @Composable
@@ -47,121 +49,109 @@ fun CompactMusicSectionComponent(
     modifier: Modifier = Modifier,
     compact: Boolean = false,
 ) {
-    var isExpanded by remember { mutableStateOf(false) }
-    val selectedTrack = availableTracks.find { it.id == selectedTrackId }
-
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(
+        modifier = modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         if (!compact) {
             Text(
                 text = "Âm nhạc tập trung",
                 color = Color.White,
-                fontSize = 16.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 12.dp)
+                modifier = Modifier.padding(bottom = 16.dp)
             )
         }
 
-        GlassBox(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(if (compact) 16.dp else 20.dp),
-            backgroundColor = Color.White.copy(alpha = 0.05f)
+        // Music Grid
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            contentPadding = PaddingValues(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Play/Pause Button
-                Box(
+            items(availableTracks, key = { it.id }) { track ->
+                val isSelected = track.id == selectedTrackId
+                
+                GlassBox(
                     modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.1f))
-                        .clickable { onToggleMusic() },
-                    contentAlignment = Alignment.Center
+                        .fillMaxWidth()
+                        .height(80.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .clickable { onSelectTrack(track.id) },
+                    shape = RoundedCornerShape(16.dp),
+                    backgroundColor = if (isSelected) AuraColors.WorkMode.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.05f)
                 ) {
-                    Icon(
-                        imageVector = if (isMusicPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = "Toggle Music",
-                        tint = Color.White,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                // Selection Box (Dropdown)
-                Box(modifier = Modifier.weight(1f)) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(44.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color.White.copy(alpha = 0.08f))
-                            .clickable { isExpanded = !isExpanded }
-                            .padding(horizontal = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
                     ) {
-                        selectedTrack?.let { track ->
-                            Icon(
-                                imageVector = track.icon,
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = track.name,
-                                color = Color.White,
-                                fontSize = 14.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-
                         Icon(
-                            imageVector = Icons.Default.ArrowDropDown,
-                            contentDescription = "Expand",
-                            tint = Color.White.copy(alpha = 0.7f)
+                            imageVector = track.icon,
+                            contentDescription = null,
+                            tint = if (isSelected) AuraColors.WorkMode else Color.White.copy(alpha = 0.6f),
+                            modifier = Modifier.size(24.dp)
                         )
-                    }
-
-                    // Material3 DropdownMenu
-                    DropdownMenu(
-                        expanded = isExpanded,
-                        onDismissRequest = { isExpanded = false },
-                        modifier = Modifier
-                            .background(Color(0xFF1A1A1A)) // Dark background for dropdown
-                            .width(200.dp)
-                    ) {
-                        availableTracks.forEach { track ->
-                            DropdownMenuItem(
-                                text = {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = track.icon,
-                                            contentDescription = null,
-                                            tint = if (track.id == selectedTrackId) Color.Cyan else Color.White,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = track.name,
-                                            color = if (track.id == selectedTrackId) Color.Cyan else Color.White
-                                        )
-                                    }
-                                },
-                                onClick = {
-                                    onSelectTrack(track.id)
-                                    isExpanded = false
-                                }
-                            )
-                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = track.name,
+                            color = if (isSelected) Color.White else Color.White.copy(alpha = 0.4f),
+                            fontSize = 12.sp,
+                            maxLines = 1,
+                            textAlign = TextAlign.Center,
+                            overflow = TextOverflow.Clip,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                            modifier = Modifier.basicMarquee()
+                        )
                     }
                 }
             }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Play/Pause Button at Bottom
+        Box(
+            modifier = Modifier
+                .size(64.dp)
+                .clip(CircleShape)
+                .background(AuraColors.WorkMode.copy(alpha = 0.15f))
+                .border(1.dp, AuraColors.WorkMode.copy(alpha = 0.3f), CircleShape)
+                .clickable { onToggleMusic() },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = if (isMusicPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                contentDescription = "Toggle Music",
+                tint = AuraColors.WorkMode,
+                modifier = Modifier.size(32.dp)
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        Text(
+            text = if (isMusicPlaying) "Đang phát" else "Đã tạm dừng",
+            color = Color.White.copy(alpha = 0.6f),
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium
+        )
+
+        val activeTrack = availableTracks.find { it.id == selectedTrackId }
+        activeTrack?.let {
+            Text(
+                text = it.name,
+                color = Color.White,
+                fontSize = 11.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Clip,
+                modifier = Modifier
+                    .padding(top = 2.dp)
+                    .widthIn(max = 150.dp)
+                    .basicMarquee()
+            )
         }
     }
 }

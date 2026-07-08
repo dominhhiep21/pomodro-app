@@ -58,6 +58,30 @@ class UserAppStateRepositoryImplV2(
         }
     }
 
+    override fun updateDailyTarget(minutes: Int) {
+        updateUserSettings { it.copy(dailyTargetMinutes = minutes) }
+    }
+
+    override fun updateNotificationSound(enabled: Boolean) {
+        updateUserSettings { it.copy(isSoundEnabled = enabled) }
+    }
+
+    override fun updateVibration(enabled: Boolean) {
+        updateUserSettings { it.copy(isVibrationEnabled = enabled) }
+    }
+
+    override fun updateFirstDayOfWeek(day: Int) {
+        updateUserSettings { it.copy(firstDayOfWeek = day) }
+    }
+
+    override fun updateLanguage(lang: String) {
+        updateUserSettings { it.copy(language = lang) }
+    }
+
+    override fun updateDarkMode(enabled: Boolean) {
+        updateUserSettings { it.copy(isDarkMode = enabled) }
+    }
+
     override fun resetUserSettings() = localSettingsDataSource.clearUserSettings()
 
 }

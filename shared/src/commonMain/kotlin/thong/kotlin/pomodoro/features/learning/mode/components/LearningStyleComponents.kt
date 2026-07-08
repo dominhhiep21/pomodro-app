@@ -55,7 +55,7 @@ import thong.kotlin.pomodoro.core.designsystem.theme.AuraColors
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningStyle
-import thong.kotlin.pomodoro.features.main.MainTabScreen
+import thong.kotlin.pomodoro.features.pomodoro._base.PomodoroScreenV2
 import thong.kotlin.pomodoro.features.session.data.LearningSessionManager
 import thong.kotlin.pomodoro.features.session.domain.CurrentLearningMode
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionEvent
@@ -64,9 +64,12 @@ import thong.kotlin.pomodoro.features.session.domain.LearningSessionRecord
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionStatus
 import thong.kotlin.pomodoro.features.session.domain.SyncStatus
 import thong.kotlin.pomodoro.features.session.presentation.SessionHistoryScreen
+import thong.kotlin.pomodoro.features.startup.presentation.HomeScreenV2
 import kotlin.time.Clock
 
-class LearningStyleScreen : Screen {
+class LearningStyleScreen(
+    private val backScreen: String = "home"
+) : Screen {
 
     @Composable
     override fun Content() {
@@ -83,7 +86,11 @@ class LearningStyleScreen : Screen {
             isLoading = isFinishing,
             onBack = {
                 if (!isFinishing) {
-                    navigator.replace(SessionHistoryScreen())
+                    if ("session_history" == backScreen) {
+                        navigator.replace(SessionHistoryScreen())
+                    } else {
+                        navigator.replace(HomeScreenV2())
+                    }
                 }
             },
             onFinish = { learningStyle, learningGroupConfig ->
@@ -106,10 +113,11 @@ class LearningStyleScreen : Screen {
                     result
                         .onSuccess { newSession ->
                             navigator.push(
-                                MainTabScreen(
-                                    currentSession = newSession,
+                                PomodoroScreenV2(
                                     learningStyle = learningStyle,
-                                    learningGroupConfig = learningGroupConfig
+                                    learningGroupConfig = learningGroupConfig,
+                                    currentSessionId = newSession.sessionId,
+                                    isNewSession = true
                                 )
                             )
                         }

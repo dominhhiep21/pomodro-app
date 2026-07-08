@@ -36,4 +36,12 @@ object AuraGradients {
             Color(0xFF51FFEB)  // Teal 400
         )
     )
+
+    // Gradient mang lại sự thư giãn sâu khi Nghỉ dài (Long Break Mode)
+    val LongBreakFlow = Brush.horizontalGradient(
+        colors = listOf(
+            Color(0xFF3B82F6), // Blue 500
+            Color(0xFF60A5FA)  // Blue 400
+        )
+    )
 }

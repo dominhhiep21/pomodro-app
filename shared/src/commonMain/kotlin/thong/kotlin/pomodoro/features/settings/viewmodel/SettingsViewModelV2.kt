@@ -3,6 +3,7 @@ package thong.kotlin.pomodoro.features.settings.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.*
+import thong.kotlin.pomodoro.core.notification.toast.AuraToast
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettingsV2
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryV2
@@ -47,6 +48,10 @@ class SettingsViewModelV2(
 
     fun updateLongBreakMinutes(minutes: Int) {
         val current = _uiState.value.userSettings
+        if (minutes <= current.personalBreakMinutes) {
+            AuraToast.showError("Thời gian Long Break nên nhiều hơn thời gian Break")
+            return
+        }
         repository.updatePersonalPomodoroTime(
             current.personalWorkMinutes,
             current.personalBreakMinutes,

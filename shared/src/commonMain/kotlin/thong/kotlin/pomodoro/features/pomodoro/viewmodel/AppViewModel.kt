@@ -415,6 +415,33 @@ class AppViewModel(
                 shouldInsertSessionStartedEvent = false
             }
 
+            !state.timerUiState.isActive && currentMode == PomodoroMode.LONG_BREAK && isMiddleOfRound -> {
+                eventType = LearningSessionEventType.LONG_BREAK_ROUND_RESUMED
+                action = "resume_long_break"
+                nextStatus = LearningSessionStatus.RUNNING
+                nextLearningMode = CurrentLearningMode.LONG_BREAK
+                shouldStartTimer = true
+                shouldInsertSessionStartedEvent = false
+            }
+
+            !state.timerUiState.isActive && currentMode == PomodoroMode.LONG_BREAK && isStartOfRound -> {
+                eventType = LearningSessionEventType.LONG_BREAK_ROUND_STARTED
+                action = "start_long_break"
+                nextStatus = LearningSessionStatus.RUNNING
+                nextLearningMode = CurrentLearningMode.LONG_BREAK
+                shouldStartTimer = true
+                shouldInsertSessionStartedEvent = false
+            }
+
+            state.timerUiState.isActive && currentMode == PomodoroMode.LONG_BREAK -> {
+                eventType = LearningSessionEventType.LONG_BREAK_ROUND_PAUSED
+                action = "pause_long_break"
+                nextStatus = LearningSessionStatus.PAUSED
+                nextLearningMode = CurrentLearningMode.LONG_BREAK
+                shouldStartTimer = false
+                shouldInsertSessionStartedEvent = false
+            }
+
             else -> return
         }
 
@@ -558,11 +585,7 @@ class AppViewModel(
 
         val elapsedSeconds = currentTotalSeconds - state.timerUiState.timeLeft
 
-        val nextMode = when (currentMode) {
-            PomodoroMode.WORK -> PomodoroMode.SHORT_BREAK
-            PomodoroMode.SHORT_BREAK -> PomodoroMode.WORK
-            PomodoroMode.LONG_BREAK -> PomodoroMode.WORK
-        }
+        val nextMode = getNextModeWhenTimerEnds()
 
         val nextLearningMode = when (nextMode) {
             PomodoroMode.WORK -> CurrentLearningMode.WORK
@@ -570,26 +593,12 @@ class AppViewModel(
             PomodoroMode.LONG_BREAK -> CurrentLearningMode.LONG_BREAK
         }
 
-        val updatedSession = when (currentMode) {
-            PomodoroMode.WORK -> {
-                currentSession.copy(
-                    status = LearningSessionStatus.PAUSED,
-                    currentLearningMode = nextLearningMode,
-                    totalFocusSeconds = currentSession.totalFocusSeconds + elapsedSeconds,
-                    skipCount = currentSession.skipCount + 1
-                )
-            }
-
-            PomodoroMode.SHORT_BREAK,
-            PomodoroMode.LONG_BREAK -> {
-                currentSession.copy(
-                    status = LearningSessionStatus.PAUSED,
-                    currentLearningMode = nextLearningMode,
-                    totalBreakSeconds = currentSession.totalBreakSeconds + elapsedSeconds,
-                    skipCount = currentSession.skipCount + 1
-                )
-            }
-        }
+        val updatedSession = currentSession.copy(
+            status = LearningSessionStatus.PAUSED,
+            currentLearningMode = nextLearningMode,
+            totalFocusSeconds = currentSession.totalFocusSeconds + elapsedSeconds,
+            skipCount = currentSession.skipCount + 1
+        )
 
         _uiState.update {
             it.copy(
@@ -633,6 +642,19 @@ class AppViewModel(
                     )
                 )
             )
+        }
+    }
+
+    private fun getNextModeWhenTimerEnds(): PomodoroMode {
+        return when (_uiState.value.currentMode) {
+            PomodoroMode.WORK -> { if ((_uiState.value.currentSession.completedWorkRounds + 1) % 4 == 0) {
+                    PomodoroMode.LONG_BREAK
+                } else {
+                    PomodoroMode.SHORT_BREAK
+                }
+            }
+            PomodoroMode.SHORT_BREAK -> PomodoroMode.WORK
+            PomodoroMode.LONG_BREAK -> PomodoroMode.WORK
         }
     }
 
@@ -699,22 +721,19 @@ class AppViewModel(
             }
 
             pauseTimer()
+            val nextMode = getNextModeWhenTimerEnds()
 
             val session = state.currentSession
             val config = state.timerUiState.config
 
-            val nextMode = if (isWorkMode) {
-                PomodoroMode.SHORT_BREAK
-            } else {
-                PomodoroMode.WORK
-            }
-
-            val nextTime = nextMode.totalSeconds(config)
-
             val updatedSession = if (isWorkMode) {
                 session.copy(
                     status = LearningSessionStatus.PAUSED,
-                    currentLearningMode = CurrentLearningMode.BREAK,
+                    currentLearningMode = if (nextMode == PomodoroMode.SHORT_BREAK) {
+                        CurrentLearningMode.BREAK
+                    } else {
+                        CurrentLearningMode.LONG_BREAK
+                    },
                     completedWorkRounds = session.completedWorkRounds + 1,
                     totalFocusSeconds = session.totalFocusSeconds + currentMode.totalSeconds(config)
                 )
@@ -726,6 +745,8 @@ class AppViewModel(
                     totalBreakSeconds = session.totalBreakSeconds + currentMode.totalSeconds(config)
                 )
             }
+
+            val nextTime = nextMode.totalSeconds(config)
 
             val learningEventType = if (isWorkMode) {
                 LearningSessionEventType.WORK_ROUND_COMPLETED
@@ -740,7 +761,11 @@ class AppViewModel(
             }
 
             val notificationMessage = if (isWorkMode) {
-                "Work session completed. Time for a break!"
+                if (nextMode == PomodoroMode.LONG_BREAK) {
+                    "Great job! You've completed 4 sessions. Enjoy a long break!"
+                } else {
+                    "Work session completed. Time for a break!"
+                }
             } else {
                 "Break finished. Time to focus again!"
             }
@@ -798,6 +823,9 @@ class AppViewModel(
                 delay(2000)
                 toggleTimer()
             } else if (userSettings.autoStartBreak && currentMode == PomodoroMode.WORK) {
+                delay(2000)
+                toggleTimer()
+            } else if (userSettings.autoStartBreak && currentMode == PomodoroMode.LONG_BREAK) {
                 delay(2000)
                 toggleTimer()
             }
@@ -1926,7 +1954,7 @@ class AppViewModel(
                 PomodoroMode.LONG_BREAK -> {
                     notificationManager?.showNotification(
                         title = "Long break ended",
-                        message = "Hết giờ nghỉ dài. Sẵn sàng học tiếp!"
+                        message = "Hết giờ nghỉ dài. Sẵn sàng học tiếp thôi nào!"
                     )
                 }
             }

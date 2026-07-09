@@ -16,8 +16,10 @@ import thong.kotlin.pomodoro.core.notification.toast.AuraToast
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.background.data.BackgroundRepository
 import thong.kotlin.pomodoro.features.background.model.BackgroundConfig
+import thong.kotlin.pomodoro.features.focus.journal.data.LearningJournalRepository
 import thong.kotlin.pomodoro.features.focus.score.domain.FocusScoreCalculator
 import thong.kotlin.pomodoro.features.focus.tree.data.FocusTreeRepository
+import thong.kotlin.pomodoro.features.focus.journal.domain.JournalEntry
 import thong.kotlin.pomodoro.features.focus.tree.domain.calculateGrowthPoint
 import thong.kotlin.pomodoro.features.focus.tree.presentation.animation.FocusTreeAnimationEvent
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
@@ -54,6 +56,7 @@ class AppViewModel(
     private val repository: UserAppStateRepositoryV2 = DependencyRegistry.userAppStateRepositoryV2,
     private val learningSessionManager: LearningSessionManager = DependencyRegistry.learningSessionManager,
     private val focusTreeRepository: FocusTreeRepository = DependencyRegistry.focusTreeRepository,
+    private val learningJournalRepository: LearningJournalRepository = DependencyRegistry.learningJournalRepository,
     private val currentSession: LearningSessionRecord,
     private val isNewSession: Boolean,
 ) : ViewModel() {
@@ -793,6 +796,13 @@ class AppViewModel(
                         timeLeft = nextTime,
                         event = timerEventType,
                         pendingNotification = notificationMessage
+                    ),
+                    workspaceUiState = currentState.workspaceUiState.copy(
+                        journalUiState = if (isWorkMode) {
+                            currentState.workspaceUiState.journalUiState.copy(isJournalModalVisible = true)
+                        } else {
+                            currentState.workspaceUiState.journalUiState
+                        }
                     )
                 )
             }
@@ -1404,6 +1414,45 @@ class AppViewModel(
         }
     }
 
+    fun saveJournalEntry(achievements: String, rating: Int) {
+        var newEntry : JournalEntry? = null
+        _uiState.update { state ->
+            val currentEntries = state.workspaceUiState.journalUiState.entries
+            newEntry = JournalEntry(
+                sessionId = state.currentSession.sessionId,
+                workRound = state.currentSession.completedWorkRounds,
+                achievements = achievements,
+                focusRating = rating
+            )
+            state.copy(
+                workspaceUiState = state.workspaceUiState.copy(
+                    journalUiState = state.workspaceUiState.journalUiState.copy(
+                        isJournalModalVisible = false,
+                        entries = currentEntries + newEntry
+                    )
+                )
+            )
+        }
+
+        viewModelScope.launch {
+            if (newEntry != null) {
+                insertLearningJournal(newEntry)
+            }
+        }
+    }
+
+    fun dismissJournalModal() {
+        _uiState.update { state ->
+            state.copy(
+                workspaceUiState = state.workspaceUiState.copy(
+                    journalUiState = state.workspaceUiState.journalUiState.copy(
+                        isJournalModalVisible = false
+                    )
+                )
+            )
+        }
+    }
+
     fun endSession() {
         val session = _uiState.value.currentSession
         val now = Clock.System.now().toEpochMilliseconds()
@@ -1974,4 +2023,6 @@ class AppViewModel(
     suspend fun deleteTask(taskId: String, sessionId: String) = learningSessionManager.deleteTaskById(taskId, sessionId)
 
     suspend fun updateFocusTreeResult(focusScore: Int, focusSeconds: Int) = focusTreeRepository.growTreeAfterWorkCompleted(focusScore, focusSeconds)
+
+    suspend fun insertLearningJournal(journal: JournalEntry) = learningJournalRepository.insertJournalEntry(journal)
 }

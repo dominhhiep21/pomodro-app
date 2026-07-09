@@ -16,6 +16,7 @@ import thong.kotlin.pomodoro.features.focus.score.domain.FocusScoreResult
 import thong.kotlin.pomodoro.features.focus.tree.domain.FocusTreeGrowthResult
 import thong.kotlin.pomodoro.features.focus.tree.domain.FocusTreeRecord
 import thong.kotlin.pomodoro.features.focus.tree.presentation.animation.FocusTreeAnimationEvent
+import thong.kotlin.pomodoro.features.focus.journal.domain.JournalUiState
 
 data class WorkspaceUiState(
     val currentMode: PomodoroMode = PomodoroMode.WORK,
@@ -74,5 +75,8 @@ data class WorkspaceUiState(
     val focusTree: FocusTreeRecord? = FocusTreeRecord(),
     val focusTreeAnimationEvent: FocusTreeAnimationEvent? = null,
     val focusTreeGrowthResult: FocusTreeGrowthResult? = null,
-    val isFocusTreeGrowthAnimationVisible: Boolean = false
+    val isFocusTreeGrowthAnimationVisible: Boolean = false,
+
+    // Journal
+    val journalUiState: JournalUiState = JournalUiState()
 )

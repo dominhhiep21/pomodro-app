@@ -60,6 +60,10 @@ import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitCompactU
 import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoroGroupUI
 import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoroUI
 import thong.kotlin.pomodoro.features.pomodoro._base.components.SessionGuidanceModal
+import thong.kotlin.pomodoro.features.focus.journal.presentation.PomodoroJournalModal
+import thong.kotlin.pomodoro.features.focus.journal.presentation.SessionJournalSummary
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.PomodoroUiState
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettingsV2
@@ -543,6 +547,14 @@ fun PomodoroScreenUIv2(
                 )
             }
 
+            // Journal Modal
+            if (totalPomodoroUiState.workspaceUiState.journalUiState.isJournalModalVisible) {
+                PomodoroJournalModal(
+                    onSave = appViewModel::saveJournalEntry,
+                    onDismiss = appViewModel::dismissJournalModal
+                )
+            }
+
             // Focus Score Modal
             totalPomodoroUiState.workspaceUiState.focusScoreResult?.let { result ->
                 Dialog(
@@ -551,10 +563,19 @@ fun PomodoroScreenUIv2(
                     }
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .verticalScroll(rememberScrollState()),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         FocusScoreCard(result = result)
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        SessionJournalSummary(
+                            entries = totalPomodoroUiState.workspaceUiState.journalUiState.entries
+                        )
                         
                         Spacer(modifier = Modifier.height(24.dp))
                         

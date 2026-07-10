@@ -971,6 +971,15 @@ class AppViewModel(
     }
 
     private fun updateScoreInputWhenSkip(elapsedSeconds: Int) {
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    focusScoreInput = it.workspaceUiState.focusScoreInput.copy(
+                        wasWorkSkipped = true
+                    )
+                )
+            )
+        }
         val isAllTaskUnfinished = _uiState.value.tasksUiState.sessionTasks.all { it.status != TaskStatus.COMPLETED }
         if (isAllTaskUnfinished) {
             _uiState.update {
@@ -1064,7 +1073,23 @@ class AppViewModel(
                 )
             )
         }
-        AuraToast.showInfo("Điểm của phiên pomo này: $totalPomodoroScore")
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    isFocusScoreModalVisible = true
+                )
+            )
+        }
+    }
+
+    fun dismissRoundFocusScore() {
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    isFocusScoreModalVisible = false
+                )
+            )
+        }
     }
 
     fun getTasksTooLong(): List<SessionTask> {

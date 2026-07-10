@@ -72,6 +72,7 @@ data class WorkspaceUiState(
     val focusScoreResult: FocusScoreResult? = null,
     val focusScoreInput: FocusScoreInput = FocusScoreInput(),
     val pomodoroFocusScoreMap: Map<Int, Int> = emptyMap(),
+    val isFocusScoreModalVisible: Boolean = false,
     
     // Focus Tree Reward
     val focusTreeReward: Int? = null,

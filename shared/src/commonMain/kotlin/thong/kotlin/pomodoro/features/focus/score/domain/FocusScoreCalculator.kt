@@ -16,7 +16,7 @@ object FocusScoreCalculator {
         val timeScore = when {
             input.isWorkFullCompleted -> 45
 
-            input.wasWorkSkipped && input.hasSomeUnfinishedTasksWhenSkipped-> {
+            input.wasWorkSkipped && input.hasSomeUnfinishedTasksWhenSkipped -> {
                 val elapsedRatio = if (input.plannedWorkSeconds > 0) {
                     input.elapsedSeconds.toDouble() / input.plannedWorkSeconds.toDouble()
                 } else {
@@ -74,7 +74,7 @@ object FocusScoreCalculator {
             applyPenalty = input.wasWorkSkipped && input.hasSomeUnfinishedTasksWhenSkipped
         )
 
-        return (timeScore + taskScore + taskStabilityScore + pauseCountScore + pauseDurationScore + journalScore - unfinishedTaskPenalty )
+        return (timeScore + taskScore + taskStabilityScore + pauseCountScore + pauseDurationScore + journalScore - unfinishedTaskPenalty)
             .coerceIn(0, 100)
     }
 
@@ -130,15 +130,15 @@ object FocusScoreCalculator {
     }
 
     private fun generateFeedback(
-        score: Int, 
-        pausedCount: Int, 
+        score: Int,
+        pausedCount: Int,
         skippedCount: Int,
         status: LearningSessionStatus
     ): String {
         if (status != LearningSessionStatus.COMPLETED && score < 50) {
             return "Phiên học bị bỏ dở. Hãy cố gắng duy trì sự tập trung ở phiên tới nhé!"
         }
-        
+
         return when {
             score >= 95 -> "Tuyệt vời! Bạn đã có một phiên học cực kỳ hiệu quả và không bị gián đoạn."
             score >= 85 && pausedCount == 0 -> "Rất tốt! Bạn đã duy trì được sự tập trung cao độ xuyên suốt phiên học."

@@ -62,6 +62,7 @@ import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoro
 import thong.kotlin.pomodoro.features.pomodoro._base.components.SessionGuidanceModal
 import thong.kotlin.pomodoro.features.focus.journal.presentation.PomodoroJournalModal
 import thong.kotlin.pomodoro.features.focus.journal.presentation.SessionJournalSummary
+import thong.kotlin.pomodoro.features.focus.score.domain.presentation.RoundFocusScoreModal
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
@@ -551,6 +552,14 @@ fun PomodoroScreenUIv2(
                 PomodoroJournalModal(
                     onSave = appViewModel::saveJournalEntry,
                     onDismiss = appViewModel::dismissJournalModal
+                )
+            }
+
+            if (totalPomodoroUiState.workspaceUiState.isFocusScoreModalVisible) {
+                // Round Focus Score Modal
+                RoundFocusScoreModal(
+                    scoreInput = totalPomodoroUiState.workspaceUiState.focusScoreInput,
+                    onDismiss = appViewModel::dismissRoundFocusScore
                 )
             }
 

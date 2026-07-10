@@ -1,4 +1,4 @@
-package thong.kotlin.pomodoro.features.focus.score.domain.presentation
+package thong.kotlin.pomodoro.features.focus.score.presentation
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape

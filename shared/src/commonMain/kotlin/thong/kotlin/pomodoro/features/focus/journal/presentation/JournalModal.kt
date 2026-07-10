@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import kotlinx.coroutines.delay
 import thong.kotlin.pomodoro.core.designsystem.components.AuraButton
 import thong.kotlin.pomodoro.core.designsystem.components.AuraInputField
 import thong.kotlin.pomodoro.core.designsystem.components.GlassBox
@@ -28,6 +29,16 @@ fun PomodoroJournalModal(
 ) {
     var achievements by remember { mutableStateOf("") }
     var rating by remember { mutableIntStateOf(5) }
+    var secondsLeft by remember { mutableIntStateOf(30) }
+
+    // Tự động đóng sau 30 giây nếu không tương tác
+    LaunchedEffect(Unit) {
+        while (secondsLeft > 0) {
+            delay(1000)
+            secondsLeft--
+        }
+        onDismiss()
+    }
 
     Dialog(onDismissRequest = onDismiss) {
         GlassBox(
@@ -84,7 +95,15 @@ fun PomodoroJournalModal(
                     onRatingSelected = { rating = it }
                 )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Tự động bỏ qua sau ${secondsLeft}s",
+                    color = Color.White.copy(alpha = 0.3f),
+                    fontSize = 12.sp
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),

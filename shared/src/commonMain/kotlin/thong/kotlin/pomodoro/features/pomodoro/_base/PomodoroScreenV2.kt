@@ -511,6 +511,7 @@ fun PomodoroScreenUIv2(
                     onNewTaskTextChange = appViewModel::onNewTaskTextChange,
                     onStartFocus = {
                         appViewModel.toggleMandatoryTaskModal()
+                        appViewModel.toggleTimer()
                     },
                     onDismiss = appViewModel::toggleMandatoryTaskModal
                 )
@@ -522,7 +523,7 @@ fun PomodoroScreenUIv2(
                     totallyPomodoroUiState = totalPomodoroUiState,
                     onSkipAndGetPoints = {
                         appViewModel.toggleAllTasksCompletedModal()
-                        appViewModel.handleTimerCompleteManually()
+                        appViewModel.skipTimer()
                     },
                     onContinueAndAddTask = {
                         appViewModel.toggleAllTasksCompletedModal()

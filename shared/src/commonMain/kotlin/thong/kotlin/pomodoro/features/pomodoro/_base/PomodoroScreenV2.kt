@@ -195,7 +195,7 @@ fun PomodoroScreenUIv2(
                         LandscapeCompactUI(
                             totallyPomodoroUiState = totalPomodoroUiState,
                             learningStyle = learningStyle,
-                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleTimer = { appViewModel.toggleTimer(true) },
                             onToggleCompactMode = appViewModel::toggleCompactMode,
                             onToggleCompactMenu = appViewModel::toggleCompactMenu,
                             onSelectCompactSection = appViewModel::setActiveCompactSection,
@@ -236,7 +236,7 @@ fun PomodoroScreenUIv2(
                     PomodoroUiState(isCompact = true, isLandscape = true, style = LearningStyle.SOLO) -> {
                         LandscapeCompactUI(
                             totallyPomodoroUiState = totalPomodoroUiState,
-                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleTimer = { appViewModel.toggleTimer(true) },
                             onToggleCompactMode = appViewModel::toggleCompactMode,
                             onToggleCompactMenu = appViewModel::toggleCompactMenu,
                             onSelectCompactSection = appViewModel::setActiveCompactSection,
@@ -279,7 +279,7 @@ fun PomodoroScreenUIv2(
                             totallyPomodoroUiState = totalPomodoroUiState,
                             learningStyle = learningStyle,
                             onToggleSettings = appViewModel::toggleSettings,
-                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleTimer = { appViewModel.toggleTimer(true) },
                             onToggleCompactMode = appViewModel::toggleCompactMode,
                             onToggleCompactMenu = appViewModel::toggleCompactMenu,
                             onSelectCompactSection = appViewModel::setActiveCompactSection,
@@ -319,7 +319,7 @@ fun PomodoroScreenUIv2(
                     PomodoroUiState(isCompact = true, isLandscape = false, style = LearningStyle.SOLO) -> {
                         PortraitCompactUI(
                             totallyPomodoroUiState = totalPomodoroUiState,
-                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleTimer = { appViewModel.toggleTimer(true) },
                             onToggleCompactMode = appViewModel::toggleCompactMode,
                             onToggleCompactMenu = appViewModel::toggleCompactMenu,
                             onSelectCompactSection = appViewModel::setActiveCompactSection,
@@ -362,7 +362,7 @@ fun PomodoroScreenUIv2(
                             totallyPomodoroUiState = totalPomodoroUiState,
                             groupConfig = learningGroupConfig ?: LearningGroupConfig(),
                             themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.currentMode),
-                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleTimer = { appViewModel.toggleTimer(true) },
                             onResetTimer = appViewModel::resetTimer,
                             onSkipTimer = appViewModel::skipTimer,
                             onToggleSettings = appViewModel::toggleSettings,
@@ -386,7 +386,7 @@ fun PomodoroScreenUIv2(
                         LandscapePomodoroUI(
                             totallyPomodoroUiState = totalPomodoroUiState,
                             themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.currentMode),
-                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleTimer = { appViewModel.toggleTimer(true) },
                             onResetTimer = appViewModel::resetTimer,
                             onSkipTimer = appViewModel::skipTimer,
                             onToggleSettings = appViewModel::toggleSettings,
@@ -411,7 +411,7 @@ fun PomodoroScreenUIv2(
                             totallyPomodoroUiState = totalPomodoroUiState,
                             groupConfig = learningGroupConfig ?: LearningGroupConfig(),
                             themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.currentMode),
-                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleTimer = { appViewModel.toggleTimer(true) },
                             onResetTimer = appViewModel::resetTimer,
                             onSkipTimer = appViewModel::skipTimer,
                             onToggleSettings = appViewModel::toggleSettings,
@@ -435,7 +435,7 @@ fun PomodoroScreenUIv2(
                         PortraitPomodoroUI(
                             totallyPomodoroUiState = totalPomodoroUiState,
                             themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.currentMode),
-                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleTimer = { appViewModel.toggleTimer(true) },
                             onResetTimer = appViewModel::resetTimer,
                             onSkipTimer = appViewModel::skipTimer,
                             onToggleSettings = appViewModel::toggleSettings,
@@ -510,7 +510,6 @@ fun PomodoroScreenUIv2(
                     onNewTaskTextChange = appViewModel::onNewTaskTextChange,
                     onStartFocus = {
                         appViewModel.toggleMandatoryTaskModal()
-                        appViewModel.toggleTimer()
                     },
                     onDismiss = appViewModel::toggleMandatoryTaskModal
                 )

@@ -20,7 +20,11 @@ compose.desktop {
         mainClass = "thong.kotlin.pomodoro.MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.Exe, TargetFormat.Msi)
+            targetFormats(
+                TargetFormat.Exe,
+                TargetFormat.Deb,
+                TargetFormat.Rpm
+            )
             packageName = "aura-pomodoro"
             packageVersion = "1.0.0"
             description = "Aura Pomodoro - Focus timer application"

@@ -16,8 +16,12 @@ import thong.kotlin.pomodoro.core.notification.toast.AuraToast
 import thong.kotlin.pomodoro.di.DependencyRegistry
 import thong.kotlin.pomodoro.features.background.data.BackgroundRepository
 import thong.kotlin.pomodoro.features.background.model.BackgroundConfig
-import thong.kotlin.pomodoro.features.focus.score.domain.FocusScoreCalculator
+import thong.kotlin.pomodoro.features.focus.journal.data.LearningJournalRepository
 import thong.kotlin.pomodoro.features.focus.tree.data.FocusTreeRepository
+import thong.kotlin.pomodoro.features.focus.journal.domain.JournalEntry
+import thong.kotlin.pomodoro.features.focus.score.domain.JournalState
+import thong.kotlin.pomodoro.features.focus.score.domain.toFocusScoreResult
+import thong.kotlin.pomodoro.features.focus.score.domain.toResult
 import thong.kotlin.pomodoro.features.focus.tree.domain.calculateGrowthPoint
 import thong.kotlin.pomodoro.features.focus.tree.presentation.animation.FocusTreeAnimationEvent
 import thong.kotlin.pomodoro.features.learning.mode.domain.LearningGroupConfig
@@ -32,6 +36,8 @@ import thong.kotlin.pomodoro.features.pomodoro.ambient.data.AmbientSoundReposito
 import thong.kotlin.pomodoro.features.pomodoro.music.data.MusicRepository
 import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.SessionTask
 import thong.kotlin.pomodoro.features.pomodoro.task.domain.model.TaskStatus
+import thong.kotlin.pomodoro.features.pomodoro.timer.domain.TimerPauseRecord
+import thong.kotlin.pomodoro.features.pomodoro.timer.domain.totalPausedSeconds
 import thong.kotlin.pomodoro.features.session.data.LearningSessionManager
 import thong.kotlin.pomodoro.features.session.domain.CurrentLearningMode
 import thong.kotlin.pomodoro.features.session.domain.LearningSessionEvent
@@ -54,6 +60,7 @@ class AppViewModel(
     private val repository: UserAppStateRepositoryV2 = DependencyRegistry.userAppStateRepositoryV2,
     private val learningSessionManager: LearningSessionManager = DependencyRegistry.learningSessionManager,
     private val focusTreeRepository: FocusTreeRepository = DependencyRegistry.focusTreeRepository,
+    private val learningJournalRepository: LearningJournalRepository = DependencyRegistry.learningJournalRepository,
     private val currentSession: LearningSessionRecord,
     private val isNewSession: Boolean,
 ) : ViewModel() {
@@ -141,7 +148,10 @@ class AppViewModel(
                                 availableBackgrounds = BackgroundRepository.availableBackgrounds,
                                 selectedBackgroundId = settings.personalSelectedBackgroundId,
                                 selectedTrackId =  settings.personalLastSelectedMusicId,
-                                isNotificationEnabled = settings.isNotificationEnabled
+                                isNotificationEnabled = settings.isNotificationEnabled,
+                                focusScoreInput = state.workspaceUiState.focusScoreInput.copy(
+                                    plannedWorkSeconds = (state.timerUiState.config.workMinutes * 60).toLong(),
+                                )
                             )
                         )
                     }
@@ -220,6 +230,25 @@ class AppViewModel(
             return
         }
 
+        val planWorkMinutes = _uiState.value.timerUiState.config.workMinutes
+
+        if (_uiState.value.currentMode == PomodoroMode.WORK && _uiState.value.timerUiState.timeLeft.toLong() < planWorkMinutes * 60L) {
+            _uiState.update { state ->
+                val records = state.timerUiState.pauseRecords
+                state.copy(
+                    timerUiState = state.timerUiState.copy(
+                        pauseRecords = records.mapIndexed { index, record ->
+                            if (index == records.lastIndex) {
+                                record.copy(endedAtMillis = Clock.System.now().toEpochMilliseconds())
+                            } else {
+                                record
+                            }
+                        }
+                    )
+                )
+            }
+        }
+
         _uiState.update { currentState ->
             currentState.copy(
                 timerUiState = currentState.timerUiState.copy(
@@ -295,9 +324,23 @@ class AppViewModel(
         }
     }
 
-    private fun pauseTimer() {
+    private fun pauseTimer(isMinusScore: Boolean = false) {
         timerJob?.cancel()
         timerJob = null
+        if (isMinusScore) {
+            val pauseRecord = TimerPauseRecord(
+                sessionId = _uiState.value.currentSession.sessionId,
+                startedAtMillis = Clock.System.now().toEpochMilliseconds(),
+                pomodoroSession = _uiState.value.timerUiState.pomodorosToday + 1
+            )
+            _uiState.update {
+                it.copy(
+                    timerUiState = it.timerUiState.copy(
+                        pauseRecords = it.timerUiState.pauseRecords + pauseRecord
+                    )
+                )
+            }
+        }
         pauseTask()
     }
 
@@ -338,7 +381,7 @@ class AppViewModel(
         nextAction()
     }
 
-    fun toggleTimer() {
+    fun toggleTimer(isMinusScore: Boolean = false) {
         val state = _uiState.value
         val session = state.currentSession
         val currentMode = state.currentMode
@@ -473,7 +516,7 @@ class AppViewModel(
 
             startTimer()
         } else {
-            pauseTimer()
+            pauseTimer(isMinusScore)
 
             _uiState.update {
                 it.copy(
@@ -600,6 +643,23 @@ class AppViewModel(
             skipCount = currentSession.skipCount + 1
         )
 
+        if (currentMode == PomodoroMode.WORK) {
+            updateScoreInputWhenSkip(elapsedSeconds)
+            _uiState.update {
+                it.copy(
+                    workspaceUiState = it.workspaceUiState.copy(
+                        journalUiState = it.workspaceUiState.journalUiState.copy(
+                            isJournalModalVisible = true
+                        ),
+                        journalFromEvent = "skip_work"
+                    ),
+                    timerUiState = it.timerUiState.copy(
+                        pomodorosToday = state.timerUiState.pomodorosToday + 1
+                    )
+                )
+            }
+        }
+
         _uiState.update {
             it.copy(
                 currentMode = nextMode,
@@ -699,10 +759,6 @@ class AppViewModel(
         }
     }
 
-    fun handleTimerCompleteManually() {
-        handleTimerComplete()
-    }
-
     private fun handleTimerComplete() {
         viewModelScope.launch {
             val userSettings = repository.getUserSettings()
@@ -718,6 +774,13 @@ class AppViewModel(
             if (isWorkMode) {
                 checkAndUpdateDoneTask()
                 checkTaskTooLong()
+                _uiState.update {
+                    it.copy(
+                        workspaceUiState = it.workspaceUiState.copy(
+                            journalFromEvent = "complete_work"
+                        )
+                    )
+                }
             }
 
             pauseTimer()
@@ -793,6 +856,13 @@ class AppViewModel(
                         timeLeft = nextTime,
                         event = timerEventType,
                         pendingNotification = notificationMessage
+                    ),
+                    workspaceUiState = currentState.workspaceUiState.copy(
+                        journalUiState = if (isWorkMode) {
+                            currentState.workspaceUiState.journalUiState.copy(isJournalModalVisible = true)
+                        } else {
+                            currentState.workspaceUiState.journalUiState
+                        }
                     )
                 )
             }
@@ -819,15 +889,14 @@ class AppViewModel(
                 )
             )
 
-            if (userSettings.autoStartWork && currentMode == PomodoroMode.SHORT_BREAK) {
-                delay(2000)
-                toggleTimer()
-            } else if (userSettings.autoStartBreak && currentMode == PomodoroMode.WORK) {
-                delay(2000)
-                toggleTimer()
-            } else if (userSettings.autoStartBreak && currentMode == PomodoroMode.LONG_BREAK) {
-                delay(2000)
-                toggleTimer()
+            _uiState.update {
+                it.copy(
+                    workspaceUiState = it.workspaceUiState.copy(
+                        journalUiState = it.workspaceUiState.journalUiState.copy(
+                            isJournalModalVisible = true
+                        )
+                    )
+                )
             }
         }
     }
@@ -887,6 +956,177 @@ class AppViewModel(
                     )
                 )
             }
+        }
+    }
+
+    private fun updateFullWorkScoreInput(isFullWork: Boolean = true) {
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    focusScoreInput = it.workspaceUiState.focusScoreInput.copy(
+                        isWorkFullCompleted = isFullWork
+                    )
+                )
+            )
+        }
+    }
+
+    private fun updateHasValidTasksScoreInput() {
+        val hasValidTasks = _uiState.value.tasksUiState.sessionTasks.isNotEmpty()
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    focusScoreInput = it.workspaceUiState.focusScoreInput.copy(
+                        hasValidTask = hasValidTasks
+                    )
+                )
+            )
+        }
+    }
+
+    private fun updateScoreInputWhenSkip(elapsedSeconds: Int) {
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    focusScoreInput = it.workspaceUiState.focusScoreInput.copy(
+                        wasWorkSkipped = true
+                    )
+                )
+            )
+        }
+        val isAllTaskUnfinished = _uiState.value.tasksUiState.sessionTasks.all { it.status != TaskStatus.COMPLETED }
+        if (isAllTaskUnfinished) {
+            _uiState.update {
+                it.copy(
+                    workspaceUiState = it.workspaceUiState.copy(
+                        focusScoreInput = it.workspaceUiState.focusScoreInput.copy(
+                            wasWorkSkipped = true,
+                            hasAllUnfinishedTasksWhenSkipped = true,
+                            elapsedSeconds = elapsedSeconds.toLong()
+                        )
+                    )
+                )
+            }
+        } else {
+            val isAllTasksCompleted = _uiState.value.tasksUiState.sessionTasks.all { it.status == TaskStatus.COMPLETED }
+
+            if (isAllTasksCompleted) {
+                _uiState.update {
+                    it.copy(
+                        workspaceUiState = it.workspaceUiState.copy(
+                            focusScoreInput = it.workspaceUiState.focusScoreInput.copy(
+                                hasAllUnfinishedTasksWhenSkipped = false,
+                                hasSomeUnfinishedTasksWhenSkipped = false,
+                                isWorkFullCompleted = true,
+                                elapsedSeconds = elapsedSeconds.toLong()
+                            )
+                        )
+                    )
+                }
+            } else {
+                val completedTasks = _uiState.value.tasksUiState.sessionTasks.count { it.status == TaskStatus.COMPLETED }
+                val unCompletedTasks = _uiState.value.tasksUiState.sessionTasks.count { it.status != TaskStatus.COMPLETED }
+                _uiState.update {
+                    it.copy(
+                        workspaceUiState = it.workspaceUiState.copy(
+                            focusScoreInput = it.workspaceUiState.focusScoreInput.copy(
+                                hasAllUnfinishedTasksWhenSkipped = false,
+                                hasSomeUnfinishedTasksWhenSkipped = true,
+                                completedTaskCountWhenSkipped = completedTasks,
+                                uncompletedTaskCountWhenSkipped = unCompletedTasks,
+                                elapsedSeconds = elapsedSeconds.toLong()
+                            )
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    private fun updateScoreInputWhenChangeInProgressTask() {
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    focusScoreInput = it.workspaceUiState.focusScoreInput.copy(
+                        switchTaskCount = it.workspaceUiState.focusScoreInput.switchTaskCount + 1
+                    )
+                )
+            )
+        }
+    }
+
+    private fun updateScoreInputPauseTimer() {
+        val timerPauseRecords = _uiState.value.timerUiState.pauseRecords
+        _uiState.update { state ->
+            state.copy(
+                workspaceUiState = state.workspaceUiState.copy(
+                    focusScoreInput = state.workspaceUiState.focusScoreInput.copy(
+                        pauseCountBeforeAllTasksDone = timerPauseRecords.size,
+                        pausedSecondsBeforeAllTasksDone = timerPauseRecords.totalPausedSeconds()
+                    )
+                ),
+                timerUiState = state.timerUiState.copy(
+                    pauseRecords = emptyList()
+                )
+            )
+        }
+    }
+
+
+    private fun updateScoreInputJournal(pomoJournalEntry: JournalEntry?) {
+        val journalState = if (pomoJournalEntry == null) {
+            JournalState.SKIPPED
+        } else {
+            if (pomoJournalEntry.achievements.isNotEmpty() && pomoJournalEntry.achievements.length >= 10) {
+                JournalState.FULL
+            } else {
+                JournalState.PARTIAL
+            }
+        }
+
+        _uiState.update { state ->
+            state.copy(
+                workspaceUiState = state.workspaceUiState.copy(
+                    focusScoreInput = state.workspaceUiState.focusScoreInput.copy(
+                        journalState = journalState
+                    )
+                )
+            )
+        }
+    }
+
+    private fun calculatePomodoroPoint(isSkip: Boolean = false) {
+        updateFullWorkScoreInput(!isSkip)
+        updateHasValidTasksScoreInput()
+        updateScoreInputPauseTimer()
+
+        val sessionId = _uiState.value.currentSession.sessionId
+
+        _uiState.update {
+            val workingPomodoro = it.timerUiState.pomodorosToday
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    pomodoroFocusScoreMap = it.workspaceUiState.pomodoroFocusScoreMap
+                            + (workingPomodoro to it.workspaceUiState.focusScoreInput.toResult(sessionId, workingPomodoro))
+                )
+            )
+        }
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    isFocusScoreModalVisible = true
+                )
+            )
+        }
+    }
+
+    fun dismissRoundFocusScore() {
+        _uiState.update {
+            it.copy(
+                workspaceUiState = it.workspaceUiState.copy(
+                    isFocusScoreModalVisible = false
+                )
+            )
         }
     }
 
@@ -1404,16 +1644,81 @@ class AppViewModel(
         }
     }
 
+    fun saveJournalEntry(achievements: String, rating: Int) {
+        var newEntry : JournalEntry? = null
+        _uiState.update { state ->
+            val currentEntries = state.workspaceUiState.journalUiState.entries
+            newEntry = JournalEntry(
+                sessionId = state.currentSession.sessionId,
+                workRound = state.currentSession.completedWorkRounds,
+                achievements = achievements,
+                focusRating = rating
+            )
+            state.copy(
+                workspaceUiState = state.workspaceUiState.copy(
+                    journalUiState = state.workspaceUiState.journalUiState.copy(
+                        isJournalModalVisible = false,
+                        entries = currentEntries + newEntry
+                    )
+                )
+            )
+        }
+
+        viewModelScope.launch {
+            if (newEntry != null) {
+                insertLearningJournal(newEntry)
+            }
+            val journalFromEvent = _uiState.value.workspaceUiState.journalFromEvent
+
+            updateScoreInputJournal(newEntry)
+            calculatePomodoroPoint(journalFromEvent == "skip_work")
+
+            decideAutoToggleTimerByUserSettings()
+        }
+    }
+
+    fun dismissJournalModal() {
+        _uiState.update { state ->
+            state.copy(
+                workspaceUiState = state.workspaceUiState.copy(
+                    focusScoreInput = state.workspaceUiState.focusScoreInput.copy(
+                        journalState = JournalState.SKIPPED
+                    ),
+                    journalUiState = state.workspaceUiState.journalUiState.copy(
+                        isJournalModalVisible = false
+                    )
+                )
+            )
+        }
+        decideAutoToggleTimerByUserSettings()
+    }
+
+    fun decideAutoToggleTimerByUserSettings() {
+        viewModelScope.launch {
+            val userSettings = repository.getUserSettings()
+            val state = _uiState.value
+            val currentMode = state.currentMode
+
+            if (userSettings.autoStartWork && currentMode == PomodoroMode.SHORT_BREAK) {
+                delay(2000)
+                toggleTimer()
+            } else if (userSettings.autoStartBreak && currentMode == PomodoroMode.WORK) {
+                delay(2000)
+                toggleTimer()
+            } else if (userSettings.autoStartBreak && currentMode == PomodoroMode.LONG_BREAK) {
+                delay(2000)
+                toggleTimer()
+            }
+        }
+    }
+
     fun endSession() {
         val session = _uiState.value.currentSession
         val now = Clock.System.now().toEpochMilliseconds()
+        val allPomodoroScore = _uiState.value.workspaceUiState.pomodoroFocusScoreMap
 
         // Calculate Focus Score
-        val scoreResult = FocusScoreCalculator.calculate(
-            session = session,
-            pausedCount = session.pausedCount,
-            skippedCount = session.skipCount,
-        )
+        val scoreResult = allPomodoroScore.toFocusScoreResult(session.plannedWorkMinutes)
 
         val updatedSession = session.copy(
             status = LearningSessionStatus.COMPLETED,
@@ -1776,7 +2081,7 @@ class AppViewModel(
         }
 
         val nextTask: SessionTask? = _uiState.value.tasksUiState.sessionTasks
-            .filter { it.status == TaskStatus.IDLE }
+            .filter { it.status == TaskStatus.IDLE || it.status == TaskStatus.PAUSED }
             .minByOrNull { it.position }
             ?.copy(status = TaskStatus.IN_PROGRESS)
 
@@ -1889,6 +2194,7 @@ class AppViewModel(
                     status = TaskStatus.IN_PROGRESS,
                     updatedAtMillis = now
                 )
+                updateScoreInputWhenChangeInProgressTask()
             }
 
             val updatedTasks = tasks.toList().sortedBy { it.position }
@@ -1974,4 +2280,6 @@ class AppViewModel(
     suspend fun deleteTask(taskId: String, sessionId: String) = learningSessionManager.deleteTaskById(taskId, sessionId)
 
     suspend fun updateFocusTreeResult(focusScore: Int, focusSeconds: Int) = focusTreeRepository.growTreeAfterWorkCompleted(focusScore, focusSeconds)
+
+    suspend fun insertLearningJournal(journal: JournalEntry) = learningJournalRepository.insertJournalEntry(journal)
 }

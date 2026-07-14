@@ -20,15 +20,31 @@ compose.desktop {
         mainClass = "thong.kotlin.pomodoro.MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.Exe, TargetFormat.Msi)
-            packageName = "thong.kotlin.pomodoro"
+            targetFormats(
+                TargetFormat.Exe,
+                TargetFormat.Deb,
+                TargetFormat.Rpm
+            )
+            packageName = "aura-pomodoro"
             packageVersion = "1.0.0"
+            description = "Aura Pomodoro - Focus timer application"
+            vendor = "Thong Kotlin"
 
             modules("java.sql")
 
             windows {
                 menu = true
-                // iconFile.set(project.file("src/main/resources/icon.ico"))
+                shortcut = true
+                perUserInstall = true
+                console = true
+
+                // iconFile.set(project.file("src/jvmMain/resources/icon.ico"))
+            }
+
+            linux {
+                debMaintainer = "email@example.com"
+
+                // iconFile.set(project.file("src/jvmMain/resources/icon.png"))
             }
         }
     }

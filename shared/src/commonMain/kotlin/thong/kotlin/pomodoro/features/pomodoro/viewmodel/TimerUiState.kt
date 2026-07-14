@@ -4,6 +4,7 @@ import kotlinx.coroutines.Job
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.EventType
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroConfig
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
+import thong.kotlin.pomodoro.features.pomodoro.timer.domain.TimerPauseRecord
 
 data class TimerUiState(
     val isSessionStarted: Boolean = false,
@@ -13,7 +14,8 @@ data class TimerUiState(
     val config: PomodoroConfig,
     val pomodorosToday: Int = 0,
     val event: EventType = EventType.NOTHING,
-    val pendingNotification: String? = null
+    val pendingNotification: String? = null,
+    val pauseRecords: List<TimerPauseRecord> = emptyList()
 )
 
 data class TimerCompleteResult(

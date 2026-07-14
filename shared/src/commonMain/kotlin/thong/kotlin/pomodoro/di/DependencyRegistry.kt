@@ -7,6 +7,7 @@ import thong.kotlin.pomodoro.core.media.SoundManager
 import thong.kotlin.pomodoro.core.notification.NotificationManager
 import thong.kotlin.pomodoro.core.pomodoro.mini_client.KtorPomodoroMiniClient
 import thong.kotlin.pomodoro.database.AuraDatabase
+import thong.kotlin.pomodoro.features.focus.journal.data.LearningJournalRepository
 import thong.kotlin.pomodoro.features.focus.tree.data.FocusTreeRepository
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.LocalSettingsDataSourceV2
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.repository.UserAppStateRepositoryImplV2
@@ -75,5 +76,9 @@ object DependencyRegistry {
 
     val focusTreeRepository: FocusTreeRepository by lazy {
         FocusTreeRepository(_database)
+    }
+
+    val learningJournalRepository: LearningJournalRepository by lazy {
+        LearningJournalRepository(_database)
     }
 }

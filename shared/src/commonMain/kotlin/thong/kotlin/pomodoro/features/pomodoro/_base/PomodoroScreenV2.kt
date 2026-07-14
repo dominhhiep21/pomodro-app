@@ -60,6 +60,11 @@ import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitCompactU
 import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoroGroupUI
 import thong.kotlin.pomodoro.features.pomodoro._base.components.PortraitPomodoroUI
 import thong.kotlin.pomodoro.features.pomodoro._base.components.SessionGuidanceModal
+import thong.kotlin.pomodoro.features.focus.journal.presentation.PomodoroJournalModal
+import thong.kotlin.pomodoro.features.focus.journal.presentation.SessionJournalSummary
+import thong.kotlin.pomodoro.features.focus.score.presentation.RoundFocusScoreModal
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.PomodoroMode
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.PomodoroUiState
 import thong.kotlin.pomodoro.features.pomodoro._base.domain.model.UserSettingsV2
@@ -191,7 +196,7 @@ fun PomodoroScreenUIv2(
                         LandscapeCompactUI(
                             totallyPomodoroUiState = totalPomodoroUiState,
                             learningStyle = learningStyle,
-                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleTimer = { appViewModel.toggleTimer(true) },
                             onToggleCompactMode = appViewModel::toggleCompactMode,
                             onToggleCompactMenu = appViewModel::toggleCompactMenu,
                             onSelectCompactSection = appViewModel::setActiveCompactSection,
@@ -232,7 +237,7 @@ fun PomodoroScreenUIv2(
                     PomodoroUiState(isCompact = true, isLandscape = true, style = LearningStyle.SOLO) -> {
                         LandscapeCompactUI(
                             totallyPomodoroUiState = totalPomodoroUiState,
-                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleTimer = { appViewModel.toggleTimer(true) },
                             onToggleCompactMode = appViewModel::toggleCompactMode,
                             onToggleCompactMenu = appViewModel::toggleCompactMenu,
                             onSelectCompactSection = appViewModel::setActiveCompactSection,
@@ -275,7 +280,7 @@ fun PomodoroScreenUIv2(
                             totallyPomodoroUiState = totalPomodoroUiState,
                             learningStyle = learningStyle,
                             onToggleSettings = appViewModel::toggleSettings,
-                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleTimer = { appViewModel.toggleTimer(true) },
                             onToggleCompactMode = appViewModel::toggleCompactMode,
                             onToggleCompactMenu = appViewModel::toggleCompactMenu,
                             onSelectCompactSection = appViewModel::setActiveCompactSection,
@@ -315,7 +320,7 @@ fun PomodoroScreenUIv2(
                     PomodoroUiState(isCompact = true, isLandscape = false, style = LearningStyle.SOLO) -> {
                         PortraitCompactUI(
                             totallyPomodoroUiState = totalPomodoroUiState,
-                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleTimer = { appViewModel.toggleTimer(true) },
                             onToggleCompactMode = appViewModel::toggleCompactMode,
                             onToggleCompactMenu = appViewModel::toggleCompactMenu,
                             onSelectCompactSection = appViewModel::setActiveCompactSection,
@@ -358,7 +363,7 @@ fun PomodoroScreenUIv2(
                             totallyPomodoroUiState = totalPomodoroUiState,
                             groupConfig = learningGroupConfig ?: LearningGroupConfig(),
                             themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.currentMode),
-                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleTimer = { appViewModel.toggleTimer(true) },
                             onResetTimer = appViewModel::resetTimer,
                             onSkipTimer = appViewModel::skipTimer,
                             onToggleSettings = appViewModel::toggleSettings,
@@ -382,7 +387,7 @@ fun PomodoroScreenUIv2(
                         LandscapePomodoroUI(
                             totallyPomodoroUiState = totalPomodoroUiState,
                             themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.currentMode),
-                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleTimer = { appViewModel.toggleTimer(true) },
                             onResetTimer = appViewModel::resetTimer,
                             onSkipTimer = appViewModel::skipTimer,
                             onToggleSettings = appViewModel::toggleSettings,
@@ -407,7 +412,7 @@ fun PomodoroScreenUIv2(
                             totallyPomodoroUiState = totalPomodoroUiState,
                             groupConfig = learningGroupConfig ?: LearningGroupConfig(),
                             themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.currentMode),
-                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleTimer = { appViewModel.toggleTimer(true) },
                             onResetTimer = appViewModel::resetTimer,
                             onSkipTimer = appViewModel::skipTimer,
                             onToggleSettings = appViewModel::toggleSettings,
@@ -431,7 +436,7 @@ fun PomodoroScreenUIv2(
                         PortraitPomodoroUI(
                             totallyPomodoroUiState = totalPomodoroUiState,
                             themeColor = rememberPomodoroThemeColor(totalPomodoroUiState.currentMode),
-                            onToggleTimer = appViewModel::toggleTimer,
+                            onToggleTimer = { appViewModel.toggleTimer(true) },
                             onResetTimer = appViewModel::resetTimer,
                             onSkipTimer = appViewModel::skipTimer,
                             onToggleSettings = appViewModel::toggleSettings,
@@ -518,7 +523,7 @@ fun PomodoroScreenUIv2(
                     totallyPomodoroUiState = totalPomodoroUiState,
                     onSkipAndGetPoints = {
                         appViewModel.toggleAllTasksCompletedModal()
-                        appViewModel.handleTimerCompleteManually()
+                        appViewModel.skipTimer()
                     },
                     onContinueAndAddTask = {
                         appViewModel.toggleAllTasksCompletedModal()
@@ -543,6 +548,22 @@ fun PomodoroScreenUIv2(
                 )
             }
 
+            // Journal Modal
+            if (totalPomodoroUiState.workspaceUiState.journalUiState.isJournalModalVisible) {
+                PomodoroJournalModal(
+                    onSave = appViewModel::saveJournalEntry,
+                    onDismiss = appViewModel::dismissJournalModal
+                )
+            }
+
+            if (totalPomodoroUiState.workspaceUiState.isFocusScoreModalVisible) {
+                // Round Focus Score Modal
+                RoundFocusScoreModal(
+                    scoreInput = totalPomodoroUiState.workspaceUiState.focusScoreInput,
+                    onDismiss = appViewModel::dismissRoundFocusScore
+                )
+            }
+
             // Focus Score Modal
             totalPomodoroUiState.workspaceUiState.focusScoreResult?.let { result ->
                 Dialog(
@@ -551,10 +572,19 @@ fun PomodoroScreenUIv2(
                     }
                 ) {
                     Column(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .verticalScroll(rememberScrollState()),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         FocusScoreCard(result = result)
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        SessionJournalSummary(
+                            entries = totalPomodoroUiState.workspaceUiState.journalUiState.entries
+                        )
                         
                         Spacer(modifier = Modifier.height(24.dp))
                         
